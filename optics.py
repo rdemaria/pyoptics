@@ -205,7 +205,7 @@ class qdplot(object):
 from numpy import sqrt, sum, array, sin, cos,   dot, pi
 from numpy.linalg import inv
 
-from madseq import pyname
+from utils import pyname
 from namedtuple import namedtuple
 
 def rng(x,a,b):
@@ -213,7 +213,7 @@ def rng(x,a,b):
   return (x<b) & (x>a)
 
 infot=namedtuple('infot','idx betx alfx mux bety alfy muy')
-import tfs
+import tfsdata as tfs
 class optics(dataobj):
   _is_s_begin=False
   _name_char=16

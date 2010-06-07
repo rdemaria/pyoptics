@@ -1,5 +1,6 @@
 from numpy import log10,pi,sqrt,exp
 import gzip, StringIO
+import re
 
 def pythonname(string):
   string=string.replace('[','')
@@ -134,6 +135,16 @@ def myopen(fn):
       return open(fn)
   except IOError:
     return StringIO.StringIO(fn)
+
+
+madname=re.compile(r'([a-z_][a-z_0-9\.]*)')
+def pyname(n):
+  n=n.lower()
+  n=madname.sub(no_dots,n)
+  n.replace('^','**')
+  if n=='from':
+    n='From'
+  return n
 
 
 
