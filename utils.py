@@ -137,6 +137,10 @@ def myopen(fn):
     return StringIO.StringIO(fn)
 
 
+def no_dots(x):
+    return x.group().replace('.','_')
+
+
 madname=re.compile(r'([a-z_][a-z_0-9\.]*)')
 def pyname(n):
   n=n.lower()

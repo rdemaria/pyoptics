@@ -219,7 +219,7 @@ class optics(dataobj):
   _name_char=16
   _entry_char=12
   _entry_prec=3
-  def __init__(self,data,idx=True):
+  def __init__(self,data,idx=False):
     dataobj.__init__(self)
     self._data=data
     if idx:
@@ -346,6 +346,10 @@ class optics(dataobj):
     return t.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
   def alphac(t):
     return sum(t('dx*kn0l'))/sum(t.l)
+  def drvterm(t,p,q,l,m):
+    dv=t.betx**(p/2.)*t.bety**(q/2.)
+    dv*=exp(+2j*pi*((p-2*l)*t.mux+(q-2*m)*t.muy))
+    return dv
   def gammatr(t):
     af=t._alphac()
     if af>0:
