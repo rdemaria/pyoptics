@@ -346,9 +346,9 @@ class optics(dataobj):
     return t.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
   def alphac(t):
     return sum(t('dx*kn0l'))/sum(t.l)
-  def drvterm(t,p,q,l,m):
-    dv=t.betx**(p/2.)*t.bety**(q/2.)
-    dv*=exp(+2j*pi*((p-2*l)*t.mux+(q-2*m)*t.muy))
+  def drvterm(t,p=0,q=0,l=0,m=0):
+    dv=t.betx**(abs(p)/2.)*t.bety**(abs(q)/2.)
+    dv*=_n.exp(+2j*pi*((p-2*l)*t.mux+(q-2*m)*t.muy))
     return dv
   def gammatr(t):
     af=t._alphac()
