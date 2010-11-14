@@ -18,6 +18,7 @@ lglabel={
 
 axlabel={
     's':       r'$s [m]$',
+    'ss':       r'$s [m]$',
     'betx':    r'$\beta [m]$',
     'bety':    r'$\beta [m]$',
     'mux':    r'$\mu/(2 \pi)$',
@@ -157,7 +158,7 @@ class qdplot(object):
 #    timeit('start lattice %s' % names,1)
     vd=0
     sp=self.lattice
-    s=self.xaxis
+    s=self.ont.s
     l=self.ont.l
     for i in names:
       myvd=self.ont.__dict__.get(i,None)
