@@ -1,6 +1,11 @@
+import re
+import os
+import time
+
+import wx
+
 import matplotlib.pyplot as _p
 import numpy as _n
-import re
 from utils import mystr as _mystr
 
 from pydataobj import dataobj
@@ -33,9 +38,23 @@ axlabel={
 def _mylbl(d,x): return d.get(x,r'$%s$'%x)
 
 
+
 class qdplot(object):
+  @staticmethod
+  def wx_autoupdate(*pls):
+    def callback(*args):
+      for pl in pls:
+        pl.update()
+      wx.WakeUpIdle()
+    wx.EVT_IDLE(wx.GetApp(),callback)
+  @staticmethod
+  def wx_stopupdate():
+    wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._callback)
+
+
   def __init__(self,t,x='',yl='',yr='',idx=slice(None),
-      clist='k r b g c m',lattice=None,newfig=True,pre=None):
+      clist='k r b g c m',lattice=None,newfig=True,pre=None,
+              ):
     yl,yr,clist=map(str.split,(yl,yr,clist))
 #    timeit('Init',True)
     self.color={}
@@ -47,11 +66,14 @@ class qdplot(object):
     for i in self.yl+self.yr:
       self.color[i]=self.clist.pop(0)
       self.clist.append(self.color[i])
-    if newfig:
+    if newfig is True:
       self.figure=_p.figure()
-    else:
-      _p.clf()
+    elif newfig is False:
       self.figure=_p.gcf()
+      self.figure.clf()
+    else:
+      self.figure=newfig
+      self.figure.clf()
     if lattice is not None:
       self.lattice=self._new_axes()
 #      self.lattice.set_autoscale_on(False)
@@ -93,11 +115,27 @@ class qdplot(object):
     self.run()
 
   def update(self):
-    print 'optics reload'
     if hasattr(self.t,'reload'):
-      self.t.reload()
-    self.run()
+      if self.t.reload():
+        self.run()
     return self
+
+#  def _wx_callback(self,*args):
+#    self.update()
+#    wx.WakeUpIdle()
+#
+#  def autoupdate(self):
+#    if _p.rcParams['backend']=='WXAgg':
+#      wx.EVT_IDLE.Bind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._wx_callback)
+#    return self
+#
+#  def stop_update(self):
+#    if _p.rcParams['backend']=='WXAgg':
+#      wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._callback)
+#
+#  def __del__(self):
+#    if hasattr(self,'_callback'):
+#      self.stop_update()
 
   def run(self):
 #    print 'optics run'
@@ -214,15 +252,31 @@ def rng(x,a,b):
   return (x<b) & (x>a)
 
 infot=namedtuple('infot','idx betx alfx mux bety alfy muy')
-import tfsdata as tfs
+import tfsdata
+import gzip
+import os
+
 class optics(dataobj):
   _is_s_begin=False
   _name_char=16
   _entry_char=12
   _entry_prec=3
-  def __init__(self,data,idx=False):
-    dataobj.__init__(self)
-    self._data=data
+  @classmethod
+  def open(cls,fn):
+    try:
+      if fn.endswith('tfs.gz'):
+        return cls(tfsdata.load(gzip.open(fn)))
+      elif fn.endswith('tfs'):
+        if os.path.exists(fn):
+          return cls(tfsdata.open(fn))
+        elif os.path.exists(fn+'.gz'):
+          return cls(tfsdata.load(gzip.open(fn+'.gz')))
+      raise IOError
+    except IOError:
+      raise IOError,"%s does not exists or wrong format" % fn
+  def __init__(self,data={},idx=False):
+    self.update(data)
+    self._fdate=0
     if idx:
       try:
         self._mkidx()
@@ -230,7 +284,13 @@ class optics(dataobj):
         print 'Warning: error in idx generation'
   def reload(self):
     if 'filename' in self._data:
-       self._data=tfs.open(self.filename)
+       fdate=os.stat(self.filename).st_ctime
+       if fdate>self._fdate:
+         self._data=tfsdata.open(self.filename)
+         self._fdate=fdate
+         print '%s reload' % self.filename
+         return True
+    return False
   def _mkidx(self):
     name=map(pyname,list(self.name))
     self.idx=dataobj()
@@ -283,18 +343,36 @@ class optics(dataobj):
         out[name]=vec[idx]
     out['sequence']=self.param.get('sequence')
     return out
+  def range(self,pat1,pat2):
+    """ return a mask relative to range"""
+    try:
+      id1=_n.where(self.pattern(pat1))[0][-1]
+    except IndexError:
+      raise ValueError,"%s pattern not found in table"%pat1
+    try:
+      id2=_n.where(self.pattern(pat2))[0][-1]
+    except IndexError:
+      raise ValueError,"%s pattern not found in table"%pat2
+    out=_n.zeros(len(self.name),dtype=bool)
+    if id2>id1:
+      out[id1:id2+1]=True
+    else:
+      out[id1:]=True
+      out[:id2+1]=True
+    return out
 
   def plot(self,yl='',yr='',x='s',idx=slice(None),
-      clist='k r b g c m',lattice=True,newfig=True,pre=None):
+      clist='k r b g c m',lattice=True,newfig=True,pre=None,
+          ):
     out=qdplot(self,x=x,yl=yl,yr=yr,idx=idx,lattice=lattice,newfig=newfig,clist=clist,pre=pre)
 #    self._target.append(out)
     return out
 
-  def plotbeta(self,newfig=True):
-    return self.plot('betx bety','dx dy',newfig=newfig)
+  def plotbeta(self,**nargs):
+    return self.plot('betx bety','dx dy',**nargs)
 
-  def plotcross(self,newfig=True):
-    return self.plot('x y','dx dy',newfig=newfig)
+  def plotcross(self,**nargs):
+    return self.plot('x y','dx dy',**nargs)
 
   def plottune(self,lbl=''):
     _p.title(r"${\rm Tune} \quad {\rm vs} \delta$")
@@ -320,14 +398,26 @@ class optics(dataobj):
     _p.legend()
 
   def plotw(self,lbl=''):
-    title(r"Chromatic function: %s"%lbl)
-  #  ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
-    ylabel(r"$w$")
-    xlabel(r"$s$")
-    plot(self.s,self.wx,label=r'$w_x$')
-    plot(self.s,self.wy,label=r'$w_y$')
-    grid(True)
-    legend()
+    _p.title(r"Chromatic function: %s"%lbl)
+  # _p.ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
+    _p.ylabel(r"$w$")
+    _p.xlabel(r"$s$")
+    _p.plot(self.s,self.wx,label=r'$w_x$')
+    _p.plot(self.s,self.wy,label=r'$w_y$')
+    _p.grid(True)
+    _p.legend()
+
+  def plotap(t,ap,nlim=30,ref=7,newfig=True,**nargs):
+    t.ss=ap.s
+    t.n1=ap.n1
+    pl=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
+    pl.figure.gca().plot(t.ss,t.ss*0+ref)
+    pl.figure.gca().set_ylim(0,nlim)
+    pl.figure.canvas.draw()
+    return pl
+
+
+
 
   def maxbetx(f):
     return f.betx+f.alfx**2/f.betx/abs(f.kn1l/f.l)

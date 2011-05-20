@@ -142,6 +142,7 @@ def no_dots(x):
 
 
 madname=re.compile(r'([a-z_][a-z_0-9\.]*)')
+
 def pyname(n):
   n=n.lower()
   n=madname.sub(no_dots,n)
