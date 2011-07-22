@@ -38,20 +38,32 @@ axlabel={
 def _mylbl(d,x): return d.get(x,r'$%s$'%x)
 
 
-
 class qdplot(object):
-  @staticmethod
-  def wx_autoupdate(*pls):
-    def callback(*args):
-      for pl in pls:
-        pl.update()
-      wx.WakeUpIdle()
-    wx.EVT_IDLE(wx.GetApp(),callback)
-  @staticmethod
-  def wx_stopupdate():
-    wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._callback)
-
-
+  autoupdate=[]
+  def wx_autoupdate(self):
+    cls=self.__class__
+    cls.autoupdate.append(self)
+    if len(cls.autoupdate)==1:
+      wx.EVT_IDLE(wx.GetApp(),cls._wx_callback)
+  def wx_stopupdate(self):
+    cls.autoupdate.remove(self)
+    if len(cls.autoupdate)==0:
+      wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,cls._wx_callback)
+  @classmethod
+  def _wx_callback(cls,*args):
+    out=[]
+    for pl in cls.autoupdate:
+      res=pl.update()
+      if res:
+        out.append(res)
+    if out and hasattr(cls,'on_update'):
+      print
+      for pl in out:
+        cls.on_update(pl)
+    wx.WakeUpIdle()
+  @classmethod
+  def on_updated(cls,fun):
+    cls.on_update=fun
   def __init__(self,t,x='',yl='',yr='',idx=slice(None),
       clist='k r b g c m',lattice=None,newfig=True,pre=None,
               ):
@@ -118,7 +130,8 @@ class qdplot(object):
     if hasattr(self.t,'reload'):
       if self.t.reload():
         self.run()
-    return self
+        return self
+    return False
 
 #  def _wx_callback(self,*args):
 #    self.update()
@@ -176,6 +189,8 @@ class qdplot(object):
     self.figure.canvas.mpl_connect('pick_event',self.pick)
     _p.interactive(is_ion)
     self.figure.canvas.draw()
+    if hasattr(self,'on_run'):
+      self.on_run(self)
 
   def pick(self,event):
     pos=_n.array([event.mouseevent.x,event.mouseevent.y])
@@ -288,7 +303,6 @@ class optics(dataobj):
        if fdate>self._fdate:
          self._data=tfsdata.open(self.filename)
          self._fdate=fdate
-         print '%s reload' % self.filename
          return True
     return False
   def _mkidx(self):
