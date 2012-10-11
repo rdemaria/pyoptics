@@ -1,14 +1,559 @@
 import re
 import os
+import gzip
 import time
 
 import wx
 
 import matplotlib.pyplot as _p
+import matplotlib.pyplot as pl
 import numpy as _n
-from utils import mystr as _mystr
+import scipy
+from numpy import sqrt, sum, array, sin, cos, dot, pi,cosh,sinh,tan,arctan
+from numpy import zeros_like, zeros
+from numpy.linalg import inv
 
+from utils import mystr as _mystr
+from utils import pyname
+from namedtuple import namedtuple
 from pydataobj import dataobj
+from objdebug import ObjDebug
+import tfsdata
+
+def rng(x,a,b):
+  "return (x<b) & (x>a)"
+  return (x<b) & (x>a)
+
+infot=namedtuple('infot','idx betx alfx mux bety alfy muy')
+
+
+class optics(dataobj):
+  _is_s_begin=False
+  _name_char=16
+  _entry_char=12
+  _entry_prec=3
+  @classmethod
+  def open(cls,fn):
+    try:
+      if fn.endswith('tfs.gz'):
+        return cls(tfsdata.load(gzip.open(fn)))
+      elif fn.endswith('tfs'):
+        if os.path.exists(fn):
+          return cls(tfsdata.open(fn))
+        elif os.path.exists(fn+'.gz'):
+          return cls(tfsdata.load(gzip.open(fn+'.gz')))
+      else:
+        return cls(tfsdata.open(fn))
+      raise IOError
+    except IOError:
+      raise IOError,"%s does not exists or wrong format" % fn
+  def __init__(self,data={},idx=False):
+    self.cos=cos
+    self.sin=sin
+    self.pi=pi
+    self.sqrt=sqrt
+    self.update(data)
+    self._fdate=0
+    if idx:
+      try:
+        self._mkidx()
+      except KeyError:
+        print 'Warning: error in idx generation'
+  def copy(self):
+    data={}
+    for k,v in self._data.items():
+      if hasattr(v,'copy'):
+        vv=v.copy()
+      elif  hasattr(v,'__getitem__'):
+        vv=v[:]
+      else:
+        vv=v
+      data[k]=vv
+    return optics(data)
+  def reload(self):
+    if 'filename' in self._data:
+       fdate=os.stat(self.filename).st_ctime
+       if fdate>self._fdate:
+         self._data=tfsdata.open(self.filename)
+         self._fdate=fdate
+         return True
+    return False
+  def _mkidx(self):
+    name=map(pyname,list(self.name))
+    self.idx=dataobj()
+    fields=infot._fields[1:]
+    for i,name in enumerate(name):
+      data=[i] + map(lambda x: self[x][i],fields)
+      setattr(self.idx,name,infot(*data))
+
+  def pattern(self,regexp):
+    c=re.compile(regexp,flags=re.IGNORECASE)
+    out=[c.search(n) is not None for i,n in enumerate(self.name)]
+    return _n.array(out)
+  __floordiv__=pattern
+
+  def dumplist(self,rows=None,cols=None):
+    if rows is None:
+      rows=_n.ones(len(self.name),dtype=bool)
+    elif isinstance(rows,str):
+      rows=self.pattern(rows)
+    rows=_n.where(rows)[0]
+
+    if cols is None:
+      colsn=self._data.keys()
+      cols=[getattr(self,n.lower()) for n in colsn]
+    if isinstance(cols,str):
+      colsn=cols.split()
+      cols=[self(n) for n in cols.split()]
+
+    out=[]
+    rowfmt=['%%-%d.%ds' % (self._name_char,self._name_char)]
+    rowfmt+=['%%-%d.%ds' % (self._entry_char,self._name_char)] * len(colsn)
+    rowfmt=' '.join(rowfmt)
+    out.append(rowfmt % tuple(['names'] + colsn  ) )
+    for i in rows:
+      v=[ self.name[i] ]+ [ _mystr(c[i],self._entry_char) for c in cols ]
+      out.append(rowfmt %  tuple(v))
+    return out
+  def dumpstr(self,rows=None,cols=None):
+    return '\n'.join(self.dumplist(rows=rows,cols=cols))
+  def show(self,rows=None,cols=None):
+    print self.dumpstr(rows=rows,cols=cols)
+  def twissdata(self,location,data):
+    idx=_n.where(self.pattern(location))[0][-1]
+    out=dict(location=location)
+    for name in data.split():
+      vec=self.__dict__.get(name)
+      if vec is None:
+        out[name]=0
+      else:
+        out[name]=vec[idx]
+    out['sequence']=self.param.get('sequence')
+    return out
+  def range(self,pat1,pat2):
+    """ return a mask relative to range"""
+    try:
+      id1=_n.where(self.pattern(pat1))[0][-1]
+    except IndexError:
+      raise ValueError,"%s pattern not found in table"%pat1
+    try:
+      id2=_n.where(self.pattern(pat2))[0][-1]
+    except IndexError:
+      raise ValueError,"%s pattern not found in table"%pat2
+    out=_n.zeros(len(self.name),dtype=bool)
+    if id2>id1:
+      out[id1:id2+1]=True
+    else:
+      out[id1:]=True
+      out[:id2+1]=True
+    return out
+
+  def plot(self,yl='',yr='',x='s',idx=slice(None),
+      clist='k r b g c m',lattice=True,newfig=True,pre=None,
+          ):
+    out=qdplot(self,x=x,yl=yl,yr=yr,idx=idx,lattice=lattice,newfig=newfig,clist=clist,pre=pre)
+#    self._target.append(out)
+    return out
+
+  def plotbeta(self,**nargs):
+    return self.plot('betx bety','dx dy',**nargs)
+
+  def plotcross(self,**nargs):
+    return self.plot('x y','dx dy',**nargs)
+
+  def plottune(self,newfig=True):
+    q4x,q3x,q2x,q1x,q0x=scipy.polyfit(self.deltap,self.q1,4)
+    q4y,q3y,q2y,q1y,q0y=scipy.polyfit(self.deltap,self.q2,4)
+    qx=(self.q1-self.q1.round())[abs(self.deltap)<1E-15][0]
+    qy=(self.q2-self.q2.round())[abs(self.deltap)<1E-15][0]
+    fmt= r"$%s=%4.2f %+4.2f \delta"
+    fmt+=r"%+4.2f \frac{\delta^2}{2\cdot10^{-3}}"
+    fmt+=r"%+4.2f \frac{\delta^3}{6\cdot10^{-6}}$"
+    fmtx=fmt%('Q_x',q0x,q1x,q2x*2e-3,q3x*6e-6)
+    fmty=fmt%('Q_y',q0y,q1y,q2y*2e-3,q3y*6e-6)
+    if newfig:
+      pl.figure()
+    _p.title(r"Tune vs $\delta$")
+    _p.xlabel("$\delta$")
+    _p.ylabel("Fractional tune")
+    _p.plot(self.deltap,self.q1-self.q1.round(),label=fmtx)
+    _p.plot(self.deltap,self.q2-self.q2.round(),label=fmty)
+    #_p.text(0.0,qx,r"$Q_x$")
+    #_p.text(0.0,qy,r"$Q_y$")
+    _p.grid(True)
+    _p.legend(loc=0)
+
+  def plotbetabeat(self,t1,dp='0.0003'):
+    _p.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
+    _p.ylabel(r"$\Delta\beta/\beta$")
+    _p.xlabel(r"$s$")
+    _p.plot(self.s,1-t1.betx/self.betx,label=r'$\Delta\beta_x/\beta_x$')
+    _p.plot(self.s,1-t1.bety/self.bety,label=r'$\Delta\beta_y/\beta_y$')
+    _p.grid(True)
+    _p.legend()
+
+  def plotw(self,lbl=''):
+    _p.title(r"Chromatic function: %s"%lbl)
+  # _p.ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
+    _p.ylabel(r"$w$")
+    _p.xlabel(r"$s$")
+    _p.plot(self.s,self.wx,label=r'$w_x$')
+    _p.plot(self.s,self.wy,label=r'$w_y$')
+    _p.grid(True)
+    _p.legend()
+
+  def plotap(t,ap,nlim=30,ref=7,newfig=True,**nargs):
+    t.ss=ap.s
+    t.n1=ap.n1
+    p=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
+    p.figure.gca().plot(t.ss,t.ss*0+ref)
+    p.figure.gca().set_ylim(0,nlim)
+    p.figure.canvas.draw()
+    return p
+
+  def mk_betamax(self):
+    self.betxmax=zeros_like(self.betx)
+    self.betymax=zeros_like(self.bety)
+    bufname=''
+    for i in range(len(self.k1l)):
+      k1l=self.k1l[i]
+      l=self.l[i]
+      betx=self.betx[i]
+      alfx=self.alfx[i]
+      bety=self.bety[i]
+      alfy=self.alfy[i]
+      if l>0: #thick
+        alfxm=self.alfx[i-1]
+        alfym=self.alfy[i-1]
+        betxm=self.betx[i-1]
+        betym=self.bety[i-1]
+        if k1l>=0: # focus
+          if alfxm<0 and alfx>0:
+            self.betxmax[i]=betx+alfx**2/betx/k1l*l
+          else:
+            self.betxmax[i]=max(betxm,betx)
+          self.betymax[i]=max(bety,betym)
+        else: # defocu
+          if alfym<0 and alfy>0:
+            self.betymax[i]=bety+alfy**2/bety/(-k1l)*l
+          else:
+            self.betymax[i]=max(bety,betym)
+          self.betxmax[i]=max(betxm,betx)
+      elif abs(k1l)>0: #thin
+        name=self.name[i].split('..')[0]
+        if bufname!=name:
+          if bufname!='':
+            idx=_n.where(self.name==bufname)[0][0]
+            self.betxmax[idx]=max(bufx)
+            self.betymax[idx]=max(bufy)
+          bufx=[self.betx[i]]
+          bufy=[self.bety[i]]
+          bufname=name
+        else:
+          bufx.append(self.betx[i])
+          bufy.append(self.bety[i])
+    return self
+
+  def maxbety(f):
+    return f.bety+f.alfy**2/f.bety/abs(f.k1l/f.l)
+  def maxbety(f):
+    return f.bety+f.alfy**2/f.bety/abs(f.k1l/f.l)
+  #def chromx(f):
+  #  if not hasattr(f,'k1l'):
+  #    f.k1l=f.k1l
+  #  return -sum(f.k1l*f.betx)/4/pi
+  #def chromy(f):
+  #  if not hasattr(f,'k1l'):
+  #    f.k1l=f.k1l
+  #  return sum(f.k1l*f.bety)/4/pi
+  def ndx(t):
+    return t.dx/sqrt(t.betx)
+  def ndpx(t):
+    return t.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
+  def alphac(t):
+    return sum(t('dx*kn0l'))/sum(t.l)
+  def gammatr(t):
+    af=t._alphac()
+    if af>0:
+      return sqrt(1/af)
+    else:
+      return -sqrt(-1/af)
+  def transferMatrix(self,i1=0,i2=-1,plane='x'):
+    """Return the transfer matrix from position i1 to position i2
+       see Y.Lee 2.68 pag 53 for definition
+    """
+    B2=self.normMat(i2,plane=plane)
+    B1=self.normMat(i1,plane=plane)
+    psi=2*pi*(self['mu'+plane][i2] - self['mu'+plane][i1])
+    R=array([[cos(psi),sin(psi)],[-sin(psi),cos(psi)]])
+    return dot(dot(B2,R),inv(B1))
+  def normMat(self,i,plane='x'):
+    beta=self['bet'+plane][i]
+    alpha=self['alf'+plane][i]
+    return array([[sqrt(beta),0],[-alpha/sqrt(beta),1/sqrt(beta)]])
+  def mk_intkbeta(self,on_sext=True):
+    self.intkbetx=self.k1l*0.
+    self.intkbety=self.k1l*0.
+    for i in range(len(self.k1l)):
+      kl=self.k1l[i]
+      k2l=self.k2l[i]
+      l=self.l[i]
+      betx=self.betx[i]
+      bety=self.bety[i]
+      intkbetx=intkbety=0
+      if abs(kl)>0:
+        if l==0:
+          intkbetx=kl*betx
+          intkbety=kl*bety
+        else:
+          alfx=self.alfx[i]
+          alfy=self.alfy[i]
+          gamx=(1+alfx**2)/betx
+          gamy=(1+alfy**2)/bety
+          k=kl/l
+          ak=abs(k)
+          rk=sqrt(ak)
+          rkl=rk*l
+          crkl=cos(rkl)
+          srkl=-sin(rkl)
+          chrkl=cosh(rkl)
+          shrkl=-sinh(rkl)
+          if k>0: #backtrack
+            r11=crkl     ; r12= srkl /rk; r21=-srkl *rk ;
+            r33=chrkl    ; r34= shrkl/rk; r43= shrkl*rk ;
+          else:
+            r33=crkl     ; r34= srkl /rk; r43=-srkl *rk ;
+            r11=chrkl    ; r12= shrkl/rk; r21= shrkl*rk ;
+          r22=r11
+          r44=r33
+          betx0=r11**2*betx-2.*r11*r12*alfx+r12**2*gamx
+          bety0=r33**2*bety-2.*r33*r34*alfy+r34**2*gamy
+          alfx0=-r11*r21*betx+(1.0+2.0*r12*r21)*alfx-r12*r22*gamx
+          alfy0=-r33*r43*bety+(1.0+2.0*r34*r43)*alfy-r34*r44*gamy
+          gamx0=(1.0+alfx0**2)/betx0
+          gamy0=(1.0+alfy0**2)/bety0
+          if k>0:
+            ax= 0.5    *(l+0.5/rk*sin(2.0*rkl));
+            bx= 0.25/ak*(1.0-cos(2.0*rkl));
+            cx= 0.5 /ak*(l-0.5/rk*sin(2.0*rkl));
+            ay= 0.5    *(l+0.5/rk*sinh(2.0*rkl));
+            by=-0.25/ak*(1.0-cosh(2.0*rkl));
+            cy=-0.5 /ak*(l-0.5/rk*sinh(2.0*rkl));
+          else:
+            ay= 0.5    *(l+0.5/rk*sin(2.0*rkl));
+            by= 0.25/ak*(1.0-cos(2.0*rkl));
+            cy= 0.5 /ak*(l-0.5/rk*sin(2.0*rkl));
+            ax= 0.5    *(l+0.5/rk*sinh(2.0*rkl));
+            bx=-0.25/ak*(1.0-cosh(2.0*rkl));
+            cx=-0.5 /ak*(l-0.5/rk*sinh(2.0*rkl));
+          #if (self//'MQX.*L5')[i]:
+          #  print kl,l,k,ak,rk,rkl
+          #  print betx ,bety ,alfx ,alfy ,gamx ,gamy
+          #  print r11,r12,r21,r22,r33,r34,r43,r44
+          #  print betx0,bety0,alfx0,alfy0,gamx0,gamy0
+          #  print ax,bx,cx,ay,by,cy
+          intkbetx= k*(ax*betx0-2.0*bx*alfx0+cx*gamx0)
+          intkbety=-k*(ay*bety0-2.0*by*alfy0+cy*gamy0)
+      elif abs(k2l)>0:
+        dx=self.dx[i]
+        dy=self.dy[i]
+        intkbetx=-k2l*dx*betx
+        intkbety= k2l*dx*bety
+      self.intkbetx[i]=intkbetx
+      self.intkbety[i]=intkbety
+    return self
+  def mk_AB(self):
+    """ Values
+        qpp1: (k2 D -k1)' beta
+        qpp2: k2 D''
+        qpp3: k1 beta'
+        qpp4: k2 D beta'
+    """
+    betx,bety,dx=self.betx,self.bety,self.dx
+    self.Bx=betx*self.wx*cos(2*pi*self.phix)
+    self.Ax=betx*self.wx*sin(2*pi*self.phix)
+    self.By=bety*self.wy*cos(2*pi*self.phiy)
+    self.Ay=bety*self.wy*sin(2*pi*self.phiy)
+    k1l=self.k1l
+    k2l=self.k2l
+    self.qp1x = 1./4/pi*_n.cumsum(-betx*k1l)
+    self.qp1y = 1./4/pi*_n.cumsum( bety*k1l)
+    self.qp2x = 1./4/pi*_n.cumsum( betx*k2l*dx)
+    self.qp2y = 1./4/pi*_n.cumsum(-bety*k2l*dx)
+    self.qpx  = self.qp1x+self.qp2x
+    self.qpy  = self.qp1y+self.qp2y
+    self.qpp1x=-2*self.qpx
+    self.qpp1y=-2*self.qpy
+    self.qpp2x= 1./2/pi*_n.cumsum( k2l*self.ddx*betx)
+    self.qpp2y= 1./2/pi*_n.cumsum(-k2l*self.ddx*bety)
+    self.qpp3x= 1./4/pi*_n.cumsum(-k1l*self.Bx)
+    self.qpp3y= 1./4/pi*_n.cumsum( k1l*self.By)
+    self.qpp4x= 1./4/pi*_n.cumsum( k2l*dx*self.Bx)
+    self.qpp4y= 1./4/pi*_n.cumsum(-k2l*dx*self.By)
+    self.qppx=self.qpp1x+self.qpp2x+self.qpp3x+self.qpp4x
+    self.qppy=self.qpp1y+self.qpp2y+self.qpp3y+self.qpp4y
+    qp1x=self.qp1x[-1]
+    qp2x=self.qp2x[-1]
+    qpx=self.qpx[-1]
+    qpp1x=self.qpp1x[-1]
+    qpp2x=self.qpp2x[-1]
+    qpp3x=self.qpp3x[-1]
+    qpp4x=self.qpp4x[-1]
+    qppx=self.qppx[-1]
+    qp1y=self.qp1y[-1]
+    qp2y=self.qp2y[-1]
+    qpy=self.qpy[-1]
+    qpp1y=self.qpp1y[-1]
+    qpp2y=self.qpp2y[-1]
+    qpp3y=self.qpp3y[-1]
+    qpp4y=self.qpp4y[-1]
+    qppy=self.qppy[-1]
+    print "Qx' = %10g%+10g = %10g"%(qp1x,qp2x,qpx)
+    print "Qy' = %10g%+10g = %10g"%(qp1y,qp2y,qpy)
+    print "Qx''= %10g%+10g%+10g%+10g = %10g"%(qpp1x,qpp2x,qpp3x,qpp4x,qppx)
+    print "Qy''= %10g%+10g%+10g%+10g = %10g"%(qpp1y,qpp2y,qpp3y,qpp4y,qppy)
+    return self
+  def cycle(t,name,reorder=True):
+    if type(name) is str:
+      name=_n.where(t.name==name.upper())[0][0]
+    for vn in ['s','mux','muy','phix','phiy']:
+      if vn in t:
+        v=t[vn]
+        vm=v[-1]
+        v-=v[name]
+        if reorder:
+          v[:name]+=vm
+    if reorder:
+      for vn in t.col_names:
+        vn=vn.lower()
+        v=t[vn]
+        t[vn]=_n.concatenate([v[name:],v[:name]])
+    return t
+  def select(t,a,b,shift=True):
+    if type(a) is str:
+      a=_n.where(t.name==a.upper())[0][0]
+    if type(b) is str:
+      b=_n.where(t.name==b.upper())[0][0]
+    data={}
+    ln=len(t.name)
+    for k,v in t._data.items():
+      if hasattr(v,'__len__') and len(v)==ln:
+        vv=v[a:b+1]
+      elif hasattr(v,'copy'):
+        vv=v.copy()
+      elif hasattr(v,'__getitem__'):
+        vv=v[:]
+      else:
+        vv=v
+      data[k]=vv
+    if shift:
+      for vn in ['s','mux','muy','phix','phiy']:
+        data[vn]-=data[vn][0]
+    return optics(data)
+  def errors_add(self,error_table):
+    """Add error columns"""
+    klist=[]
+    for k,val in error_table.items():
+      if k.startswith('k') and sum(abs(val))>0:
+        klist.append([k,val])
+        self[k]=self.get(k,zeros(len(self.name)))
+    for idxerror,name in enumerate(error_table['name']):
+      idxself=_n.where(self.name==name)[0]
+      for k,val in klist:
+        self[k][idxself]+=val[idxerror]
+    return self
+  def errors_getmn(self,errorname='b6'):
+    """Return resonances given the order and type"""
+    out=[]
+    kind=errorname[0]
+    order=int(errorname[1:])
+    for m in range(0,order+1):
+      n=order-m
+      if 'b' in kind and n%2==0:
+        out.append( (m,n) )
+        if n>0:
+          out.append( (m,-n) )
+      if 'a' in kind and n%2==1:
+        out.append( (m,n) )
+        if n>0:
+          out.append( (m,-n) )
+    return out
+  def drvterm(t,m=0,n=0,p=0,q=0):
+    dv=t.betx**(abs(m)/2.)*t.bety**(abs(n)/2.)
+    dv*=_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
+    return dv
+  def errors_kvector(self,i,maxorder=10):
+    rng=range(maxorder)
+    kn,ks=[],[]
+    for n in rng:
+      kname='k%dl'%n
+      if kname in self:
+         kn.append(self[kname][i])
+      else:
+         kn.append(0.)
+      kname='k%dsl'%n
+      if kname in self:
+         ks.append(self[kname][i])
+      else:
+         ks.append(0.)
+    return kn,ks
+  def errors_ktob(self,maxorder=6):
+    nelem=len(self.name)
+    rng=range(maxorder)
+    xx=self.x
+    yy=self.y
+    for n in rng:
+      self['b%d'%(n+1)]=zeros(nelem)
+      self['a%d'%(n+1)]=zeros(nelem)
+    for i in range(nelem):
+      kn,ks=self.errors_kvector(i,maxorder)
+      x=xx[i]
+      y=yy[i]
+      cn=k2b(kn,ks,x,y)
+      for ib,b in enumerate(cn):
+        self['b%d'%(ib+1)][i]=b.real
+        self['a%d'%(ib+1)][i]=b.imag
+    return self
+  def errors_detuning(self,ex,ey,xs,ys,order):
+    nelem=len(self.name)
+    Jx=ex/2*xs**2
+    Jy=ey/2*ys**2
+    Dq=[Dq2,Dq4,Dq6,Dq8,Dq10,Dq12,Dq14,Dq16][order/2-1]
+    betx=self.betx
+    bety=self.bety
+    bnn=self['b%d'%order]
+    dqxx=zeros(nelem)
+    dqyy=zeros(nelem)
+    for i in range(nelem):
+      Bx=betx[i]
+      By=bety[i]
+      bn=bnn[i]
+      dqx,dqy=Dq(bn,Bx,Jx,By,Jy)
+      dqxx[i]=dqx
+      dqyy[i]=dqy
+      #print bn,Bx,Jx,By,Jy,dqx,dqx
+    self['DQx%d'%order]=dqxx
+    self['DQy%d'%order]=dqyy
+    return self
+  def errors_footprint(self,ex=3.75e-6/450*0.938,ey=3.75e-6/450*0.938,
+                            nsigma=12,nangles=7,orders=[4,6],wp=(0.28, 0.31),
+                            label='footprint'):
+    x,y=mk_grid(nsigma,nangles)
+    tunx=[]
+    tuny=[]
+    for order in orders:
+      if order%2==1 or order<2 or order>8:
+        print "Order supported are 2,4,6,8,10,12,14,16"
+    for xs,ys in zip(x,y):
+      dqx=wp[0]
+      dqy=wp[1]
+      for order in orders:
+        self.errors_detuning(ex,ey,xs,ys,order)
+        dqx+=sum(self['DQx%d'%order])
+        dqy+=sum(self['DQy%d'%order])
+      tunx.append(dqx)
+      tuny.append(dqy)
+    return Footprint(x,y,tunx,tuny,nsigma,nangles)
 
 
 
@@ -19,6 +564,14 @@ lglabel={
     'dy':    r'$D_y [m]$',
     'mux':    r'$\mu_y$',
     'muy':    r'$\mu_y$',
+    'Ax':     '$A_x$',
+    'Ay':     '$A_y$',
+    'Bx':     '$B_x$',
+    'By':     '$B_y$',
+    'wx':     '$w_x$',
+    'wy':     '$w_y$',
+    'sx':     r'$\sigma_x$',
+    'sy':     r'$\sigma_y$',
     }
 
 axlabel={
@@ -32,6 +585,8 @@ axlabel={
     'dy':    r'$D [m]$',
     'x':    r'$co [m]$',
     'y':    r'$co [m]$',
+    'sx':     r'$\sigma$ [mm]',
+    'sy':     r'$\sigma$ [mm]',
     }
 
 
@@ -57,7 +612,6 @@ class qdplot(object):
       if res:
         out.append(res)
     if out and hasattr(cls,'on_update'):
-      print
       for pl in out:
         cls.on_update(pl)
     wx.WakeUpIdle()
@@ -254,233 +808,230 @@ class qdplot(object):
 
 
 
-
-
-from numpy import sqrt, sum, array, sin, cos,   dot, pi
-from numpy.linalg import inv
-
-from utils import pyname
-from namedtuple import namedtuple
-
-def rng(x,a,b):
-  "return (x<b) & (x>a)"
-  return (x<b) & (x>a)
-
-infot=namedtuple('infot','idx betx alfx mux bety alfy muy')
-import tfsdata
-import gzip
-import os
-
-class optics(dataobj):
-  _is_s_begin=False
-  _name_char=16
-  _entry_char=12
-  _entry_prec=3
-  @classmethod
-  def open(cls,fn):
-    try:
-      if fn.endswith('tfs.gz'):
-        return cls(tfsdata.load(gzip.open(fn)))
-      elif fn.endswith('tfs'):
-        if os.path.exists(fn):
-          return cls(tfsdata.open(fn))
-        elif os.path.exists(fn+'.gz'):
-          return cls(tfsdata.load(gzip.open(fn+'.gz')))
-      raise IOError
-    except IOError:
-      raise IOError,"%s does not exists or wrong format" % fn
-  def __init__(self,data={},idx=False):
-    self.update(data)
-    self._fdate=0
-    if idx:
-      try:
-        self._mkidx()
-      except KeyError:
-        print 'Warning: error in idx generation'
-  def reload(self):
-    if 'filename' in self._data:
-       fdate=os.stat(self.filename).st_ctime
-       if fdate>self._fdate:
-         self._data=tfsdata.open(self.filename)
-         self._fdate=fdate
-         return True
-    return False
-  def _mkidx(self):
-    name=map(pyname,list(self.name))
-    self.idx=dataobj()
-    fields=infot._fields[1:]
-    for i,name in enumerate(name):
-      data=[i] + map(lambda x: self[x][i],fields)
-      setattr(self.idx,name,infot(*data))
-
-  def pattern(self,regexp):
-    c=re.compile(regexp,flags=re.IGNORECASE)
-    out=[c.search(n) is not None for i,n in enumerate(self.name)]
-    return _n.array(out)
-  __floordiv__=pattern
-
-  def dumplist(self,rows=None,cols=None):
-    if rows is None:
-      rows=_n.ones(len(self.name),dtype=bool)
-    elif isinstance(rows,str):
-      rows=self.pattern(rows)
-    rows=_n.where(rows)[0]
-
-    if cols is None:
-      colsn=self._data.keys()
-      cols=[getattr(self,n.lower()) for n in colsn]
-    if isinstance(cols,str):
-      colsn=cols.split()
-      cols=[self(n) for n in cols.split()]
-
+#class Footprint(object):
+class Footprint(ObjDebug):
+  def __init__(self,x,y,tunx,tuny,nsigma,nangles,label='detuning'):
+    self.nsigma=nsigma
+    self.nangles=nangles
+    self.x=array(x)
+    self.y=array(y)
+    self.tunx=array(tunx)
+    self.tuny=array(tuny)
+    self.label=label.replace('_',' ')
+  def plot_grid(self,nsigma=None,lw=1):
+    if nsigma is None:
+      nsigma=self.nsigma
+    nangles=self.nangles
+    ranges=self.mkranges(nsigma)
+    for i in ranges:
+      if hasattr(i,'step'):
+        lw= i.step==nangles and i.start/2. or 1
+      pl.plot(self.x[i],self.y[i],'-k',lw=lw)
+  def mkranges(self,nsigma=None):
+    if nsigma is None:
+      nsigma=self.nsigma
+    nangles=self.nangles
+    ranges=[]
+    for i in range(nangles):
+      ranges.append([0,i])
+    for i in range(nangles):
+      ranges.append(slice(1+i,nangles*nsigma+1,nangles))
+    for i in range(nsigma):
+      ranges.append(slice(1+nangles*i,1+nangles*(i+1)))
+    return ranges
+  def plot_footprint(t,nsigma=None,wp=(0.28,0.31),spread=0.01,
+      label=None,color=None):
+    ranges=t.mkranges(nsigma)
+    lw=1
     out=[]
-    rowfmt=['%%-%d.%ds' % (self._name_char,self._name_char)]
-    rowfmt+=['%%-%d.%ds' % (self._entry_char,self._name_char)] * len(colsn)
-    rowfmt=' '.join(rowfmt)
-    out.append(rowfmt % tuple(['names'] + colsn  ) )
-    for i in rows:
-      v=[ self.name[i] ]+ [ _mystr(c[i],self._entry_char) for c in cols ]
-      out.append(rowfmt %  tuple(v))
-    return out
-  def dumpstr(self,rows=None,cols=None):
-    return '\n'.join(self.dumplist(rows=rows,cols=cols))
-  def show(self,rows=None,cols=None):
-    print self.dumpstr(rows=rows,cols=cols)
-  def twissdata(self,location,data):
-    idx=_n.where(self.pattern(location))[0][-1]
-    out=dict(location=location)
-    for name in data.split():
-      vec=self.__dict__.get(name)
-      if vec is None:
-        out[name]=0
+    lbl=True
+    if label is None:
+      label=t.label
+    if color is None:
+      color=colorrotate()
+    for i in ranges:
+      if lbl:
+         p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw,label=label)
+         lbl=False
       else:
-        out[name]=vec[idx]
-    out['sequence']=self.param.get('sequence')
+         p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw)
+      out.append(p[0])
+    pl.ylabel('$Q_y$')
+    pl.xlabel('$Q_x$')
+    pl.grid(True)
+    qx,qy=wp
+    pl.xlim(qx-spread,qx+spread)
+    pl.ylim(qy-spread,qy+spread)
     return out
-  def range(self,pat1,pat2):
-    """ return a mask relative to range"""
-    try:
-      id1=_n.where(self.pattern(pat1))[0][-1]
-    except IndexError:
-      raise ValueError,"%s pattern not found in table"%pat1
-    try:
-      id2=_n.where(self.pattern(pat2))[0][-1]
-    except IndexError:
-      raise ValueError,"%s pattern not found in table"%pat2
-    out=_n.zeros(len(self.name),dtype=bool)
-    if id2>id1:
-      out[id1:id2+1]=True
+  def triangulate(t):
+    tr=matplotlib.delaunay.triangulate.Triangulation(t.tunx,t.tuny)
+    for i in tr.triangle_nodes:
+      plot(t.tunx[i],t.tuny[i])
+  def reshape(self):
+    """return tunes in [sigma,angles]"""
+    qx=self.tunx[1:].reshape(self.nsigma,self.nangles)
+    qy=self.tuny[1:].reshape(self.nsigma,self.nangles)
+    return qx,qy
+
+class FootTrack(Footprint):
+  def __init__(self,dynapfn,nangles=7,nsigma=12,label='dynap'):
+    self.label=label.replace('_',' ')
+    t=tfsdata.open(dynapfn)
+    self.tunx=t['tunx']
+    self.tuny=t['tuny']
+    self.tx=t['x']
+    self.ty=t['y']
+    self.nangles=nangles
+    self.nsigma=nsigma
+    #self.t=t
+
+
+def mk_grid(nsigma,nangles):
+  small=0.05
+  big=sqrt(1.-small**2)
+  n=1;m=0; #sigma angle multiplier
+  x=[small]
+  y=[small]
+  while n<=nsigma:
+    angle = 90./(nangles-1)*m*pi/180
+    if m == 0:
+      xs=n*big; ys=n*small
+    elif m == nangles-1:
+      xs=n*small; ys=n*big
     else:
-      out[id1:]=True
-      out[:id2+1]=True
-    return out
-
-  def plot(self,yl='',yr='',x='s',idx=slice(None),
-      clist='k r b g c m',lattice=True,newfig=True,pre=None,
-          ):
-    out=qdplot(self,x=x,yl=yl,yr=yr,idx=idx,lattice=lattice,newfig=newfig,clist=clist,pre=pre)
-#    self._target.append(out)
-    return out
-
-  def plotbeta(self,**nargs):
-    return self.plot('betx bety','dx dy',**nargs)
-
-  def plotcross(self,**nargs):
-    return self.plot('x y','dx dy',**nargs)
-
-  def plottune(self,lbl=''):
-    _p.title(r"${\rm Tune} \quad {\rm vs} \delta$")
-    _p.xlabel("$\delta$")
-    _p.ylabel("Fractional tune")
-    tt=r'$%s \rm{%s}$'
-    _p.plot(self.deltap,self.q1-self.q1.round(),label=tt %('Q_x',lbl))
-    _p.plot(self.deltap,self.q2-self.q2.round(),label=tt %('Q_y',lbl))
-    qx=(self.q1-self.q1.round())[abs(self.deltap)<1E-15][0]
-    qy=(self.q2-self.q2.round())[abs(self.deltap)<1E-15][0]
-    _p.text(0.0,qx,r"$Q_x$")
-    _p.text(0.0,qy,r"$Q_y$")
-    _p.grid(True)
-    _p.legend()
-
-  def plotbetabeat(self,t1,dp='0.0003'):
-    _p.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
-    _p.ylabel(r"$\Delta\beta/\beta$")
-    _p.xlabel(r"$s$")
-    _p.plot(self.s,1-t1.betx/self.betx,label=r'$\Delta\beta_x/\beta_x$')
-    _p.plot(self.s,1-t1.bety/self.bety,label=r'$\Delta\beta_y/\beta_y$')
-    _p.grid(True)
-    _p.legend()
-
-  def plotw(self,lbl=''):
-    _p.title(r"Chromatic function: %s"%lbl)
-  # _p.ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
-    _p.ylabel(r"$w$")
-    _p.xlabel(r"$s$")
-    _p.plot(self.s,self.wx,label=r'$w_x$')
-    _p.plot(self.s,self.wy,label=r'$w_y$')
-    _p.grid(True)
-    _p.legend()
-
-  def plotap(t,ap,nlim=30,ref=7,newfig=True,**nargs):
-    t.ss=ap.s
-    t.n1=ap.n1
-    pl=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
-    pl.figure.gca().plot(t.ss,t.ss*0+ref)
-    pl.figure.gca().set_ylim(0,nlim)
-    pl.figure.canvas.draw()
-    return pl
+      xs=n*cos(angle)
+      ys=n*sin(angle);
+    m=m+1
+    if m == nangles:
+      m=0; n=n+1;
+    x.append(xs)
+    y.append(ys)
+  return array(x),array(y)
 
 
 
+def Dq2(b2,Bx,Jx,By,Jy):
+#  b2=k1l
+  Dqx= b2*Bx/(4.*pi)
+  Dqy=-b2*By/(4.*pi)
+  return Dqx,Dqy
 
-  def maxbetx(f):
-    return f.betx+f.alfx**2/f.betx/abs(f.kn1l/f.l)
-  def maxbety(f):
-    return f.bety+f.alfy**2/f.bety/abs(f.kn1l/f.l)
-  def chromx(f):
-    if not hasattr(f,'kn1l'):
-      f.kn1l=f.k1l
-    return -sum(f.kn1l*f.betx)/4/pi
-  def chromy(f):
-    if not hasattr(f,'kn1l'):
-      f.kn1l=f.k1l
-    return sum(f.kn1l*f.bety)/4/pi
-  def ndx(t):
-    return t.dx/sqrt(t.betx)
-  def ndpx(t):
-    return t.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
-  def alphac(t):
-    return sum(t('dx*kn0l'))/sum(t.l)
-  def drvterm(t,p=0,q=0,l=0,m=0):
-    dv=t.betx**(abs(p)/2.)*t.bety**(abs(q)/2.)
-    dv*=_n.exp(+2j*pi*((p-2*l)*t.mux+(q-2*m)*t.muy))
-    return dv
-  def gammatr(t):
-    af=t._alphac()
-    if af>0:
-      return sqrt(1/af)
-    else:
-      return -sqrt(-1/af)
-  def transferMatrix(self,i1=0,i2=-1,plane='x'):
-    """Return the transfer matrix from position i1 to position i2
-       see Y.Lee 2.68 pag 53 for definition
-    """
-    B2=self.normMat(i2,plane=plane)
-    B1=self.normMat(i1,plane=plane)
-    psi=2*pi*(self['mu'+plane][i2] - self['mu'+plane][i1])
-    R=array([[cos(psi),sin(psi)],[-sin(psi),cos(psi)]])
-    return dot(dot(B2,R),inv(B1))
-  def normMat(self,i,plane='x'):
-    beta=self['bet'+plane][i]
-    alpha=self['alf'+plane][i]
-    return array([[sqrt(beta),0],[-alpha/sqrt(beta),1/sqrt(beta)]])
+def Dq4(b4,Bx,Jx,By,Jy):
+#  b4=k3l/6.
+  Dqx=b4*3*Bx*(Bx*Jx - 2*By*Jy)/(8.*pi)
+  Dqy=b4*3*By*(By*Jy - 2*Bx*Jx)/(8.*pi)
+  return Dqx,Dqy
+
+def Dq6(b6,Bx,Jx,By,Jy):
+#  b6=k5l/120.
+  Dqx= b6*5*Bx*(  Bx**2*Jx**2 - 6*Bx*By*Jx*Jy + 3*By**2*Jy**2)/(8.*pi)
+  Dqy=-b6*5*By*(3*Bx**2*Jx**2 - 6*Bx*By*Jx*Jy +   By**2*Jy**2)/(8.*pi)
+  return Dqx,Dqy
+
+def Dq8(b8,Bx,Jx,By,Jy):
+#  b8=k7l/5040.
+  Dqx=b8*35*Bx*(Bx**3*Jx**3 - 12*Bx**2*By*Jx**2*Jy +
+                18*Bx*By**2*Jx*Jy**2 - 4*By**3*Jy**3)/(32.*pi)
+  Dqy=b8*35*By*(-4*Bx**3*Jx**3 + 18*Bx**2*By*Jx**2*Jy -
+                12*Bx*By**2*Jx*Jy**2 + By**3*Jy**3)/(32.*pi)
+  return Dqx,Dqy
+
+def Dq10(b10,Bx,Jx,By,Jy):
+#  b10=k9l/362880.
+  Dqx= b10*63*Bx*(Bx**4*Jx**4 - 20*Bx**3*By*Jx**3*Jy +
+                  60*Bx**2*By**2*Jx**2*Jy**2 - 40*Bx*By**3*Jx*Jy**3 +
+                  5*By**4*Jy**4)/(32.*pi)
+  Dqy=-b10*63*By*(5*Bx**4*Jx**4 - 40*Bx**3*By*Jx**3*Jy +
+                  60*Bx**2*By**2*Jx**2*Jy**2 - 20*Bx*By**3*Jx*Jy**3 +
+                  By**4*Jy**4)/(32.*pi)
+  return Dqx,Dqy
+
+def Dq12(b12,Bx,Jx,By,Jy):
+#  b12=k11l/39916800.
+  Dqx=b12*231*Bx*(Bx**5*Jx**5 - 30*Bx**4*By*Jx**4*Jy +
+                   150*Bx**3*By**2*Jx**3*Jy**2 -
+                   200*Bx**2*By**3*Jx**2*Jy**3 + 75*Bx*By**4*Jx*Jy**4
+                   - 6*By**5*Jy**5)/(64.*pi)
+  Dqy=b12*231*By*(-6*Bx**5*Jx**5 + 75*Bx**4*By*Jx**4*Jy -
+                   200*Bx**3*By**2*Jx**3*Jy**2 +
+                   150*Bx**2*By**3*Jx**2*Jy**3 -
+                   30*Bx*By**4*Jx*Jy**4 + By**5*Jy**5)/(64.*pi)
+  return Dqx,Dqy
+
+def Dq14(b14,Bx,Jx,By,Jy):
+#  b14=k13l/6227020800.
+  Dqx= b14*429*Bx*(Bx**6*Jx**6 - 42*Bx**5*By*Jx**5*Jy +
+                   315*Bx**4*By**2*Jx**4*Jy**2 -
+                   700*Bx**3*By**3*Jx**3*Jy**3 +
+                   525*Bx**2*By**4*Jx**2*Jy**4 - 126*Bx*By**5*Jx*Jy**5 +
+                   7*By**6*Jy**6)/(64.*pi)
+  Dqy=-b14*429*By*(7*Bx**6*Jx**6 - 126*Bx**5*By*Jx**5*Jy +
+                   525*Bx**4*By**2*Jx**4*Jy**2 -
+                   700*Bx**3*By**3*Jx**3*Jy**3 +
+                   315*Bx**2*By**4*Jx**2*Jy**4 - 42*Bx*By**5*Jx*Jy**5 +
+                   By**6*Jy**6)/(64.*Pi)
+  return Dqx,Dqy
+
+def Dq16(b16,Bx,Jx,By,Jy):
+#  b16=k15l/1307674368000.
+  Dqx=b16*6435*Bx*(Bx**7*Jx**7 - 56*Bx**6*By*Jx**6*Jy +
+                   588*Bx**5*By**2*Jx**5*Jy**2 -
+                   1960*Bx**4*By**3*Jx**4*Jy**3 +
+                   2450*Bx**3*By**4*Jx**3*Jy**4 -
+                   1176*Bx**2*By**5*Jx**2*Jy**5 + 196*Bx*By**6*Jx*Jy**6 -
+                   8*By**7*Jy**7)/(512.*pi)
+  Dqy=b16*6435*By*(-8*Bx**7*Jx**7 + 196*Bx**6*By*Jx**6*Jy -
+                   1176*Bx**5*By**2*Jx**5*Jy**2 +
+                   2450*Bx**4*By**3*Jx**4*Jy**3 -
+                   1960*Bx**3*By**4*Jx**3*Jy**4 +
+                   588*Bx**2*By**5*Jx**2*Jy**5 - 56*Bx*By**6*Jx*Jy**6 +
+                   By**7*Jy**7)/(512.*pi)
+  return Dqx,Dqy
 
 
 
+def nchoosek(n,k):
+  bc = [1 for i in range(0,k+1)]
+  for j in range(1,n-k+1):
+    for i in range(1,k+1):
+      bc[i] = bc[i-1]+bc[i]
+  return bc[k]
+
+def factorial(n):
+  fact = 1
+  for x in range(1, n+1):
+    fact *= x
+  return fact
+
+def FeedDown(bn,an,x,y,i):
+  cn=[ b+1j*a for b,a in zip(bn,an)]
+  z=x+1j*y
+  n=len(cn)
+  fd=sum([nchoosek(k,i)*cn[k-1]*z**(k-i) for k in range(i,n+1)])
+  return fd.real,fd.imag
+
+def k2b(kn,ks,x=0,y=0):
+  bn=[k/float(factorial(n)) for n,k in enumerate(kn)]
+  an=[k/float(factorial(n)) for n,k in enumerate(ks)]
+  z=complex(x,y)
+  cn=[ complex(b,a) for b,a in zip(bn,an)]
+  n=len(cn)
+  zn=[ z**k for k in range(n)]
+  fn=[   sum([nchoosek(k,i)*cn[k-1]*z**(k-i) for k in range(i,n+1)]) for i in range(1,n+1) ]
+  return fn
+
+def twiss2map(bet1,alf1,bet2,alf2,mu):
+  b1b2=sqrt(bet1*bet2)
+  b1onb2=sqrt(bet1/bet2)
+  c=cos(2*pi*mu)
+  s=sin(2*pi*mu)
+  r11=(c+alf1*s)/b1onb2
+  r12=b1b2*s
+  r21=((alf1-alf2)*c - (1+alf1*alf2)*s)/b1b2
+  r22=b1onb2*(c-alf2*s)
+  return [[r11,r12],[r21,r22]]
 
 
-
-
-
+mycolors=list('rcgmb')
 
 

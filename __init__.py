@@ -1,2 +1,1 @@
-from optics import optics, qdplot
-from tfsdata import tfsdata
+from optics import optics, qdplot, FootTrack, Footprint
