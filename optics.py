@@ -3,7 +3,10 @@ import os
 import gzip
 import time
 
-import wx
+try:
+  import wx
+except:
+  pass
 
 import matplotlib.pyplot as _p
 import matplotlib.pyplot as pl
@@ -100,8 +103,7 @@ class optics(dataobj):
     rows=_n.where(rows)[0]
 
     if cols is None:
-      colsn=self._data.keys()
-      cols=[getattr(self,n.lower()) for n in colsn]
+      cols=''
     if isinstance(cols,str):
       colsn=cols.split()
       cols=[self(n) for n in cols.split()]
@@ -413,6 +415,14 @@ class optics(dataobj):
     print "Qx''= %10g%+10g%+10g%+10g = %10g"%(qpp1x,qpp2x,qpp3x,qpp4x,qppx)
     print "Qy''= %10g%+10g%+10g%+10g = %10g"%(qpp1y,qpp2y,qpp3y,qpp4y,qppy)
     return self
+  def interp(self,snew,namenew=None,sname='s'):
+    "Interpolate with piecewise linear all columns using a new s coordinate"
+    for cname in self.col_names:
+      cname=cname.lower()
+      if cname!=sname and _n.isreal(self[cname][0]):
+        self[cname]=_n.interp(snew,self[sname],self[cname])
+    self[sname]=snew
+    self.name=namenew
   def cycle(t,name,reorder=True):
     if type(name) is str:
       name=_n.where(t.name==name.upper())[0][0]
@@ -448,8 +458,17 @@ class optics(dataobj):
       data[k]=vv
     if shift:
       for vn in ['s','mux','muy','phix','phiy']:
-        data[vn]-=data[vn][0]
+        if vn in data:
+          data[vn]-=data[vn][0]
     return optics(data)
+  def append(self,t):
+    data={}
+    for k,v in self._data.items():
+      if k.upper() in self.col_names:
+        data[k]=_n.concatenate([v,t[k]])
+      else:
+        data[k]=v
+    return  optics(data)
   def errors_add(self,error_table):
     """Add error columns"""
     klist=[]
