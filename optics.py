@@ -20,8 +20,12 @@ from utils import mystr as _mystr
 from utils import pyname
 from namedtuple import namedtuple
 from pydataobj import dataobj
-from objdebug import ObjDebug
 import tfsdata
+
+try:
+  from objdebug import ObjDebug
+except:
+  pass
 
 def rng(x,a,b):
   "return (x<b) & (x>a)"
@@ -827,8 +831,8 @@ class qdplot(object):
 
 
 
-#class Footprint(object):
-class Footprint(ObjDebug):
+class Footprint(object):
+#class Footprint(ObjDebug):
   def __init__(self,x,y,tunx,tuny,nsigma,nangles,label='detuning'):
     self.nsigma=nsigma
     self.nangles=nangles
