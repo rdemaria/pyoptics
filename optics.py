@@ -163,6 +163,18 @@ class optics(dataobj):
 
   def plotbeta(self,**nargs):
     return self.plot('betx bety','dx dy',**nargs)
+  def plotsigma(self,emit=2.5e-6/7000*0.938,deltap=1.1e-4):
+    self.sigx =sqrt(self.betx*emit)*1000
+    self.sigy =sqrt(self.bety*emit)*1000
+    self.sigdx=self.dx*deltap*1000
+    self.plot('sigx sigy sigdx')
+    ya,yb=pl.ylim()
+    pl.twinx()
+    bmax=max(self.betx.max(),self.bety.max())
+    rng=range(0,int(_n.ceil(_n.log10(bmax)))+1)
+    bval=_n.array([n*10**dd for dd in rng for n in [1,2,5] ])
+    bval=bval[bval<bmax]
+    pl.ylim(ya,yb)
 
   def plotcross(self,**nargs):
     return self.plot('x y','dx dy',**nargs)
@@ -593,8 +605,9 @@ lglabel={
     'By':     '$B_y$',
     'wx':     '$w_x$',
     'wy':     '$w_y$',
-    'sx':     r'$\sigma_x$',
-    'sy':     r'$\sigma_y$',
+    'sigx':    r'$\sigma_x=\sqrt{\beta_x \epsilon}$',
+    'sigy':    r'$\sigma_y=\sqrt{\beta_y \epsilon}$',
+    'sigdx':    r'$\sigma_{D_x}=\sqrt{D_x \delta}$',
     }
 
 axlabel={
@@ -608,8 +621,9 @@ axlabel={
     'dy':    r'$D [m]$',
     'x':    r'$co [m]$',
     'y':    r'$co [m]$',
-    'sx':     r'$\sigma$ [mm]',
-    'sy':     r'$\sigma$ [mm]',
+    'sigx':     r'$\sigma$ [mm]',
+    'sigy':     r'$\sigma$ [mm]',
+    'sigdx':     r'$\sigma$ [mm]',
     }
 
 
