@@ -515,7 +515,7 @@ class optics(dataobj):
     return out
   def drvterm(t,m=0,n=0,p=0,q=0):
     dv=t.betx**(abs(m)/2.)*t.bety**(abs(n)/2.)
-    dv*=_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
+    dv=dv*_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
     return dv
   def errors_kvector(self,i,maxorder=10):
     rng=range(maxorder)
@@ -597,7 +597,7 @@ lglabel={
     'bety':    r'$\beta_y$',
     'dx':    r'$D_x [m]$',
     'dy':    r'$D_y [m]$',
-    'mux':    r'$\mu_y$',
+    'mux':    r'$\mu_x$',
     'muy':    r'$\mu_y$',
     'Ax':     '$A_x$',
     'Ay':     '$A_y$',
