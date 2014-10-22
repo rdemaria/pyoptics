@@ -1,0 +1,35 @@
+- types
+  - expr (gbl,lcl,expr) -> eval
+  - code (gbl, codes) -> eval
+  - view (array,index) -> getitem,setitem
+
+- containers
+  - frame
+    - provide types
+    - triggers (names, target -> update() )
+    - make function (input,output)
+  - table (row list, column list
+  - list
+
+a=expr('fdafdfa')
+f.fda=a
+
+
+- algorithm
+  - matching
+  - first order tracking
+  - readtfs
+  - readsdds
+  - readyasp
+  - * second order tracking
+  - * non linear tracking
+
+
+- formulas
+  - chromaticity
+  - momentum compaction
+
+
+
+
+

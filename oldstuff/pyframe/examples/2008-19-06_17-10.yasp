@@ -1,0 +1,472 @@
+@ YASP %s V2.0
+@ TYPE %s POSITION
+@ NUMBER-BEAMS %d 1
+@ MODE %s CORBIT
+@ ACCELERATOR %s SPS
+@ TRANSFER %s SPSRING
+@ TWISS %s SPS-LHC-2008v1
+@ SUPER-CONTEXT %s SFT-CNGS-LHCFAST2_V2
+@ CONTEXT %s SFT-CNGS-LHCFAST2_V2.LHCFAST.C2
+@ USER %s SPS.USER.LHCFAST1
+@ CYCNUM %d 43685
+@ CYCTIME %d 0
+@ SCTIME %d 17225
+@ P %f     25.920
+@ DATE-CODE %d 1213888222300
+@ DATE %s 19/06/08
+@ TIME %s 17-10-22
+@ RAWDATA %s YES
+@ MONITOR-H-NUM %d 116
+@ MONITOR-V-NUM %d 113
+@ CORRECTOR-H-NUM %d 108
+@ CORRECTOR-V-NUM %d 109
+# MONITOR  %s micron
+* NAME  PLANE  BEAM  POS  RMS  SUM  HW-STATUS STATUS STATUS-TAG
+ BPH.10208            H 1     4680.0         0.0      4341.0  0  0  OK
+ BPH.10408            H 1      390.0         0.0      4510.0  0  0  OK
+ BPH.10608            H 1      650.0         0.0      4899.0  0  0  OK
+ BPH.10808            H 1     6510.0         0.0      4090.0  0  0  OK
+ BPH.11008            H 1     5850.0         0.0      4616.0  0  0  OK
+ BPH.11208            H 1    10020.0         0.0      3985.0  0  0  OK
+ BPH.11408            H 1     5580.0         0.0      4262.0  0  0  OK
+ BPH.11606            H 1     1500.0         0.0      4713.0  0  0  OK
+ BPD.11833            H 1     2560.0         0.0      4843.0  0  0  OK
+ BPD.11906            H 1     5860.0         0.0      4520.0  0  0  OK
+ BPH.12008            H 1     -360.0         0.0      5172.0  0  0  OK
+ BPH.12208            H 1    -7720.0         0.0      5604.0  0  0  OK
+ BPCN.12308           H 1    -3030.0         0.0      4416.0  0  0  OK
+ BPH.12408            H 1      630.0         0.0      5839.0  0  0  OK
+ BPCN.12508           H 1    -1020.0         0.0      5055.0  0  0  OK
+ BPH.12608            H 1     1680.0         0.0      4991.0  0  0  OK
+ BPH.12808            H 1    -1360.0         0.0      4510.0  0  0  OK
+ BPH.13008            H 1    -2290.0         0.0      6695.0  0  0  OK
+ BPH.13208            H 1     5930.0         0.0      4316.0  0  0  OK
+ BPH.13408            H 1     4400.0         0.0      4201.0  0  0  OK
+ BPH.13608            H 1      980.0         0.0      4240.0  0  0  OK
+ BPH.20208            H 1     1860.0         0.0      2246.0  0  0  OK
+ BPH.20408            H 1     1220.0         0.0      4565.0  0  0  OK
+ BPH.20608            H 1    -2080.0         0.0      3052.0  0  0  OK
+ BPH.20808            H 1    -4010.0         0.0      5627.0  0  0  OK
+ BPH.21008            H 1    -5900.0         0.0      6067.0  0  0  OK
+ BPH.21208            H 1    -3680.0         0.0      5747.0  0  0  OK
+ BPH.21408            H 1     2240.0         0.0      5492.0  0  0  OK
+ BPA.21605            H 1      860.0         0.0      4391.0  0  0  OK
+ BPA.21706            H 1    -2250.0         0.0      4087.0  0  0  OK
+ BPA.21805            H 1     4420.0         0.0      3146.0  0  0  OK
+ BPH.22008            H 1    -2370.0         0.0      3903.0  0  0  OK
+ BPH.22208            H 1    13660.0         0.0      3698.0  0  0  OK
+ BPH.22408            H 1     7660.0         0.0      3961.0  0  0  OK
+ BPH.22608            H 1     2270.0         0.0      4072.0  0  0  OK
+ BPH.22808            H 1     1240.0         0.0      2425.0  0  0  OK
+ BPH.23008            H 1     4350.0         0.0      3643.0  0  0  OK
+ BPH.23208            H 1     9830.0         0.0      3677.0  0  0  OK
+ BPH.23408            H 1      370.0         0.0      5012.0  0  0  OK
+ BPH.23608            H 1    -1070.0         0.0      5163.0  0  0  OK
+ BPH.30208            H 1     2760.0         0.0      1436.0  0  0  OK
+ BPH.30408            H 1     4320.0         0.0      1497.0  0  0  OK
+ BPH.30608            H 1     -730.0         0.0      1485.0  0  0  OK
+ BPH.30808            H 1    -4720.0         0.0      1516.0  0  0  OK
+ BPH.31008            H 1    -1470.0         0.0      1597.0  0  0  OK
+ BPH.31208            H 1    -9690.0         0.0      1386.0  0  0  OK
+ BPH.31408            H 1    -5630.0         0.0      1612.0  0  0  OK
+ BPH.31608            H 1     -220.0         0.0      1775.0  0  0  OK
+ BPH.31808            H 1     -380.0         0.0      1582.0  0  0  OK
+ BPH.32008            H 1    -1540.0         0.0      1481.0  0  0  OK
+ BPH.32208            H 1      930.0         0.0      1495.0  0  0  OK
+ BPH.32408            H 1      620.0         0.0      1762.0  0  0  OK
+ BPH.32608            H 1    -4740.0         0.0      1596.0  0  0  OK
+ BPH.32808            H 1       90.0         0.0      1442.0  0  0  OK
+ BPH.33008            H 1        0.0         0.0       782.0  129  1  SUM_MIN,B45
+ BPH.33208            H 1    -2720.0         0.0      1521.0  0  0  OK
+ BPH.33408            H 1     2360.0         0.0      1386.0  0  0  OK
+ BPH.33608            H 1    -5870.0         0.0      1370.0  0  0  OK
+ BPH.40208            H 1      -60.0         0.0      2066.0  0  0  OK
+ BPH.40408            H 1     3940.0         0.0      4802.0  0  0  OK
+ BPH.40608            H 1     -320.0         0.0      4055.0  0  0  OK
+ BPH.40808            H 1      220.0         0.0      4084.0  0  0  OK
+ BPH.41008            H 1    -1360.0         0.0      3844.0  0  0  OK
+ BPH.41208            H 1      760.0         0.0      4512.0  0  0  OK
+ BPH.41408            H 1     1380.0         0.0      4580.0  0  0  OK
+ BPH.41608            H 1     -200.0         0.0      4156.0  0  0  OK
+ BPCE.41705           H 1     -670.0         0.0      3713.0  0  0  OK
+ BPCE.41801           H 1     -260.0         0.0      4628.0  0  0  OK
+ BPCE.41931           H 1      510.0         0.0      3678.0  0  0  OK
+ BPH.42008            H 1     3990.0         0.0      5693.0  0  0  OK
+ BPH.42208            H 1      720.0         0.0      5418.0  0  0  OK
+ BPH.42408            H 1    -2780.0         0.0      5326.0  0  0  OK
+ BPH.42608            H 1    -1840.0         0.0      5373.0  0  0  OK
+ BPH.42808            H 1     -440.0         0.0      5225.0  0  0  OK
+ BPH.43008            H 1     2320.0         0.0      4268.0  0  0  OK
+ BPH.43208            H 1      470.0         0.0      5184.0  0  0  OK
+ BPH.43408            H 1     6960.0         0.0      4932.0  0  0  OK
+ BPH.43608            H 1     1900.0         0.0      4526.0  0  0  OK
+ BPH.50208            H 1     5250.0         0.0      4539.0  0  0  OK
+ BPH.50408            H 1     4360.0         0.0      4613.0  0  0  OK
+ BPH.50608            H 1     7660.0         0.0      4730.0  0  0  OK
+ BPH.50808            H 1    12270.0         0.0      4902.0  0  0  OK
+ BPH.51008            H 1     9260.0         0.0      3999.0  0  0  OK
+ BPH.51208            H 1     6870.0         0.0      3910.0  0  0  OK
+ BPH.51408            H 1     9770.0         0.0      3364.0  0  0  OK
+ BPH.51608            H 1     8660.0         0.0      3915.0  0  0  OK
+ BPH.51808            H 1     7810.0         0.0      4177.0  0  0  OK
+ BPH.52008            H 1     1350.0         0.0      4483.0  0  0  OK
+ BPH.52208            H 1     9860.0         0.0      4404.0  0  0  OK
+ BPH.52408            H 1     8890.0         0.0      4573.0  0  0  OK
+ BPH.52608            H 1     4480.0         0.0      4872.0  0  0  OK
+ BPH.52808            H 1     -510.0         0.0      4638.0  0  0  OK
+ BPH.53008            H 1     3310.0         0.0      4445.0  0  0  OK
+ BPH.53208            H 1    10150.0         0.0      4476.0  0  0  OK
+ BPH.53408            H 1     3230.0         0.0      4693.0  0  0  OK
+ BPH.53608            H 1     1170.0         0.0      4415.0  0  0  OK
+ BPH.60208            H 1     2350.0         0.0      1860.0  0  0  OK
+ BPH.60408            H 1     1840.0         0.0      1676.0  0  0  OK
+ BPH.60608            H 1    -2840.0         0.0      1830.0  0  0  OK
+ BPH.60808            H 1     2720.0         0.0      2118.0  0  0  OK
+ BPH.61008            H 1     2090.0         0.0      1533.0  0  0  OK
+ BPH.61208            H 1     1640.0         0.0      1858.0  0  0  OK
+ BPH.61408            H 1     2700.0         0.0      1915.0  0  0  OK
+ BPH.61608            H 1     3620.0         0.0      1617.0  0  0  OK
+ BPCE.61705           H 1     3630.0         0.0      2383.0  0  0  OK
+ BPCE.61805           H 1     5950.0         0.0      2166.0  0  0  OK
+ BPCE.61931           H 1     3430.0         0.0      1590.0  0  0  OK
+ BPH.62008            H 1     4670.0         0.0      1496.0  0  0  OK
+ BPH.62208            H 1    -1160.0         0.0      1586.0  0  0  OK
+ BPH.62408            H 1    -1870.0         0.0      1592.0  0  0  OK
+ BPH.62608            H 1     1710.0         0.0      1794.0  0  0  OK
+ BPH.62808            H 1     1950.0         0.0      1718.0  0  0  OK
+ BPH.63008            H 1     -290.0         0.0      1786.0  0  0  OK
+ BPH.63208            H 1    -1680.0         0.0      1927.0  0  0  OK
+ BPH.63408            H 1     -350.0         0.0      1843.0  0  0  OK
+ BPH.63608            H 1    10450.0         0.0      1247.0  0  0  OK
+ BPV.10108            V 1     1740.0         0.0      4628.0  0  0  OK
+ BPV.10308            V 1      270.0         0.0      4271.0  0  0  OK
+ BPV.10508            V 1    -2050.0         0.0      4620.0  0  0  OK
+ BPV.10708            V 1    -4980.0         0.0      4012.0  0  0  OK
+ BPV.10908            V 1    -1170.0         0.0      3951.0  0  0  OK
+ BPV.11108            V 1    -1830.0         0.0      3776.0  0  0  OK
+ BPV.11308            V 1    -5720.0         0.0      3005.0  0  0  OK
+ BPV.11508            V 1    -8690.0         0.0      3562.0  0  0  OK
+ BPV.11706            V 1    -3260.0         0.0      4146.0  0  0  OK
+ BPD.11833            V 1     8610.0         0.0      3642.0  0  0  OK
+ BPD.11906            V 1      -90.0         0.0      4718.0  0  0  OK
+ BPV.12108            V 1      810.0         0.0      5077.0  0  0  OK
+ BPCN.12308           V 1    -3190.0         0.0      5282.0  0  0  OK
+ BPCN.12508           V 1    -1350.0         0.0      5285.0  0  0  OK
+ BPV.12708            V 1     4870.0         0.0      5351.0  0  0  OK
+ BPV.12908            V 1    -1040.0         0.0      4452.0  0  0  OK
+ BPV.13108            V 1    -2930.0         0.0      4589.0  0  0  OK
+ BPV.13308            V 1     1980.0         0.0      4789.0  0  0  OK
+ BPV.13508            V 1     1660.0         0.0      4503.0  0  0  OK
+ BPV.20108            V 1     -520.0         0.0      2245.0  0  0  OK
+ BPV.20308            V 1    -5410.0         0.0      4547.0  0  0  OK
+ BPV.20508            V 1     -880.0         0.0      4536.0  0  0  OK
+ BPV.20708            V 1     1430.0         0.0      4470.0  0  0  OK
+ BPV.20908            V 1     2130.0         0.0      4676.0  0  0  OK
+ BPV.21108            V 1      860.0         0.0      5732.0  0  0  OK
+ BPV.21308            V 1     -500.0         0.0      6150.0  0  0  OK
+ BPV.21508            V 1     3160.0         0.0      5741.0  0  0  OK
+ BPA.21605            V 1      750.0         0.0      3100.0  0  0  OK
+ BPA.21706            V 1     1370.0         0.0      2824.0  0  0  OK
+ BPA.21805            V 1    -4500.0         0.0      2692.0  0  0  OK
+ BPA.21931            V 1    -4240.0         0.0      1686.0  0  0  OK
+ BPV.22108            V 1    -6950.0         0.0      3053.0  0  0  OK
+ BPCN.22308           V 1     1740.0         0.0      3966.0  0  0  OK
+ BPV.22508            V 1      780.0         0.0      4020.0  0  0  OK
+ BPCN.22708           V 1     -390.0         0.0      3912.0  0  0  OK
+ BPV.22908            V 1    -4580.0         0.0      4886.0  0  0  OK
+ BPV.23108            V 1      340.0         0.0      4862.0  0  0  OK
+ BPV.23308            V 1      490.0         0.0      4446.0  0  0  OK
+ BPV.23508            V 1    24710.0         0.0      2820.0  128  1  B45
+ BPV.30108            V 1    -2730.0         0.0      1549.0  0  0  OK
+ BPV.30308            V 1        0.0         0.0        77.0  129  1  SUM_MIN,B45
+ BPV.30508            V 1    -1850.0         0.0      1568.0  0  0  OK
+ BPV.30708            V 1    -1250.0         0.0      1331.0  0  0  OK
+ BPV.30908            V 1    -1370.0         0.0      1413.0  0  0  OK
+ BPV.31108            V 1    -2860.0         0.0      1494.0  0  0  OK
+ BPV.31308            V 1     3720.0         0.0      1933.0  0  0  OK
+ BPV.31508            V 1    -1660.0         0.0      1744.0  0  0  OK
+ BPV.31708            V 1     -230.0         0.0      1689.0  0  0  OK
+ BPV.31908            V 1       50.0         0.0      1634.0  0  0  OK
+ BPV.32108            V 1     7600.0         0.0      1414.0  0  0  OK
+ BPVT.32303           V 1     -910.0         0.0      1429.0  0  0  OK
+ BPV.32508            V 1    -1450.0         0.0      1609.0  0  0  OK
+ BPCN.32708           V 1    -1010.0         0.0      1192.0  0  0  OK
+ BPV.32908            V 1     7250.0         0.0      1498.0  0  0  OK
+ BPV.33108            V 1     2480.0         0.0      1374.0  0  0  OK
+ BPV.33308            V 1    -2420.0         0.0       864.0  0  0  OK
+ BPV.33508            V 1     -640.0         0.0      1360.0  0  0  OK
+ BPV.40108            V 1    -4610.0         0.0      1916.0  0  0  OK
+ BPV.40308            V 1     1410.0         0.0      4256.0  0  0  OK
+ BPV.40508            V 1    -3020.0         0.0      3931.0  0  0  OK
+ BPV.40708            V 1     -330.0         0.0      4202.0  0  0  OK
+ BPV.40908            V 1     2650.0         0.0      4348.0  0  0  OK
+ BPV.41108            V 1     1300.0         0.0      4523.0  0  0  OK
+ BPV.41308            V 1    -1940.0         0.0      5035.0  0  0  OK
+ BPV.41508            V 1    -3370.0         0.0      5410.0  0  0  OK
+ BPCE.41705           V 1     1490.0         0.0      4006.0  0  0  OK
+ BPCE.41801           V 1     1250.0         0.0      3378.0  0  0  OK
+ BPCE.41931           V 1     3440.0         0.0      3593.0  0  0  OK
+ BPV.42108            V 1     1200.0         0.0      3011.0  0  0  OK
+ BPV.42308            V 1    -1690.0         0.0      5137.0  0  0  OK
+ BPV.42508            V 1    -1530.0         0.0      4947.0  0  0  OK
+ BPV.42708            V 1     2300.0         0.0      5216.0  0  0  OK
+ BPV.42908            V 1     1900.0         0.0      5501.0  0  0  OK
+ BPV.43108            V 1      -10.0         0.0      4356.0  0  0  OK
+ BPV.43308            V 1    -1340.0         0.0      4409.0  0  0  OK
+ BPV.43508            V 1     -640.0         0.0      4848.0  0  0  OK
+ BPV.50108            V 1      990.0         0.0      3981.0  0  0  OK
+ BPV.50308            V 1    -1730.0         0.0      4570.0  0  0  OK
+ BPV.50508            V 1    -4710.0         0.0      4043.0  0  0  OK
+ BPV.50708            V 1    -1450.0         0.0      4066.0  0  0  OK
+ BPV.50908            V 1    -2350.0         0.0      4257.0  0  0  OK
+ BPV.51108            V 1    -6340.0         0.0      3750.0  0  0  OK
+ BPV.51308            V 1    -4950.0         0.0      3878.0  0  0  OK
+ BPV.51508            V 1    -6240.0         0.0      3661.0  0  0  OK
+ BPV.51708            V 1     -680.0         0.0      4129.0  0  0  OK
+ BPV.51908            V 1    -4080.0         0.0      4455.0  0  0  OK
+ BPV.52108            V 1      940.0         0.0      4239.0  0  0  OK
+ BPV.52308            V 1      890.0         0.0      4036.0  0  0  OK
+ BPV.52508            V 1      560.0         0.0      4293.0  0  0  OK
+ BPV.52708            V 1    -5660.0         0.0      5062.0  0  0  OK
+ BPV.52908            V 1    -3140.0         0.0      4624.0  0  0  OK
+ BPV.53108            V 1      900.0         0.0      4114.0  0  0  OK
+ BPV.53308            V 1     1020.0         0.0      4093.0  0  0  OK
+ BPV.53508            V 1    -1950.0         0.0      4416.0  0  0  OK
+ BPV.60108            V 1    -3360.0         0.0      1532.0  0  0  OK
+ BPV.60308            V 1     -270.0         0.0      1330.0  0  0  OK
+ BPV.60508            V 1     4040.0         0.0      1671.0  0  0  OK
+ BPV.60708            V 1    -1080.0         0.0      1692.0  0  0  OK
+ BPV.60908            V 1    -3400.0         0.0      1398.0  0  0  OK
+ BPCN.61108           V 1     1050.0         0.0      1623.0  0  0  OK
+ BPCN.61308           V 1     2040.0         0.0      1716.0  0  0  OK
+ BPV.61508            V 1        0.0         0.0       754.0  129  1  SUM_MIN,B45
+ BPCE.61705           V 1     -340.0         0.0      2228.0  0  0  OK
+ BPCE.61805           V 1    -1270.0         0.0      1522.0  0  0  OK
+ BPCE.61931           V 1    -1560.0         0.0      2502.0  0  0  OK
+ BPV.62108            V 1     1740.0         0.0      1565.0  0  0  OK
+ BPV.62308            V 1     1190.0         0.0      1570.0  0  0  OK
+ BPV.62508            V 1    -1790.0         0.0      1495.0  0  0  OK
+ BPV.62708            V 1    -2640.0         0.0      1583.0  0  0  OK
+ BPV.62908            V 1      420.0         0.0      1678.0  0  0  OK
+ BPV.63108            V 1     3500.0         0.0      1525.0  0  0  OK
+ BPV.63308            V 1     -550.0         0.0      1412.0  0  0  OK
+ BPV.63508            V 1    -3660.0         0.0      1614.0  0  0  OK
+# CORRECTOR %s microrad
+* NAME  PLANE  BEAM  STRENGTH-NAME  KICK
+ MDH.10207            H 1 logical.MDH10207           0.00
+ MDH.10407            H 1 logical.MDH10407           0.00
+ MDH.10607            H 1 logical.MDH10607           0.00
+ MDH.10807            H 1 logical.MDH10807           0.00
+ MDH.11007            H 1 logical.MDH11007           0.00
+ MDH.11207            H 1 logical.MDH11207           0.00
+ MDH.11407            H 1 logical.MDH11407           0.00
+ MDH.11605            H 1 logical.MDHA11604          0.00
+ MDHD.11832           H 1 logical.MDHD11832          0.00
+ MDH.12007            H 1 logical.MDH12007           0.00
+ MDH.12207            H 1 logical.MDH12207           0.00
+ MDH.12407            H 1 logical.MDH12407           0.00
+ MDH.12607            H 1 logical.MDH12607           0.00
+ MDH.12807            H 1 logical.MDH12807           0.00
+ MDH.13007            H 1 logical.MDH13007           0.00
+ MDH.13207            H 1 logical.MDH13207           0.00
+ MDH.13407            H 1 logical.MDH13407           0.00
+ MDH.13607            H 1 logical.MDH13607           0.00
+ MDH.20207            H 1 logical.MDH20207           0.00
+ MDH.20407            H 1 logical.MDH20407           0.00
+ MDH.20607            H 1 logical.MDH20607           0.00
+ MDH.20807            H 1 logical.MDH20807           0.00
+ MDH.21007            H 1 logical.MDH21007         -21.83
+ MDH.21207            H 1 logical.MDH21207           0.00
+ MDH.21407            H 1 logical.MDH21407           0.00
+ MDHA.21604           H 1 logical.MDHA21604          0.00
+ MDHA.21804           H 1 logical.MDHA21804          0.00
+ MDH.22007            H 1 logical.MDH22007           0.00
+ MDH.22207            H 1 logical.MDH22207           0.00
+ MDH.22407            H 1 logical.MDH22407           0.00
+ MDH.22607            H 1 logical.MDH22607           0.00
+ MDH.22807            H 1 logical.MDH22807           0.00
+ MDH.23007            H 1 logical.MDH23007           0.00
+ MDH.23207            H 1 logical.MDH23207           0.00
+ MDH.23407            H 1 logical.MDH23407           0.00
+ MDH.23607            H 1 logical.MDH23607           0.00
+ MDH.30207            H 1 logical.MDH30207           0.00
+ MDH.30407            H 1 logical.MDH30407           0.00
+ MDH.30607            H 1 logical.MDH30607           0.00
+ MDH.30807            H 1 logical.MDH30807           0.00
+ MDH.31007            H 1 logical.MDH31007           0.00
+ MDH.31207            H 1 logical.MDH31207           0.00
+ MDH.31407            H 1 logical.MDH31407         -29.54
+ MDH.31607            H 1 logical.MDH31607         -12.79
+ MDH.31807            H 1 logical.MDH31807         -27.95
+ MDH.32007            H 1 logical.MDH32007         -15.76
+ MDH.32207            H 1 logical.MDH32207           0.00
+ MDH.32407            H 1 logical.MDH32407           0.00
+ MDH.32607            H 1 logical.MDH32607           0.00
+ MDH.32807            H 1 logical.MDH32807           0.00
+ MDH.33007            H 1 logical.MDH33007           0.00
+ MDH.33207            H 1 logical.MDH33207           0.00
+ MDH.33407            H 1 logical.MDH33407           0.00
+ MDH.33607            H 1 logical.MDH33607           0.00
+ MDH.40207            H 1 logical.MDH40207           0.00
+ MDH.40407            H 1 logical.MDH40407           0.00
+ MDH.40607            H 1 logical.MDH40607           0.00
+ MDH.40807            H 1 logical.MDH40807           0.00
+ MDH.41007            H 1 logical.MDH41007           0.00
+ MDH.41207            H 1 logical.MDH41207           0.00
+ MDH.41407            H 1 logical.MDH41407           0.00
+ MDH.41607            H 1 logical.MDH41607           0.00
+ MDHA.41804           H 1 logical.MDHA41804          0.00
+ MDH.42007            H 1 logical.MDH42007           0.00
+ MDH.42207            H 1 logical.MDH42207           0.00
+ MDH.42407            H 1 logical.MDH42407           0.00
+ MDH.42607            H 1 logical.MDH42607           0.00
+ MDH.42807            H 1 logical.MDH42807           0.00
+ MDH.43007            H 1 logical.MDH43007           0.00
+ MDH.43207            H 1 logical.MDH43207           0.00
+ MDH.43407            H 1 logical.MDH43407           0.00
+ MDH.43607            H 1 logical.MDH43607           0.00
+ MDH.50207            H 1 logical.MDH50207           0.00
+ MDH.50407            H 1 logical.MDH50407           0.00
+ MDH.50607            H 1 logical.MDH50607           0.00
+ MDH.50807            H 1 logical.MDH50807           0.00
+ MDH.51007            H 1 logical.MDH51007           0.00
+ MDH.51207            H 1 logical.MDH51207           0.00
+ MDH.51407            H 1 logical.MDH51407           0.00
+ MDH.51607            H 1 logical.MDH51607           0.00
+ MDH.51807            H 1 logical.MDH51807           0.00
+ MDH.52007            H 1 logical.MDH52007           0.00
+ MDH.52207            H 1 logical.MDH52207           0.00
+ MDH.52407            H 1 logical.MDH52407           0.00
+ MDH.52607            H 1 logical.MDH52607           0.00
+ MDH.52807            H 1 logical.MDH52807           0.00
+ MDH.53007            H 1 logical.MDH53007           0.00
+ MDH.53207            H 1 logical.MDH53207           0.00
+ MDH.53407            H 1 logical.MDH53407           0.00
+ MDH.53607            H 1 logical.MDH53607           0.00
+ MDH.60207            H 1 logical.MDH60207           0.00
+ MDH.60407            H 1 logical.MDH60407           0.00
+ MDH.60607            H 1 logical.MDH60607           0.00
+ MDH.60807            H 1 logical.MDH60807           0.00
+ MDH.61007            H 1 logical.MDH61007           0.00
+ MDH.61207            H 1 logical.MDH61207           0.00
+ MDH.61407            H 1 logical.MDH61407           0.00
+ MDH.61607            H 1 logical.MDHA61604        -10.70
+ MDHB.61804           H 1 logical.MDHA61803          0.00
+ MDH.62007            H 1 logical.MDH62007           0.00
+ MDH.62207            H 1 logical.MDH62207           0.00
+ MDH.62407            H 1 logical.MDH62407           0.00
+ MDH.62607            H 1 logical.MDH62607           0.00
+ MDH.62807            H 1 logical.MDH62807           0.00
+ MDH.63007            H 1 logical.MDH63007           0.00
+ MDH.63207            H 1 logical.MDH63207           0.00
+ MDH.63407            H 1 logical.MDH63407           0.00
+ MDH.63607            H 1 logical.MDH63607           0.00
+ MDV.10107            V 1 logical.MDV10107           0.00
+ MDV.10307            V 1 logical.MDV10307           0.00
+ MDV.10507            V 1 logical.MDV10507           0.00
+ MDV.10707            V 1 logical.MDV10707           0.00
+ MDV.10907            V 1 logical.MDV10907           0.00
+ MDV.11107            V 1 logical.MDV11107           0.00
+ MDV.11307            V 1 logical.MDV11307          42.87
+ MDV.11507            V 1 logical.MDV11507          43.21
+ MDV.11705            V 1 logical.MDVA11703          0.00
+ MDVA.11904           V 1 logical.MDVA11904         30.18
+ MDV.12107            V 1 logical.MDV12107         -69.10
+ MDV.12307            V 1 logical.MDV12307           0.00
+ MDV.12507            V 1 logical.MDV12507           0.00
+ MDV.12707            V 1 logical.MDV12707           0.00
+ MDV.12907            V 1 logical.MDV12907          21.95
+ MDV.13107            V 1 logical.MDV13107           0.00
+ MDV.13307            V 1 logical.MDV13307           0.00
+ MDV.13507            V 1 logical.MDV13507           0.00
+ MDV.20107            V 1 logical.MDV20107           0.00
+ MDV.20307            V 1 logical.MDV20307           0.00
+ MDV.20507            V 1 logical.MDV20507           0.00
+ MDV.20707            V 1 logical.MDV20707           0.00
+ MDV.20907            V 1 logical.MDV20907           0.00
+ MDV.21107            V 1 logical.MDV21107           0.00
+ MDV.21307            V 1 logical.MDV21307           0.00
+ MDV.21507            V 1 logical.MDV21507           0.00
+ MDVA.21703           V 1 logical.MDVA21703          0.00
+ MDVA.21932           V 1 logical.MDVA21932          0.00
+ MDV.22108            V 1 logical.MDV22108           0.00
+ MDV.22307            V 1 logical.MDV22307          23.36
+ MDV.22507            V 1 logical.MDV22507           0.00
+ MDV.22707            V 1 logical.MDV22707           0.00
+ MDV.22907            V 1 logical.MDV22907           0.00
+ MDV.23107            V 1 logical.MDV23107           0.00
+ MDV.23307            V 1 logical.MDV23307           0.00
+ MDV.23507            V 1 logical.MDV23507           0.00
+ MDV.30107            V 1 logical.MDV30107           0.00
+ MDV.30307            V 1 logical.MDV30307          -3.07
+ MDV.30507            V 1 logical.MDV30507           4.64
+ MDV.30707            V 1 logical.MDV30707          19.14
+ MDV.30907            V 1 logical.MDV30907           0.00
+ MDV.31107            V 1 logical.MDV31107           0.00
+ MDV.31307            V 1 logical.MDV31307           0.00
+ MDV.31507            V 1 logical.MDV31507          29.55
+ MDV.31707            V 1 logical.MDV31707         -21.37
+ MDV.31907            V 1 logical.MDV31907          98.43
+ MDV.32107            V 1 logical.MDV32107         -21.83
+ MDV.32307            V 1 logical.MDV32307          35.51
+ MDV.32507            V 1 logical.MDV32507         -28.13
+ MDV.32707            V 1 logical.MDV32707           0.00
+ MDV.32907            V 1 logical.MDV32907           0.00
+ MDV.33107            V 1 logical.MDV33107           0.00
+ MDV.33307            V 1 logical.MDV33307           0.00
+ MDV.33507            V 1 logical.MDV33507           0.00
+ MDV.40107            V 1 logical.MDV40107         -32.72
+ MDV.40307            V 1 logical.MDV40307           0.00
+ MDV.40507            V 1 logical.MDV40507           0.00
+ MDV.40707            V 1 logical.MDV40707           0.00
+ MDV.40907            V 1 logical.MDV40907           0.00
+ MDV.41107            V 1 logical.MDV41107           0.00
+ MDV.41307            V 1 logical.MDV41307           0.00
+ MDV.41507            V 1 logical.MDV41507           0.00
+ MDVA.41703           V 1 logical.MDVA41703          0.00
+ MDVA.41932           V 1 logical.MDVA41932         33.72
+ MDV.42107            V 1 logical.MDV42107           0.00
+ MDV.42307            V 1 logical.MDV42307          40.17
+ MDV.42507            V 1 logical.MDV42507           0.00
+ MDV.42707            V 1 logical.MDV42707           0.00
+ MDV.42907            V 1 logical.MDV42907           0.00
+ MDV.43107            V 1 logical.MDV43107           0.00
+ MDV.43307            V 1 logical.MDV43307           0.00
+ MDV.43507            V 1 logical.MDV43507           0.00
+ MDV.50107            V 1 logical.MDV50107           0.00
+ MDV.50307            V 1 logical.MDV50307           0.00
+ MDV.50507            V 1 logical.MDV50507           0.00
+ MDV.50707            V 1 logical.MDV50707           0.00
+ MDV.50907            V 1 logical.MDV50907           0.00
+ MDV.51107            V 1 logical.MDV51107           0.00
+ MDV.51307            V 1 logical.MDV51307           0.00
+ MDV.51507            V 1 logical.MDV51507           0.00
+ MDV.51707            V 1 logical.MDV51707           0.00
+ MDVB.51777           V 1 logical.MDVB51777          0.00
+ MDV.51907            V 1 logical.MDV51907           0.00
+ MDV.52107            V 1 logical.MDV52107           0.00
+ MDV.52307            V 1 logical.MDV52307           0.00
+ MDV.52507            V 1 logical.MDV52507           0.00
+ MDV.52707            V 1 logical.MDV52707           0.00
+ MDV.52907            V 1 logical.MDV52907           0.00
+ MDV.53107            V 1 logical.MDV53107           0.00
+ MDV.53307            V 1 logical.MDV53307           0.00
+ MDV.53507            V 1 logical.MDV53507           0.00
+ MDV.60107            V 1 logical.MDV60107           0.00
+ MDV.60307            V 1 logical.MDV60307           0.00
+ MDV.60507            V 1 logical.MDV60507           0.00
+ MDV.60707            V 1 logical.MDV60707           0.00
+ MDV.60907            V 1 logical.MDV60907           0.00
+ MDV.61107            V 1 logical.MDV61107           0.00
+ MDV.61307            V 1 logical.MDV61307         -43.24
+ MDV.61507            V 1 logical.MDV61507           0.00
+ MDVA.61703           V 1 logical.MDVA61703        -56.79
+ MDVA.61932           V 1 logical.MDVA61932         41.62
+ MDV.62107            V 1 logical.MDV62107           0.00
+ MDV.62307            V 1 logical.MDV62307          50.18
+ MDV.62507            V 1 logical.MDV62507           0.00
+ MDV.62707            V 1 logical.MDV62707           0.00
+ MDV.62907            V 1 logical.MDV62907           0.00
+ MDV.63107            V 1 logical.MDV63107           0.00
+ MDV.63307            V 1 logical.MDV63307           0.00
+ MDV.63507            V 1 logical.MDV63507           0.00

@@ -1,0 +1,13 @@
+
+test: sequence,l=100;
+mba1: sbend,l=1.2,angle=.9,k1=-.0/1.2,at=.6;
+mba2: sbend,l=1.2,angle=.9,k1=-.0/1.2,at=1.8;
+endsequence;
+
+beam, particle = proton, sequence=test, energy = 7000.0;
+set,format="26.18e";
+select,flag=twiss,clear;
+select,flag=twiss,column=name,s,l,angle,k1l,k2l,betx,bety,alfx,alfy,dx,dpx,dy,dpy,mux,muy,x,y,px,py,wx,wy;
+use,sequence=test;
+
+twiss,dpy=.3,betx=1,bety=1,sectormap,sectorfile='sec.data',file='twiss.data';
