@@ -1,0 +1,34 @@
+q1: quadrupole,l=4,k1:=kq1;
+q2: quadrupole,l=8,k1:=kq2;
+q3: quadrupole,l=4,k1:=kq1;
+
+seq: sequence,l=50;
+q1,at=32; q2,at=38; q3,at=44;
+endsequence;
+beam,energy=7000;
+
+kq1=0.005; kq2=-0.005;
+
+set,format="8.3f";
+!use,sequence=seq,range=q2/q3;
+use,sequence=seq;
+select,flag=twiss,clear;
+select,flag=twiss,column=name,s,betx,alfx,mux,bety,alfy,muy;
+twiss,betx=0.5,bety=0.5,dx=0.1,dpx=0.01,rmatrix;
+write,table=twiss;
+
+
+set,format="8.3f";
+!use,sequence=seq,range=q2/q3;
+use,sequence=seq;
+select,flag=twiss,clear;
+select,flag=twiss,column=name,s,betx,alfx,mux,bety,alfy,muy,dx,dpx,dy,dpy;
+!select,flag=twiss,column=name,s,re11,re12,re21,re22,re16,re26;
+!select,flag=twiss,column=name,s,betx,alfx,mux,bety,re11,re12,re21,re22;
+!select,flag=twiss,column=name,s,betx,alfx,mux,bety,re33,re34,re43,re44;
+!select,flag=twiss,column=name,s,re11,re12,re21,re22,re16,re26;
+twiss,betx=0.5,bety=0.5,dx=0.1,dpx=0.01,dy=-0.2,dpy=-0.03,rmatrix;
+write,table=twiss;
+
+
+

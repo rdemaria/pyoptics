@@ -1,6 +1,0 @@
-[submodule "tfsdata"]
-	path = tfsdata
-	url = /home/rdemaria/work/tfsdata
-[submodule "pydataobj"]
-	path = pydataobj
-	url = /home/rdemaria/work/pydataobj/
