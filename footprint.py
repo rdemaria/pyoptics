@@ -1,5 +1,6 @@
 from pydataobj import *
 from tfsdata import *
+from optics import errors_getmn,getmn
 import matplotlib.pyplot as pl
 import matplotlib.delaunay
 import numpy as np
@@ -54,35 +55,6 @@ def get_res_box(m,n,l=0,qz=0,a=0,b=1,c=0,d=1):
       out.append(points)
   return out
 
-def getmn(o,s='+'):
-  """returns list of (m,n) of * resonances of order o
-     with * = 'a': all resonances
-              'o': skew multipoles n=odd
-              'e': normal multipoles n=even
-              's': sum resonances (m>0,n>0), loss of beam
-              'd': difference resonances (m<0,n>0) or (m>0,n<0), exchange between planes
-  """
-  out=[]
-  #(-1,2) delivers the same resonance line as (1,-2)
-  for m in range(0,o+1):
-    n=o-m
-    if s=='a':
-      out.append( (m,n) )
-      out.append( (m,-n) )
-    if s=='e' and n%2==0 or m==0:
-      out.append( (m,n) )
-      out.append( (m,-n) )
-#      print m,n
-#      print m,-n
-    if s=='o' and n%2==1 and m>0:
-      out.append( (m,n) )
-      out.append( (m,-n) )
-    if s=='s' and (n>0 and m>0):
-      out.append( (m,n) )
-    if s=='d' and (n>0 and m>0):
-      out.append( (m,-n) )
-  return out
-
 def plot_res_box(m,n,l=0,qz=0,a=0,b=1,c=0,d=1,color='b',linestyle='-'):
   points=get_res_box(m,n,l,qz,a,b,c,d)
   for c in points:
@@ -92,13 +64,13 @@ def plot_res_box(m,n,l=0,qz=0,a=0,b=1,c=0,d=1,color='b',linestyle='-'):
 
 def plot_res_order_box(o,l=0,qz=0,a=0,b=1,c=0,d=1,c1='b',lst1='-',c2='b',lst2='--',c3='g'):
   """plot resonance lines for order o and sidbands of order l and frequency qz"""
-  for m,n in getmn(o,'e'):
+  for m,n in getmn(o,'b'):
     # print 'b%s: m=%d n=%d'%(o,m,n)
     plot_res_box(m,n,l=0,qz=0,a=a,b=b,c=c,d=d,color=c1,linestyle=lst1)
     if(l!=0):#sidebands
       for ll in +abs(l),-abs(l):
         plot_res_box(m,n,l=ll,qz=qz,a=a,b=b,c=c,d=d,color=c3,linestyle=lst1) 
-  for m,n in getmn(o,'o'):
+  for m,n in getmn(o,'a'):
     # print 'a%s: m=%d n=%d'%(o,m,n)
     plot_res_box(m,n,l=0,qz=0,a=a,b=b,c=c,d=d,color=c2,linestyle=lst2)
     if(l!=0):#sidebands
@@ -145,13 +117,12 @@ def plot_grid(t,nsigmax=12,nangles=7,lw=1):
       lw= i.step==nangles and i.start/2. or 1
     pl.plot(t.x[i],t.y[i],'-k',lw=lw)
 
-def plot_footprint(t,nsigmax=6,nangles=7,wp=(0.28,0.31),spread=0.01):
+def plot_footprint(t,name='',nsigmax=6,nangles=7,wp=None,spread=0.01,color=None):
   ranges=mkranges(nsigmax,nangles)
   lw=1
   out=[]
   lbl=True
-  name=''
-  color=colorrotate()
+  if color==None: color=colorrotate()
   for i in ranges:
     if lbl:
        p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw,label=name)
@@ -162,9 +133,10 @@ def plot_footprint(t,nsigmax=6,nangles=7,wp=(0.28,0.31),spread=0.01):
   pl.ylabel('$Q_y$')
   pl.xlabel('$Q_x$')
   pl.grid(True)
-  qx,qy=wp
-  pl.xlim(qx-spread,qx+spread)
-  pl.ylim(qy-spread,qy+spread)
+  if wp!=None:
+    qx,qy=wp
+    pl.xlim(qx-spread,qx+spread)
+    pl.ylim(qy-spread,qy+spread)
   return out
 
 mycolors=list('rgbcm')
