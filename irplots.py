@@ -17,7 +17,7 @@ class IRPlots(object):
     return self
   def plotn(self,n):
     name="%sb%d"%(self.name,n)
-    pl.figure('name')
+    pl.figure(name)
     p=optics.open("twiss_%s.tfs"%name).plotbeta(newfig=False)
     pl.title(name)
     p.wx_autoupdate()
