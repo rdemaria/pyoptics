@@ -192,8 +192,9 @@ class optics(dataobj):
       clist='k r b g c m',lattice=True,newfig=True,pre=None,
           ):
     out=qdplot(self,x=x,yl=yl,yr=yr,idx=idx,lattice=lattice,newfig=newfig,clist=clist,pre=pre)
+    self._plot=out
 #    self._target.append(out)
-    return out
+    return self
 
   def plotbeta(self,**nargs):
     return self.plot('betx bety','dx dy',**nargs)
@@ -209,6 +210,8 @@ class optics(dataobj):
     bval=_n.array([n*10**dd for dd in rng for n in [1,2,5] ])
     bval=bval[bval<bmax]
     pl.ylim(ya,yb)
+    self._plot=_p.gcf()
+    return t
 
   def plotcross(self,**nargs):
     return self.plot('x y','dx dy',**nargs)
@@ -234,6 +237,8 @@ class optics(dataobj):
     #_p.text(0.0,qy,r"$Q_y$")
     _p.grid(True)
     _p.legend(loc=0)
+    self._plot=_p.gcf()
+    return t
 
   def plotbetabeat(self,t1,dp='0.0003'):
     _p.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
@@ -243,6 +248,8 @@ class optics(dataobj):
     _p.plot(self.s,1-t1.bety/self.bety,label=r'$\Delta\beta_y/\beta_y$')
     _p.grid(True)
     _p.legend()
+    self._plot=_p.gcf()
+    return t
 
   def plotw(self,lbl=''):
     _p.title(r"Chromatic function: %s"%lbl)
@@ -253,15 +260,22 @@ class optics(dataobj):
     _p.plot(self.s,self.wy,label=r'$w_y$')
     _p.grid(True)
     _p.legend()
+    self._plot=_p.gcf()
+    return t
 
-  def plotap(t,ap,nlim=30,ref=7,newfig=True,**nargs):
+  def plotap(t,ap=None,nlim=30,ref=7,newfig=True,**nargs):
+    if ap is None:
+        apfn=t.filename.replace('twiss','ap')
+        ap=optics.open(apfn)
     t.ss=ap.s
     t.n1=ap.n1
-    p=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
+    t=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
+    p=t._plot
     p.figure.gca().plot(t.ss,t.ss*0+ref)
     p.figure.gca().set_ylim(0,nlim)
     p.figure.canvas.draw()
-    return p
+    t._plot=p
+    return t
 
   def mk_betamax(self):
     self.betxmax=zeros_like(self.betx)
