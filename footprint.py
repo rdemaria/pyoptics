@@ -162,14 +162,14 @@ def triangulate(t):
 
 #*********************** START: functions to plot resonances in xy space - takes as input dynaptune files *************************
 def get_res(o,l,qz,tunexmin,tunexmax,tuneymin,tuneymax):
-  '''return the resonances lines which cross the area [(tunexmin,tunexmax),(tuneymin,tuneymax)]'''
+  '''return the resonances lines (skew and normal -> kind='ab') which cross the area [(tunexmin,tunexmax),(tuneymin,tuneymax)]'''
   res_list=[]
   for m,n in getmn(o,'ab'):#get m,n for resonance of order o
     rbox=get_res_box(m,n,l,qz,tunexmin,tunexmax,tuneymin,tuneymax)
     if(len(rbox)>0):
       for qq in rbox:
         q=m*qq[0][0]+n*qq[0][1]+l*qz
-        res_list.append((o,m,n,q,l,qz))
+        res_list.append((o,m,n,int(round(q)),l,qz))
   return res_list
 
 def get_xy_dat_res(data,res,eps):
@@ -196,44 +196,7 @@ def get_xy_dat_res(data,res,eps):
   xyres['delta']=abs(m*tunxres+n*tunyres+l*qz-q)
   return xyres
 
-def plot_res_xy(datan,omax=10,l=0,qz=0,eps=1.e-2,plxlim=None,plylim=None):
-  '''plot resonances in x,y space up to order omax and with maximum 
-  distance abs(m*tunex+n*tuney+l*qz-r)=delta<eps. The data should be given
-  in number of sigma -> x[sigma], y[sigma]'''
-#  fig=pl.gcf()
-#  gs=gridspec.GridSpec(1,1)
-#  gs.update(hspace=0.4,wspace=0.5)
-#  ax=fig.add_subplot(gs[0])
-  cmin=0
-  cmax=1
-  cb=None
-  print omax
-  for reso in range(1,int(round(omax))):
-    lres=get_res(reso,l,qz,min(datan.tunx),max(datan.tunx),min(datan.tuny),max(datan.tuny))
-    for ll in lres:
-      xyres=get_xy_dat_res(datan,ll,eps)
-      if(len(xyres['x'])>0):
-        print ll
-        if cb is None:
-          s = pl.scatter(xyres['x'],xyres['y'],c='r',marker='.',edgecolors='none')
-#          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
-#          s.set_clim([cmin,cmax])
-#          cb=fig.colorbar(s)
-          cb=1
-        else:
-          s = pl.scatter(xyres['x'],xyres['y'],c='r',marker='.',edgecolors='none')
-#          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
-#          s.set_clim([cmin,cmax])
-  #      pl.plot(xyres['x'],xyres['y'],marker='.',linestyle='None',color='b')
-#  pl.tick_params(axis='x', pad=5)
-#  pl.tick_params(axis='y', pad=5)
-#  pl.xlabel(r'$\sigma_x$',fontsize=16,labelpad=14)
-#  pl.ylabel(r'$\sigma_y$',fontsize=16,labelpad=14)
-  pl.xlim(plxlim)
-  pl.ylim(plylim)
-#  cb.set_label(r'$1-\Delta$res/eps with eps=%s'%round(eps,4))
-
-def plot_res_xy_old(datan,omax=10,l=0,qz=0,eps=1.e-2,plxlim=None,plylim=None):
+def plot_res_xy(datan,omin=1,omax=10,l=0,qz=0,eps=1.e-2,plxlim=None,plylim=None):
   '''plot resonances in x,y space up to order omax and with maximum 
   distance abs(m*tunex+n*tuney+l*qz-r)=delta<eps. The data should be given
   in number of sigma -> x[sigma], y[sigma]'''
@@ -245,22 +208,19 @@ def plot_res_xy_old(datan,omax=10,l=0,qz=0,eps=1.e-2,plxlim=None,plylim=None):
   cmax=1
   cb=None
   print omax
-  for reso in range(1,int(round(omax))):
+  for reso in range(omin,int(round(omax+1))):
     lres=get_res(reso,l,qz,min(datan.tunx),max(datan.tunx),min(datan.tuny),max(datan.tuny))
     for ll in lres:
       xyres=get_xy_dat_res(datan,ll,eps)
       if(len(xyres['x'])>0):
         print ll
         if cb is None:
-          s = ax.scatter(xyres['x'],xyres['y'],c='r',marker='.',edgecolors='none')
-#          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
-#          s.set_clim([cmin,cmax])
-#          cb=fig.colorbar(s)
-          cb=1
+          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
+          s.set_clim([cmin,cmax])
+          cb=fig.colorbar(s)
         else:
-          s = ax.scatter(xyres['x'],xyres['y'],c='r',marker='.',edgecolors='none')
-#          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
-#          s.set_clim([cmin,cmax])
+          s = ax.scatter(xyres['x'],xyres['y'],c=(1-xyres['delta']/eps),marker='.',edgecolors='none')
+          s.set_clim([cmin,cmax])
   #      pl.plot(xyres['x'],xyres['y'],marker='.',linestyle='None',color='b')
   ax.tick_params(axis='x', pad=5)
   ax.tick_params(axis='y', pad=5)
@@ -268,7 +228,7 @@ def plot_res_xy_old(datan,omax=10,l=0,qz=0,eps=1.e-2,plxlim=None,plylim=None):
   pl.ylabel(r'$\sigma_y$',fontsize=16,labelpad=14)
   pl.xlim(plxlim)
   pl.ylim(plylim)
-#  cb.set_label(r'$1-\Delta$res/eps with eps=%s'%round(eps,4))
+  cb.set_label(r'$1-\Delta$res/eps with eps=%s'%round(eps,4))
 
 #*********************** END: functions to plot resonances in xy space - takes as input dynaptune files *************************
 
