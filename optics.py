@@ -31,6 +31,39 @@ def rng(x,a,b):
   "return (x<b) & (x>a)"
   return (x<b) & (x>a)
 
+def errors_getmn(self,errorname='b6'):
+  """returns list of (m,n) for multiople error errorname"""
+  kind=errorname[0]
+  order=int(errorname[1:])
+  return getmn(order=order,kind=kind)  
+def getmn(order,kind='b'):
+  """returns list of (m,n) of * resonances of order o
+     with * = 't': all resonances
+              'a': skew multipoles n=odd
+              'b': normal multipoles n=even
+              's': sum resonances (m>0,n>0), loss of beam
+              'd': difference resonances (m<0,n>0) or (m>0,n<0), exchange between planes
+  """
+
+  """Return resonances given the order and type"""
+  out=[]
+  if 't' in kind: kind='ab'
+  for m in range(0,order+1):
+    n=order-m
+    if 'b' in kind and n%2==0 or m==0:
+      out.append( (m,n) )
+      if n>0:
+        out.append( (m,-n) )
+    if 'a' in kind and n%2==1 and m>0:
+      out.append( (m,n) )
+      if n>0:
+        out.append( (m,-n) )
+    if 's' in kind and (n>0 and m>0):
+      out.append( (m,n) )
+    if 'd' in kind and (n>0 and m>0):
+      out.append( (m,-n) )
+  return list(set(out))
+
 infot=namedtuple('infot','idx betx alfx mux bety alfy muy')
 
 
@@ -511,22 +544,6 @@ class optics(dataobj):
       for k,val in klist:
         self[k][idxself]+=val[idxerror]
     return self
-  def errors_getmn(self,errorname='b6'):
-    """Return resonances given the order and type"""
-    out=[]
-    kind=errorname[0]
-    order=int(errorname[1:])
-    for m in range(0,order+1):
-      n=order-m
-      if 'b' in kind and n%2==0:
-        out.append( (m,n) )
-        if n>0:
-          out.append( (m,-n) )
-      if 'a' in kind and n%2==1:
-        out.append( (m,n) )
-        if n>0:
-          out.append( (m,-n) )
-    return out
   def drvterm(t,m=0,n=0,p=0,q=0):
     dv=t.betx**(abs(m)/2.)*t.bety**(abs(n)/2.)
     dv=dv*_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))

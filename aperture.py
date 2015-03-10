@@ -7,6 +7,18 @@ from numpy import *
 
 from pyoptics import *
 
+#old functions
+def plot_ap(apfn="temp/ap_ir5b1.tfs",nlim=30,ref=12):
+  tfn=apfn.replace('ap_ir','twiss_ir')
+  t=optics.open(tfn)
+  ap=optics.open(apfn)
+  t.ss=ap.s
+  t.n1=ap.n1
+  p=t.plot(x='ss',yl='n1')
+  p.figure.gca().set_ylim(0,nlim)
+  pl.plot(t.ss,t.ss*0+ref)
+  p.figure.canvas.draw()
+  return t,ap
 
 class BeamEnvelope(object):
   def __init__(self,twiss,survey,ap,offset,apfiles={}):

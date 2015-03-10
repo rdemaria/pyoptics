@@ -1,9 +1,9 @@
 from pydataobj import *
 from tfsdata import *
+from optics import errors_getmn,getmn
 import matplotlib.pyplot as pl
 import matplotlib.delaunay
-from convexhull import convex_hull
-import numpy as _n
+import numpy as np
 import os
 from glob import glob
 import re
@@ -33,80 +33,66 @@ def find_res_ycross(m,n,q,ys,x1,x2,out):
       out.append((xs,ys))
 #  print
 
-def get_res_box(m,n,a=0,b=1,c=0,d=1):
-  """m,n,q resonance integers
-     a,b,c,d box parameters
+def get_res_box(m,n,l=0,qz=0,a=0,b=1,c=0,d=1):
+  """get (x,y) coordinates of resonance lines with
+     m,n,q:   resonance integers with m*qx+n*qy=q
+     l,qz:    order l of resonance sideband with frequency qz
+     a,b,c,d: box parameters=tune range, 
+              explicitly a<qx<b and c<qy<d 
   """
-  order=int(_n.ceil(abs(m)*max(abs(a),abs(b))+abs(n)*max(abs(c),abs(d))))
+  order=int(np.ceil(abs(m)*max(abs(a),abs(b))+abs(n)*max(abs(c),abs(d))))
   out=[]
   for q in range(-order,+order+1):
+    q=q-l*qz
     points=[]
-#    print '%2d*x+%2d*y=%2d' % (m,n,q)
-    find_res_xcross(m,n,q,a,c,d,points)
-    find_res_xcross(m,n,q,b,c,d,points)
-    find_res_ycross(m,n,q,c,a,b,points)
-    find_res_ycross(m,n,q,d,a,b,points)
+#    print '%2d*Qx+%2d*Qy=%2d' % (m,n,q)
+    find_res_xcross(m,n,q,a,c,d,points)#find endpoint of line (a,ys) with c<ys<d
+    find_res_xcross(m,n,q,b,c,d,points)#find endpoint of line (b,ys) with c<ys<d
+    find_res_ycross(m,n,q,c,a,b,points)#find endpoint of line (xs,c) with a<xs<b
+    find_res_ycross(m,n,q,d,a,b,points)#find endpoint of line (xs,d) with a<xs<b
     points=list(set(points))
     if len(points)>1:
       out.append(points)
   return out
 
-def getmn(o,s='b',diff=False):
-  out=[]
-  for m in range(0,o+1):
-    n=o-m
-    if 'b' in s and n%2==0:
-      out.append( (m,n) )
-      if diff:
-        out.append( (m,-n) )
-#      print m,n
-#      print m,-n
-    if 'a' in s and n%2==1:
-      out.append( (m,n) )
-      if diff:
-        out.append( (m,-n) )
-#      print m,n
-#      print m,-n
-  return out
-
-def plot_res_box(m,n,a=0,b=1,c=0,d=1,color='k'):
-  points=get_res_box(m,n,a,b,c,d)
+def plot_res_box(m,n,l=0,qz=0,a=0,b=1,c=0,d=1,color='b',linestyle='-'):
+  points=get_res_box(m,n,l,qz,a,b,c,d)
   for c in points:
     x,y=zip(*c)
-    pl.plot(x,y,'%s'%color)
+    pl.plot(x,y,color=color,linestyle=linestyle)
 
 
-def plot_res_order_box(o,a=0,b=1,c=0,d=1,c1='k',c2='r',diff=False):
-  for m,n in getmn(o,'b',diff=diff):
+def plot_res_order_box(o,l=0,qz=0,a=0,b=1,c=0,d=1,c1='b',lst1='-',c2='b',lst2='--',c3='g'):
+  """plot resonance lines for order o and sidbands of order l and frequency qz"""
+  for m,n in getmn(o,'b'):
     # print 'b%s: m=%d n=%d'%(o,m,n)
-    plot_res_box(m,n,a=a,b=b,c=c,d=d,color=c1)
-  for m,n in getmn(o,'a',diff=diff):
+    plot_res_box(m,n,l=0,qz=0,a=a,b=b,c=c,d=d,color=c1,linestyle=lst1)
+    if(l!=0):#sidebands
+      for ll in +abs(l),-abs(l):
+        plot_res_box(m,n,l=ll,qz=qz,a=a,b=b,c=c,d=d,color=c3,linestyle=lst1) 
+  for m,n in getmn(o,'a'):
     # print 'a%s: m=%d n=%d'%(o,m,n)
-    plot_res_box(m,n,a=a,b=b,c=c,d=d,color=c2)
+    plot_res_box(m,n,l=0,qz=0,a=a,b=b,c=c,d=d,color=c2,linestyle=lst2)
+    if(l!=0):#sidebands
+      for ll in +abs(l),-abs(l):
+        plot_res_box(m,n,l=ll,qz=qz,a=a,b=b,c=c,d=d,color=c3,linestyle=lst2) 
 
 
-def plot_res(m,n,color='k'):
+def plot_res(m,n,l=0,qz=0,color='b',linestyle='-'):
   a,b=pl.xlim()
   c,d=pl.ylim()
-  points=get_res_box(m,n,a,b,c,d)
+  points=get_res_box(m,n,l,qz,a,b,c,d)
   for c in points:
     x,y=zip(*c)
-    pl.plot(x,y,'-%s'%color)
-
-def plot_res_order(o,c1='k',c2='r',diff=False):
+    pl.plot(x,y,color=color,linestyle=linestyle)
+  pl.xlim(a,b)
+  pl.ylim(c,d)
+def plot_res_order(o,l=0,qz=0,c1='b',lst1='-',c2='b',lst2='--',c3='g'):
   a,b=pl.xlim()
   c,d=pl.ylim()
-  for m,n in getmn(o,'b',diff=diff):
-    # print 'b%s: m=%d n=%d'%(o,m,n)
-    plot_res_box(m,n,a=a,b=b,c=c,d=d,color=c1)
-  for m,n in getmn(o,'a',diff=diff):
-    # print 'a%s: m=%d n=%d'%(o,m,n)
-    plot_res_box(m,n,a=a,b=b,c=c,d=d,color=c2)
-
-#plot_res_box(1,0)
-#plot_res_box(3,0)
-#plot_res_box(2,1)
-
+  plot_res_order_box(o,l,qz,a,b,c,d,c1,lst1,c2,lst2,c3)
+  pl.xlim(a,b)
+  pl.ylim(c,d)
 
 #a=c=0.28;b=d=0.34;
 #map(plot_res_order,range(1,15))
@@ -131,13 +117,12 @@ def plot_grid(t,nsigmax=12,nangles=7,lw=1):
       lw= i.step==nangles and i.start/2. or 1
     pl.plot(t.x[i],t.y[i],'-k',lw=lw)
 
-def plot_footprint(t,nsigmax=6,nangles=7,wp=(0.28,0.31),spread=0.01):
+def plot_footprint(t,name='',nsigmax=6,nangles=7,wp=None,spread=0.01,color=None):
   ranges=mkranges(nsigmax,nangles)
   lw=1
   out=[]
   lbl=True
-  name=''
-  color=colorrotate()
+  if color==None: color=colorrotate()
   for i in ranges:
     if lbl:
        p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw,label=name)
@@ -148,9 +133,10 @@ def plot_footprint(t,nsigmax=6,nangles=7,wp=(0.28,0.31),spread=0.01):
   pl.ylabel('$Q_y$')
   pl.xlabel('$Q_x$')
   pl.grid(True)
-  qx,qy=wp
-  pl.xlim(qx-spread,qx+spread)
-  pl.ylim(qy-spread,qy+spread)
+  if wp!=None:
+    qx,qy=wp
+    pl.xlim(qx-spread,qx+spread)
+    pl.ylim(qy-spread,qy+spread)
   return out
 
 mycolors=list('rgbcm')
@@ -226,6 +212,5 @@ def change_alpha(ll,alpha):
 #  print bb,ir,squeeze,dqx,dqy,opt
 #  t=load(bb,ir,squeeze,dqx,dqy,opt)
 #  data[(bb,ir,squeeze,opt)]=t
-
 
 
