@@ -171,6 +171,7 @@ def dump_csv(data,fh):
     fh.write('\n')
 
 
+
 import gzip
 def open(fn):
   """Load data encoded in the TFS format from a file name
@@ -184,6 +185,18 @@ def open(fn):
   t=load(fh)
   t['filename']=fn
   return t
+
+def save(data,fn):
+  """Load data encoded in the TFS format from a file name
+  Usage:
+    data=load(fn)
+  """
+  if fn.endswith('.gz'):
+    fh=gzip.open(fn,'w')
+  else:
+    fh=file(fn,'w')
+  dump(data,fh)
+
 
 if __name__=='__main__':
   fh=file('test/tfsload.tfs')
