@@ -36,6 +36,7 @@ def errors_getmn(self,errorname='b6'):
   kind=errorname[0]
   order=int(errorname[1:])
   return getmn(order=order,kind=kind)  
+
 def getmn(order,kind='b'):
   """returns list of (m,n) of * resonances of order o
      with * = 't': all resonances
