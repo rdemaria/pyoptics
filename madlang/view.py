@@ -173,4 +173,8 @@ class view(object):
     else:
       name=' %s' % id(self)
     return '<%s%s>' % (self.__class__.__name__, name)
+  def __call__(self,expr):
+    return eval(expr,gbl,self)
 
+from math import *
+gbl=globals()

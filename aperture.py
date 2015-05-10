@@ -41,14 +41,24 @@ class BeamEnvelope(object):
     self.co=co
     self.d_arc=d_arc
     self.b_arc=b_arc
-  def get_surv_range(self,a,b):
+  def get_surv_range(self,a=None,b=None,ref=None):
     sss=self.s
     ttt=self.t
-    idxa=where(sss//a)[0][0]
-    idxb=where(sss//b)[0][-1]+1
+    if a is None:
+        idxa=0
+    else:
+      idxa=where(sss//a)[0][0]
+    if b is None:
+       idxb=-1
+    else:
+       idxb=where(sss//b)[0][-1]+1
     z=sss.z[idxa:idxb];x=sss.x[idxa:idxb];t=sss.theta[idxa:idxb];
-    ct=cos(t[0]);st=sin(t[0])
-    z=z-z[0];x=x-x[0]; t=t-t[0]
+    if ref is None:
+        idref=0
+    else:
+       idref=where(sss//ref)[0][0]
+    ct=cos(t[idref]);st=sin(t[idref])
+    z=z-z[idref];x=x-x[idref]; t=t-t[idref]
     zn=z*ct+x*st
     xn=-z*st+x*ct
     cox=xn+ttt.x[idxa:idxb]
