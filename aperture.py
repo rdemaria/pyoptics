@@ -21,29 +21,77 @@ def plot_ap(apfn="temp/ap_ir5b1.tfs",nlim=30,ref=12):
   return t,ap
 
 class BeamEnvelope(object):
-  def __init__(self,twiss,survey,ap,offset,apfiles={}):
-    self.t=twiss
-    energy=ap.param['energy']
-    emit_n=ap.param['exn']
-    bbeat=ap.param['beta_beating']
-    deltap=ap.param['dp_bucket_size']
-    co=ap.param['co_radius']
-    d_arc=ap.param['dqf']*ap.param['paras_dx']
-    b_arc=ap.param['betaqfx']
-    self.s=survey
-    self.a=ap
-    self.offset=offset
+  def __init__(self,twiss,survey,ap,apfiles=None,offset=None):
+    self.twiss=twiss
+    self.survey=survey
+    self.ap=ap
     self.apfiles=apfiles
-    self.energy=energy
-    self.emit_n=emit_n
-    self.bbeat=bbeat
-    self.deltap=deltap
-    self.co=co
-    self.d_arc=d_arc
-    self.b_arc=b_arc
+    self.offset=offset
+    self.energy=ap.param['energy']
+    self.gamma=ap.param['gamma']
+    self.emit_n=ap.param['exn']
+    self.bbeat=ap.param['beta_beating']
+    self.deltap=ap.param['dp_bucket_size']
+    self.co=ap.param['co_radius']
+    self.d_arc=ap.param['dqf']*ap.param['paras_dx']
+    self.b_arc=ap.param['betaqfx']
+    for k in self.apfiles:
+        idx=self.twiss.apertype==k
+        for name in self.twiss.name[idx]:
+            idx2=self.ap.name==name
+            self.ap.aper_1[idx2]=self.twiss.aper_1[idx][0]
+            self.ap.aper_2[idx2]=self.twiss.aper_2[idx][0]
+            self.ap.aper_3[idx2]=self.twiss.aper_3[idx][0]
+            self.ap.aper_4[idx2]=self.twiss.aper_4[idx][0]
+  def plot_aper_sx(self,st='k'):
+      ap=self.ap
+      idx=(ap.aper_1>0)&(ap.aper_1<1)
+      lim=ap.aper_1[idx]
+      lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
+      pl.plot(ap.s[idx],lim,st)
+      pl.plot(ap.s[idx],lim2,st)
+      pl.plot(ap.s[idx],-lim,st)
+      pl.plot(ap.s[idx],-lim2,st)
+      pl.ylabel('x [m]')
+      pl.xlabel('s [m]')
+  def plot_aper_sy(self,st='k'):
+      ap=self.ap
+      idx=(ap.aper_2>0)&(ap.aper_2<1)
+      lim=ap.aper_2[idx]
+      lim2=ap.aper_2[idx]-ap.rtol[idx]-ap.ytol[idx]
+      pl.plot(ap.s[idx],lim,st)
+      pl.plot(ap.s[idx],lim2,st)
+      pl.plot(ap.s[idx],-lim,st)
+      pl.plot(ap.s[idx],-lim2,st)
+      pl.ylabel('y [m]')
+      pl.xlabel('s [m]')
+  def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None):
+      ap=self.ap
+      sig=sqrt(ap.betx*self.emit_n/self.gamma)[n1:n2]
+      if nsig==None:
+          nsig=ap.param['n1min']*ap.param['halo_h']/ap.param['halo_prim']
+      env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
+      ss=ap.s[n1:n2]
+      xx=ap.x[n1:n2]
+      pl.fill_between(ss,xx+env,xx-env,color=color,alpha=0.2)
+      pl.fill_between(ss,xx+sig,xx-sig,color=color,alpha=0.5)
+      pl.ylabel('x [m]')
+      pl.xlabel('s [m]')
+  def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None):
+    ap=self.ap
+    sig=sqrt(ap.bety*self.emit_n/self.gamma)[n1:n2]
+    if nsig==None:
+       nsig=ap.param['n1min']*ap.param['halo_v']/ap.param['halo_prim']
+    env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
+    ss=ap.s[n1:n2]
+    yy=ap.y[n1:n2]
+    pl.fill_between(ss,yy+env,yy-env,color=color,alpha=0.2)
+    pl.fill_between(ss,yy+sig,yy-sig,color=color,alpha=0.5)
+    pl.ylabel('y [m]')
+    pl.xlabel('s [m]')
   def get_surv_range(self,a=None,b=None,ref=None):
-    sss=self.s
-    ttt=self.t
+    sss=self.survey
+    ttt=self.twiss
     if a is None:
         idxa=0
     else:
@@ -63,60 +111,60 @@ class BeamEnvelope(object):
     xn=-z*st+x*ct
     cox=xn+ttt.x[idxa:idxb]
     coy=ttt.y[idxa:idxb]
-    emitx=self.a.param['exn']/self.a.param['gamma']
-    emity=self.a.param['eyn']/self.a.param['gamma']
+    emitx=self.ap.param['exn']/self.ap.param['gamma']
+    emity=self.ap.param['eyn']/self.ap.param['gamma']
     bx=sqrt(ttt.betx[idxa:idxb]*emitx)
     by=sqrt(ttt.bety[idxa:idxb]*emity)
     return zn,cox,coy,bx,by
   def get_pos(self,n):
-    return self.a.x[n],self.a.y[n]
+    return self.ap.x[n],self.ap.y[n]
   def get_pos_deltap(self,n,pm=1):
     x,y=self.get_pos(n)
-    dx=self.a.dx[n]
-    dy=self.a.dy[n]
+    dx=self.ap.dx[n]
+    dy=self.ap.dy[n]
     return x+dx*self.deltap*pm,y+dy*self.deltap*pm
   def get_pos_tol_spec(self,n,pm=1):
     x,y=self.get_pos_deltap(n,pm=pm)
-    betx=self.a.betx[n]
-    bety=self.a.bety[n]
+    betx=self.ap.betx[n]
+    bety=self.ap.bety[n]
     dx=self.bbeat*self.d_arc*sqrt(betx/self.b_arc)*self.deltap
     dy=self.bbeat*self.d_arc*sqrt(bety/self.b_arc)*self.deltap
     co=self.co
-    rtol=self.a.rtol[n]
-    xtol=self.a.xtol[n]
-    ytol=self.a.ytol[n]
+    rtol=self.ap.rtol[n]
+    xtol=self.ap.xtol[n]
+    ytol=self.ap.ytol[n]
     return x,y,xtol,ytol,rtol+co+dx,rtol+co+dy
   def get_pos_tol(self,n,pm=1):
-    x,y,xtol,ytol,rtol,rtol=self.get_pos_tol_spec(n,pm)
-    return racetrack_to_polygon(x,y,xtol,ytol,rtol,rtol)
+    x,y,xtol,ytol,rtolx,rtoly=self.get_pos_tol_spec(n,pm)
+    return racetrack_to_polygon(x,y,xtol,ytol,rtolx,rtoly)
   def get_pos_btol(self,n,pm=1):
     x,y=self.get_pos_deltap(n,pm=pm)
-    betx=self.a.betx[n]
-    bety=self.a.bety[n]
-    dx=self.d_arc*self.deltap*sqrt(betx/self.b_arc)
-    dy=self.d_arc*self.deltap*sqrt(bety/self.b_arc)
+    betx=self.ap.betx[n]
+    bety=self.ap.bety[n]
+    dx=self.bbeat*self.d_arc*self.deltap*sqrt(betx/self.b_arc)
+    dy=self.bbeat*self.d_arc*self.deltap*sqrt(bety/self.b_arc)
     co=self.co
     return racetrack_to_polygon(x,y,0,0,co+dx,co+dy)
   def get_aperture(self,n):
-    apertype=self.a.apertype[n]
+    apertype=self.ap.apertype[n]
     if apertype=='RECTELLIPSE':
-      h=self.a.aper_1[n]
-      v=self.a.aper_2[n]
-      a=self.a.aper_3[n]
-      b=self.a.aper_4[n]
+      h=self.ap.aper_1[n]
+      v=self.ap.aper_2[n]
+      a=self.ap.aper_3[n]
+      b=self.ap.aper_4[n]
       return rectellipse_to_polygon(0,0,h,v,a,b)
     else:
       x,y=self.apfiles[apertype]
       return x,y
   def get_ap_defined(self):
-    apt=self.a.apertype
+    apt=self.ap.apertype
     lst=[n for n,ap in enumerate(apt) if ap=='RECTELLIPSE' or ap in self.apfiles]
     return lst
   def get_sigma(self,n):
-    betx=self.a.betx[n]*self.bbeat
-    bety=self.a.bety[n]*self.bbeat
-    sigx=sqrt(betx*self.emit_n/self.energy*0.938)
-    sigy=sqrt(bety*self.emit_n/self.energy*0.938)
+    betx=self.ap.betx[n]
+    bety=self.ap.bety[n]
+    sigx=sqrt(betx*self.emit_n/self.gamma)*self.bbeat
+    sigy=sqrt(bety*self.emit_n/self.gamma)*self.bbeat
     return sigx,sigy
   def get_halo_list(self,n):
     sigx,sigy=self.get_sigma(n)
@@ -134,36 +182,38 @@ class BeamEnvelope(object):
     return halo
   def get_halo_min(self,n):
     return sorted(self.get_halo_list(n))[0]
+  def get_halo_min_name(self,name):
+    return self.ap.n1[self.get_n_name(name)].min()
   def get_halo_min_all(self,n1,n2):
     out=[]
     for n in self.get_ap_defined():
       if n>=n1 and n<=n2:
-        print  n,self.a.name[n]
-        out.append([ n,self.a.name[n],self.a.s[n]]+self.get_halo_min(n))
+        print  n,self.ap.name[n]
+        out.append([ n,self.ap.name[n],self.ap.s[n]]+self.get_halo_min(n))
     return out
   def plot_aperture(self,n,color='g',lbl='aperture'):
     x,y=self.get_aperture(n)
     pl.plot(x,y,color+'-',label=lbl)
-    pl.title(self.a.name[n])
+    pl.title(self.ap.name[n])
   def plot_pos_btol(self,n,color='b',lbl='beam tolerances'):
     x,y=self.get_pos_btol(n,1)
     pl.plot(x,y,color+'-')
     x,y=self.get_pos_btol(n,-1)
     pl.plot(x,y,color+'-',label=lbl)
-    pl.title(self.a.name[n])
+    pl.title(self.ap.name[n])
   def plot_pos_tol(self,n,color='c',lbl='beam and mech tolerances'):
     x,y=self.get_pos_tol(n,1)
     pl.plot(x,y,color+'-')
     x,y=self.get_pos_tol(n,-1)
     pl.plot(x,y,color+'-',label=lbl)
-    pl.title(self.a.name[n])
+    pl.title(self.ap.name[n])
   def plot_halo_list(self,n):
     self.plot_aperture(n)
     self.plot_pos_tol(n)
     self.plot_pos_btol(n)
     for t1s,t1,x0,y0,xp,yp,alf,sig in self.get_halo_list(n):
       p,=pl.plot([x0,xp],[y0,yp],'r-')
-    pl.title(self.a.name[n])
+    pl.title(self.ap.name[n])
     return p
   def get_halo(self,n,hr,hx,hy,pm=1):
     x,y,xtol,ytol,rtol,rtol=self.get_pos_tol_spec(n,pm)
@@ -178,45 +228,47 @@ class BeamEnvelope(object):
     b=rtol+sr*sigy
     return racetrack_to_polygon(x,y,h,v,a,b)
   def plot_halo(self,n,halor=13,halox=12,haloy=12,color='m',lbl='halo'):
-    self.plot_aperture(n,color='k',lbl=None)
-    self.plot_pos_tol(n,color=color,lbl=None)
-    self.plot_pos_btol(n,color=color,lbl=None)
     x,y=self.get_halo(n,halor,halox,haloy,1)
     pl.plot(x,y,color+'-')
     x,y=self.get_halo(n,halor,halox,haloy,-1)
     pl.plot(x,y,color+'-',label=lbl)
-    pl.title(self.a.name[n])
+    pl.title(self.ap.name[n])
   def get_n_name(self,name):
-    return np.where(self.a//name)[0]
+    return np.where(self.ap//name)[0]
   def plot_ap(self,nlim=30,ref=12):
-    #self.t.plotap(self.a,nlim=nlim)
-    t=self.t
-    ap=self.a
+    #self.twiss.plotap(self.ap,nlim=nlim)
+    t=self.twiss
+    ap=self.ap
     tlt=os.path.split(t.filename)[1].split('.')[0].split('_')[1]
     t.ss=ap.s
     t.n1=ap.n1
-    p=t.plot(x='ss',yl='n1')
-    p.figure.gca().set_ylim(0,nlim)
+    t.plot(x='ss',yl='n1')
+    t._plot.figure.gca().set_ylim(0,nlim)
     pl.plot(t.ss,t.ss*0+ref)
-    p.figure.canvas.draw()
+    t._plot.figure.canvas.draw()
   def get_n1_name(self,name):
-    idx=np.where(self.a//name)[0]
-    ap=self.a
+    idx=np.where(self.ap//name)[0]
+    ap=self.ap
     return zip(ap.n1[idx],ap.name[idx],ap.betx[idx],ap.bety[idx])
-  def plot_halo_name(self,name,n1=None,color='m',lbl='halo'):
+  def plot_halo_name(self,name,n1=None,color='m',lbl='halo',lblap=None):
     first=True
     for n in self.get_n_name(name):
       if first:
           lbl=lbl
           first=False
+          lblap=lblap
       else:
           lbl=None
+          lblap=None
       if n1 is None:
-        nv=self.a.n1[n]
+        nv=self.ap.n1[n]
       else:
         nv=n1
       self.plot_halo(n,nv,nv,nv,color=color,lbl=lbl)
-    pl.axes().set_aspect('equal', 'datalim')
+      self.plot_aperture(n,color='k',lbl=lblap)
+      self.plot_pos_tol(n,color=color,lbl=None)
+      self.plot_pos_btol(n,color=color,lbl=None)
+    #pl.axes().set_aspect('equal', 'datalim')
     pl.title(name)
     tv,tt=pl.xticks()
     pl.xticks(tv,map(str,tv*1000))
@@ -225,9 +277,6 @@ class BeamEnvelope(object):
     pl.xlabel('x [mm]')
     pl.ylabel('y [mm]')
     pl.grid(True)
-
-
-
 
 def arc_to_polygon(a,b,t1,t2,steps=10):
   t=np.linspace(t1,t2,steps)
