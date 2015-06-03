@@ -182,6 +182,8 @@ class BeamEnvelope(object):
     return halo
   def get_halo_min(self,n):
     return sorted(self.get_halo_list(n))[0]
+  def get_halo_name(self,name):
+    return self.ap.n1[self.get_n_name(name)]
   def get_halo_min_name(self,name):
     return self.ap.n1[self.get_n_name(name)].min()
   def get_halo_min_all(self,n1,n2):

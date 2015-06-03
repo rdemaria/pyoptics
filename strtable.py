@@ -30,8 +30,11 @@ class StrTable(dataobj):
       if sum(abs(self[n]))>0:
         out.append(n)
     return sorted(out)
-  def plot_acb(self,n,knob,n1,n2,x=None):
-    scale=StrTable.scale
+  def plot_acb(self,n,knob,n1,n2,x=None,scale=1,brho=None):
+    if brho is None:
+        scale*=1e6
+    else:
+        scale*=brho
     if x is None:
       xv=arange(len(self[self.keys()[0]][n1:n2]))
     else:
@@ -42,7 +45,10 @@ class StrTable(dataobj):
     pl.legend(loc=0,frameon=False)
     if x is not None:
       pl.xlabel(x)
-    pl.ylabel('k0l [Tm]')
+    if  brho is None:
+      pl.ylabel(r'angle [$\mu$rad]')
+    else:
+      pl.ylabel('k0l [Tm]')
   def get_triplet(self):
     return self.get_vars('kqx\.r[2815]|kt?qx[123].*r[15]')
   def plot_triplet(self,n1,n2,x=None):
@@ -142,7 +148,7 @@ class StrTable(dataobj):
     pl.tight_layout()
     self.xvar=x
     return self
-  def plot_knobs(self,n1=0,n2=None,figname=None):
+  def plot_knobs(self,n1=0,n2=None,figname=None,scales=[1,1]):
     x=self.get_vars('betxip')[0]
     if figname is None:
       fig=pl.figure('knobs',figsize=(16,12))
@@ -150,19 +156,23 @@ class StrTable(dataobj):
       fig=pl.figure(figname,figsize=(16,12))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
     pl.clf()
-    for ii,knob in enumerate(['on_x','on_sep']):
+    for ii,(knob,scale) in enumerate(zip(['on_x','on_sep'],scales)):
        pl.subplot(2,3,1+ii*3)
-       self.plot_acb(1,knob,n1,n2,x=x)
-       self.plot_acb(2,knob,n1,n2,x=x)
-       self.plot_acb(3,knob,n1,n2,x=x)
+       pl.title('%s=%g'%(knob,scale))
+       self.plot_acb(1,knob,n1,n2,x=x,scale=scale)
+       self.plot_acb(2,knob,n1,n2,x=x,scale=scale)
+       self.plot_acb(3,knob,n1,n2,x=x,scale=scale)
+       pl.ylim(-100,100)
        pl.subplot(2,3,2+ii*3)
-       self.plot_acb(4,knob,n1,n2,x=x)
-       pl.ylim(-2.5,2.5)
+       pl.title('%s=%g'%(knob,scale))
+       self.plot_acb(4,knob,n1,n2,x=x,scale=scale)
+       pl.ylim(-100,100)
        pl.subplot(2,3,3+ii*3)
-       self.plot_acb(5,knob,n1,n2,x=x)
+       pl.title('%s=%g'%(knob,scale))
+       self.plot_acb(5,knob,n1,n2,x=x,scale=scale)
        if self.get_acb(6):
-         self.plot_acb(6,knob,n1,n2,x=x)
-       pl.ylim(-2.5,2.5)
+         self.plot_acb(6,knob,n1,n2,x=x,scale=scale)
+       pl.ylim(-100,100)
     pl.tight_layout()
     self.xvar=x
     return self

@@ -640,6 +640,7 @@ lglabel={
     'sigx':    r'$\sigma_x=\sqrt{\beta_x \epsilon}$',
     'sigy':    r'$\sigma_y=\sqrt{\beta_y \epsilon}$',
     'sigdx':    r'$\sigma_{D_x}=\sqrt{D_x \delta}$',
+    'n1':        r'Aperture [$\sigma$]',
     }
 
 axlabel={
@@ -656,6 +657,7 @@ axlabel={
     'sigx':     r'$\sigma$ [mm]',
     'sigy':     r'$\sigma$ [mm]',
     'sigdx':     r'$\sigma$ [mm]',
+    'n1':        r'Aperture [$\sigma$]',
     }
 
 
