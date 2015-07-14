@@ -6,3 +6,5 @@ import tfsdata
 from yaspdata import YASPData
 from aperture import BeamEnvelope,plot_ap
 import madlang
+
+from lhcopt import LHCopt
