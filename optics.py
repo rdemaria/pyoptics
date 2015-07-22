@@ -635,7 +635,7 @@ def _mylbl(d,x): return d.get(x,r'$%s$'%x)
 
 
 class qdplot(object):
-  self.lglabel={
+  lglabel={
       'betx':    r'$\beta_x$',
       'bety':    r'$\beta_y$',
       'dx':    r'$D_x [m]$',
