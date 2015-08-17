@@ -154,6 +154,7 @@ class BeamEnvelope(object):
       b=self.ap.aper_4[n]
       return rectellipse_to_polygon(0,0,h,v,a,b)
     else:
+      #x,y=interpolate_ap(self.apfiles[apertype],2)
       x,y=self.apfiles[apertype]
       return x,y
   def get_ap_defined(self):
@@ -166,22 +167,31 @@ class BeamEnvelope(object):
     sigx=sqrt(betx*self.emit_n/self.gamma)*self.bbeat
     sigy=sqrt(bety*self.emit_n/self.gamma)*self.bbeat
     return sigx,sigy
-  def get_halo_list(self,n):
+  def get_halo_list(self,n,ref=12):
     sigx,sigy=self.get_sigma(n)
     xtp,ytp=self.get_pos_tol(n,pm=1)
     xtn,ytn=self.get_pos_tol(n,pm=-1)
     xap,yap=self.get_aperture(n)
     halo=[]
-    for alf in range(0,360,45):
+    for alf in range(0,360,15):
       tmp=[]
       sig=sqrt((sigx*cos(alf*pi/180.))**2+(sigy*sin(alf*pi/180.))**2)
       for  x0,y0 in zip(np.r_[xtp,xtn],np.r_[ytp,ytn]):
         xp,yp,t1,t2,ii=intersect_ray_polygon(x0,y0,alf,xap,yap)
-        tmp.append([t1/sig,t1,x0,y0,xp,yp])
+        tmp.append([t1/sig,t1,x0,y0,xp,yp,t1-ref*sig])
       halo.append(sorted(tmp)[0]+[alf,sig])
     return halo
   def get_halo_min(self,n):
     return sorted(self.get_halo_list(n))[0]
+  def get_halo_min_m(self,n,ref):
+    out=[r[-3] for r in self.get_halo_list(n,ref=ref)]
+    return min(out)
+  def get_halo_min_name_m(self,name,ref):
+    out=[self.get_halo_min_m(n,ref) for n in self.get_n_name(name)]
+    return min(out)
+  def get_halo_min_name2(self,name):
+    out=[self.get_halo_min(n)[0] for n in self.get_n_name(name)]
+    return out
   def get_halo_name(self,name):
     return self.ap.n1[self.get_n_name(name)]
   def get_halo_min_name(self,name):
@@ -190,7 +200,7 @@ class BeamEnvelope(object):
     out=[]
     for n in self.get_ap_defined():
       if n>=n1 and n<=n2:
-        print  n,self.ap.name[n]
+        #print  n,self.ap.name[n]
         out.append([ n,self.ap.name[n],self.ap.s[n]]+self.get_halo_min(n))
     return out
   def plot_aperture(self,n,color='g',lbl='aperture'):
@@ -229,7 +239,7 @@ class BeamEnvelope(object):
     a=rtol+sr*sigx
     b=rtol+sr*sigy
     return racetrack_to_polygon(x,y,h,v,a,b)
-  def plot_halo(self,n,halor=13,halox=12,haloy=12,color='m',lbl='halo'):
+  def plot_halo(self,n,halor=12,halox=12,haloy=12,color='m',lbl='halo'):
     x,y=self.get_halo(n,halor,halox,haloy,1)
     pl.plot(x,y,color+'-')
     x,y=self.get_halo(n,halor,halox,haloy,-1)
@@ -328,9 +338,11 @@ def intersect_ray_segment(x0,y0,alpha,x1,y1,x2,y2):
   s=sin(alpha*pi/180)
   x1-=x0;x2-=x0; y1-=y0;y2-=y0
   det=s*(x2-x1)+c*(y1-y2)
-  t1=(x2*y1-x1*y2)/det
-  t2=(c*y1-s*x1)/det
-  return x0+c*t1,y0+s*t1,t1,t2
+  if det!=0:
+    t1=(x2*y1-x1*y2)/det
+    t2=(c*y1-s*x1)/det
+    if t2>=0 and t2<=1 and t1>=0:
+      return x0+c*t1,y0+s*t1,t1,t2
 
 def intersect_ray_polygon(x0,y0,alpha,x,y):
   """return interesection point between
@@ -339,10 +351,9 @@ def intersect_ray_polygon(x0,y0,alpha,x,y):
   for ii in range(len(x)-1):
     x1=x[ii]; y1=y[ii]
     x2=x[ii+1]; y2=y[ii+1]
-    xp,yp,t1,t2=intersect_ray_segment(x0,y0,alpha,x1,y1,x2,y2)
-    if t2>=0 and t2<=1 and t1>=0:
-      return xp,yp,t1,t2,ii
-  return None
+    res =intersect_ray_segment(x0,y0,alpha,x1,y1,x2,y2)
+    if res is not None:
+       return res+(ii,)
 
 def polygon_to_pmesh(x0,y0,alpha,x,y):
   """return interesection point between
@@ -369,6 +380,17 @@ def polygon_to_pmesh(x0,y0,alpha,x,y):
       if count>0:
         count+=1
   return xx,yy
+
+
+def interpolate_ap(ap,n=1):
+    out=[list(ap.T[0])]
+    tt=np.linspace(0,1,n+2)[1:-1]
+    for x,y in ap.T[1:]:
+      x0,y0=out[-1]
+      for t in tt:
+          out.append([x0+(x-x0)*t,y0+(y-y0)*t])
+      out.append([x,y])
+    return np.array(out).T
 
 
 
