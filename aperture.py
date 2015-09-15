@@ -21,7 +21,7 @@ def plot_ap(apfn="temp/ap_ir5b1.tfs",nlim=30,ref=12):
   return t,ap
 
 class BeamEnvelope(object):
-  def __init__(self,twiss,survey,ap,apfiles=None,offset=None):
+  def __init__(self,ap,twiss,survey,apfiles=None,offset=None):
     self.twiss=twiss
     self.survey=survey
     self.ap=ap
@@ -29,20 +29,31 @@ class BeamEnvelope(object):
     self.offset=offset
     self.energy=ap.param['energy']
     self.gamma=ap.param['gamma']
-    self.emit_n=ap.param['exn']
+    self.exn=ap.param['exn']
+    self.eyn=ap.param['eyn']
     self.bbeat=ap.param['beta_beating']
     self.deltap=ap.param['dp_bucket_size']
     self.co=ap.param['co_radius']
     self.d_arc=ap.param['dqf']*ap.param['paras_dx']
     self.b_arc=ap.param['betaqfx']
-    for k in self.apfiles:
-        idx=self.twiss.apertype==k
-        for name in self.twiss.name[idx]:
-            idx2=self.ap.name==name
-            self.ap.aper_1[idx2]=self.twiss.aper_1[idx][0]
-            self.ap.aper_2[idx2]=self.twiss.aper_2[idx][0]
-            self.ap.aper_3[idx2]=self.twiss.aper_3[idx][0]
-            self.ap.aper_4[idx2]=self.twiss.aper_4[idx][0]
+    self.halo_prim=ap.param['halo_prim']
+    self.halo_r=ap.param['halo_r']
+    self.halo_v=ap.param['halo_v']
+    self.halo_h=ap.param['halo_h']
+    # dependent quantities
+    self.beta=self.energy/ap.param['pc']
+    #for k in self.apfiles:
+    #    idx=self.twiss.apertype==k
+    #    for name in self.twiss.name[idx]:
+    #        idx2=self.ap.name==name
+    #        self.ap.aper_1[idx2]=self.twiss.aper_1[idx][0]
+    #        self.ap.aper_2[idx2]=self.twiss.aper_2[idx][0]
+    #        self.ap.aper_3[idx2]=self.twiss.aper_3[idx][0]
+    #        self.ap.aper_4[idx2]=self.twiss.aper_4[idx][0]
+  def get_ex(self):
+      return self.exn/self.gamma/self.beta
+  def get_ey(self):
+      return self.eyn/self.gamma/self.beta
   def plot_aper_sx(self,st='k'):
       ap=self.ap
       idx=(ap.aper_1>0)&(ap.aper_1<1)
@@ -67,9 +78,9 @@ class BeamEnvelope(object):
       pl.xlabel('s [m]')
   def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None):
       ap=self.ap
-      sig=sqrt(ap.betx*self.emit_n/self.gamma)[n1:n2]
+      sig=sqrt(ap.betx[n1:n2]*self.get_ex())
       if nsig==None:
-          nsig=ap.param['n1min']*ap.param['halo_h']/ap.param['halo_prim']
+          nsig=ap.param['n1min']*self.halo_h/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
       ss=ap.s[n1:n2]
       xx=ap.x[n1:n2]
@@ -79,9 +90,9 @@ class BeamEnvelope(object):
       pl.xlabel('s [m]')
   def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None):
     ap=self.ap
-    sig=sqrt(ap.bety*self.emit_n/self.gamma)[n1:n2]
+    sig=sqrt(ap.bety[n1:n2]*self.get_ey())
     if nsig==None:
-       nsig=ap.param['n1min']*ap.param['halo_v']/ap.param['halo_prim']
+       nsig=ap.param['n1min']*self.halo_v/self.halo_prim
     env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
     ss=ap.s[n1:n2]
     yy=ap.y[n1:n2]
@@ -111,8 +122,8 @@ class BeamEnvelope(object):
     xn=-z*st+x*ct
     cox=xn+ttt.x[idxa:idxb]
     coy=ttt.y[idxa:idxb]
-    emitx=self.ap.param['exn']/self.ap.param['gamma']
-    emity=self.ap.param['eyn']/self.ap.param['gamma']
+    emitx=self.exn/self.gamma
+    emity=self.eyn/self.gamma
     bx=sqrt(ttt.betx[idxa:idxb]*emitx)
     by=sqrt(ttt.bety[idxa:idxb]*emity)
     return zn,cox,coy,bx,by
@@ -136,7 +147,7 @@ class BeamEnvelope(object):
     return x,y,xtol,ytol,rtol+co+dx,rtol+co+dy
   def get_pos_tol(self,n,pm=1):
     x,y,xtol,ytol,rtolx,rtoly=self.get_pos_tol_spec(n,pm)
-    return racetrack_to_polygon(x,y,xtol,ytol,rtolx,rtoly)
+    return racetrack_to_polygon(x,y,xtol,ytol,rtolx,rtoly,9)
   def get_pos_btol(self,n,pm=1):
     x,y=self.get_pos_deltap(n,pm=pm)
     betx=self.ap.betx[n]
@@ -144,7 +155,7 @@ class BeamEnvelope(object):
     dx=self.bbeat*self.d_arc*self.deltap*sqrt(betx/self.b_arc)
     dy=self.bbeat*self.d_arc*self.deltap*sqrt(bety/self.b_arc)
     co=self.co
-    return racetrack_to_polygon(x,y,0,0,co+dx,co+dy)
+    return racetrack_to_polygon(x,y,0,0,co+dx,co+dy,9)
   def get_aperture(self,n):
     apertype=self.ap.apertype[n]
     if apertype=='RECTELLIPSE':
@@ -162,36 +173,66 @@ class BeamEnvelope(object):
     lst=[n for n,ap in enumerate(apt) if ap=='RECTELLIPSE' or ap in self.apfiles]
     return lst
   def get_sigma(self,n):
-    betx=self.ap.betx[n]
-    bety=self.ap.bety[n]
-    sigx=sqrt(betx*self.emit_n/self.gamma)*self.bbeat
-    sigy=sqrt(bety*self.emit_n/self.gamma)*self.bbeat
-    return sigx,sigy
-  def get_halo_list(self,n,ref=12):
+    return self.get_sigx(n),self.get_sigy(n)
+  def get_sigx(self,n):
+      betx=self.ap.betx[n]
+      return sqrt(betx*self.get_ex())*self.bbeat
+  def get_sigy(self,n):
+      bety=self.ap.bety[n]
+      return sqrt(bety*self.get_ey())*self.bbeat
+  def get_halo_list(self,n,ref=12,astep=45):
     sigx,sigy=self.get_sigma(n)
     xtp,ytp=self.get_pos_tol(n,pm=1)
     xtn,ytn=self.get_pos_tol(n,pm=-1)
     xap,yap=self.get_aperture(n)
     halo=[]
-    for alf in range(0,360,15):
+    for xd,yd in zip(*self.get_halo_prim(n)):
       tmp=[]
-      sig=sqrt((sigx*cos(alf*pi/180.))**2+(sigy*sin(alf*pi/180.))**2)
+      sig=sqrt(xd**2+yd**2)
+      alf2=arctan2(yd,xd)/pi*180
       for  x0,y0 in zip(np.r_[xtp,xtn],np.r_[ytp,ytn]):
-        xp,yp,t1,t2,ii=intersect_ray_polygon(x0,y0,alf,xap,yap)
+        xp,yp,t1,t2,ii=intersect_ray_polygon(x0,y0,alf2,xap,yap)
         tmp.append([t1/sig,t1,x0,y0,xp,yp,t1-ref*sig])
-      halo.append(sorted(tmp)[0]+[alf,sig])
+      halo.append(sorted(tmp)[0]+[alf2,sig])
     return halo
-  def get_halo_min(self,n):
-    return sorted(self.get_halo_list(n))[0]
-  def get_halo_min_m(self,n,ref):
-    out=[r[-3] for r in self.get_halo_list(n,ref=ref)]
+  def get_min_dist(self,n,ref=12):
+      xh,yh=self.get_halo(n,ref,ref,ref,0)
+      xa,ya=self.get_aperture(n)
+      xi=[];yi=[]
+      xo=[];yo=[]
+      for x,y in zip(xh,yh):
+         if point_inside_polygon(x,y,xa,ya):
+           xi.append(x); yi.append(y)
+         else:
+           xo.append(x); yo.append(y)
+      if len(xo)>0:
+         maxdist=0
+         for x,y in zip(xo,yo):
+           dist=distance_point_polygon(x,y,xa,ya)
+           if dist is not None and dist>maxdist:
+              maxdist=dist
+         return -maxdist
+      else:
+         mindist=inf
+         for x,y in zip(xi,yi):
+           dist=distance_point_polygon( x,y,xa,ya)
+           if mindist>dist:
+              mindist=dist
+         return mindist
+  def get_min_dist_name(self,name,ref=12):
+     out=[self.get_min_dist(n,ref) for n in self.get_n_name(name)]
+     return min(out)
+  def get_halo_min(self,n,astep=45):
+    return sorted(self.get_halo_list(n,astep=astep))[0]
+  def get_halo_min_m(self,n,ref=12):
+    out=[(r[0],r[-3]) for r in self.get_halo_list(n,ref=ref)]
     return min(out)
   def get_halo_min_name_m(self,name,ref):
     out=[self.get_halo_min_m(n,ref) for n in self.get_n_name(name)]
     return min(out)
   def get_halo_min_name2(self,name):
     out=[self.get_halo_min(n)[0] for n in self.get_n_name(name)]
-    return out
+    return min(out)
   def get_halo_name(self,name):
     return self.ap.n1[self.get_n_name(name)]
   def get_halo_min_name(self,name):
@@ -227,6 +268,16 @@ class BeamEnvelope(object):
       p,=pl.plot([x0,xp],[y0,yp],'r-')
     pl.title(self.ap.name[n])
     return p
+  def get_halo_prim(self,n):
+    hr=self.halo_r/self.halo_prim
+    hy=self.halo_v/self.halo_prim
+    hx=self.halo_h/self.halo_prim
+    sigx,sigy=self.get_sigma(n)
+    tmp=sqrt(2)*sqrt((hr - hx)*(hr - hy))
+    sh=hr-hy+tmp
+    sv=hr-hx+tmp
+    sr=hx+hy-hr-tmp
+    return racetrack_to_polygon(0,0,sh*sigx,sv*sigy,sr*sigx,sr*sigy)
   def get_halo(self,n,hr,hx,hy,pm=1):
     x,y,xtol,ytol,rtol,rtol=self.get_pos_tol_spec(n,pm)
     sigx,sigy=self.get_sigma(n)
@@ -238,7 +289,7 @@ class BeamEnvelope(object):
     v=ytol+sv*sigy
     a=rtol+sr*sigx
     b=rtol+sr*sigy
-    return racetrack_to_polygon(x,y,h,v,a,b)
+    return racetrack_to_polygon(x,y,h,v,a,b,9)
   def plot_halo(self,n,halor=12,halox=12,haloy=12,color='m',lbl='halo'):
     x,y=self.get_halo(n,halor,halox,haloy,1)
     pl.plot(x,y,color+'-')
@@ -290,11 +341,11 @@ class BeamEnvelope(object):
     pl.ylabel('y [mm]')
     pl.grid(True)
 
-def arc_to_polygon(a,b,t1,t2,steps=10):
+def arc_to_polygon(a,b,t1,t2,steps=9):
   t=np.linspace(t1,t2,steps)
   return a*cos(t),b*sin(t)
 
-def rectellipse_to_polygon(x0,y0,h,v,a,b,steps=10):
+def rectellipse_to_polygon(x0,y0,h,v,a,b,steps=9):
   arg1=h/float(a)
   if arg1>1:
     arg1=1;
@@ -312,7 +363,7 @@ def rectellipse_to_polygon(x0,y0,h,v,a,b,steps=10):
     yy=np.r_[y,  y[::-1], -y, -y[::-1], y[0]]
   return xx+x0,yy+y0
 
-def racetrack_to_polygon(x0,y0,h,v,a,b,steps=10):
+def racetrack_to_polygon(x0,y0,h,v,a,b,steps=9):
   x,y=arc_to_polygon(a,b,0,pi/2,steps=steps)
   xx=np.r_[x+h, -x[::-1]-h, -x-h,  x[::-1]+h, x[0]+h]
   yy=np.r_[y+v,  y[::-1]+v, -y-v, -y[::-1]-v, y[0]+v]
@@ -328,6 +379,62 @@ def octagon_to_polygon(x0,y0,hv,d):
   return xx+x0,yy+y0
 
 
+def distance_point_segment(x, y, x1, y1, x2, y2):
+    A = x - x1; B = y - y1; C = x2 - x1; D = y2 - y1;
+    dot = A * C + B * D;
+    len_sq = C**2 + D**2;
+    param=-1
+    if len_sq!=0:
+      param = dot / len_sq
+      if param<0:
+         xx = x1; yy = y1;
+      elif param >0:
+          xx = x2; yy = y2;
+      else:
+         xx = x1 + param * C;
+         yy = y1 + param * D;
+      return sqrt( (x-xx)**2+(y-yy)**2 )
+
+def distance_point_segment2(x, y, x1, y1, x2, y2):
+    A = x - x1; B = y - y1; C = x2 - x1; D = y2 - y1;
+    dot = A * C + B * D;
+    len_sq = C**2 + D**2;
+    param=-1
+    if len_sq!=0:
+      param = dot / len_sq
+      if param>=0 and param <=1:
+         xx = x1 + param * C;
+         yy = y1 + param * D;
+         return sqrt( (x-xx)**2+(y-yy)**2 )
+
+
+def distance_point_polygon(x, y,xp,yp):
+   x1=xp[0]; y1=yp[0]
+   mindist=inf
+   for x2,y2 in zip(xp[1:],yp[1:]):
+      dist=distance_point_segment2(x, y, x1, y1, x2, y2)
+      if dist is not None and dist<mindist:
+         mindist=dist
+      x1=x2;y1=y2
+   if mindist!=inf:
+     return mindist
+
+
+def point_inside_polygon(x,y,xp,yp):
+    n = len(xp)
+    inside =False
+    p1x=xp[0]; p1y=yp[0]
+    for i in range(n+1):
+        p2x=xp[i%n]; p2y=yp[i%n]
+        if y > min(p1y,p2y):
+            if y <= max(p1y,p2y):
+                if x <= max(p1x,p2x):
+                    if p1y != p2y:
+                        xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x,p1y = p2x,p2y
+    return inside
 
 
 def intersect_ray_segment(x0,y0,alpha,x1,y1,x2,y2):
