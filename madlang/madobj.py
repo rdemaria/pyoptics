@@ -94,13 +94,20 @@ class Elem(object):
      self._ns=obj
   def __contains__(self,k):
       return k in self._data
-  def __getattr__(self,k):
-    if k.startswith('_'):
-       return object.__getattribute__(self,k)
-    elif k in self._data:
+  def __getattribute__(self,k):
+      if k.startswith('_'):
+         return object.__getattribute__(self,k)
+      elif k in self._data:
         return self[k]
-    else:
-      raise AttributeError('%s missing in %s'%(k,self))
+      else:
+        return object.__getattribute__(self,k)
+#    print k, k in self.__class__.__dict__
+#    if k in self.__class__.__dict__ or k.startswith('_'):
+#       return object.__getattribute__(self,k)
+#    elif k in self._data:
+#        return self[k]
+#    else:
+#      raise AttributeError('%s missing in %s'%(k,self))
   def __setattr__(self,k,v):
     if k.startswith('_'):
         self.__dict__[k]=v

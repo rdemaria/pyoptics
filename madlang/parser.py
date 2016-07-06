@@ -43,7 +43,7 @@ def parse_element(st):
     name,proto,attrlist=res[0],res[2],res[3]
     value=[]
     res=['element',value]
-    value.append(['proto',proto])
+    value.append(proto)
     if attrlist:
       for i in parse_attr(attrlist):
         attr=parse_variable(i)
