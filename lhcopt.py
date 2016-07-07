@@ -19,28 +19,31 @@ class Scenarios(object):
 
 class Scenario(object):
   beam_data=['p','E','N<sub>b</sub>','k<sub>b</sub>','&epsilon;']
-  beam_data_unit=['','GeV','10<sup>11</sup>','','&mu;rad']
+  beam_data_unit_tmp=['','GeV','10<sup>%d</sup>','','&mu;m']
   ip_data=['&beta;<sub>x</sub>', '&beta;<sub>y</sub>',
            'x', 'y',
-           'p<sub>x</sub>', 'p<sub>y</sub>',
-           'exp.']
-  ip_data_unit=['m','m','mm', 'mm', '&mu;rad', '&mu;rad','']
+           'p<sub>x</sub>', 'p<sub>y</sub>']
+  ip_data_unit=['m','m','mm', 'mm', '&mu;rad', '&mu;rad']
   ip_names=['ip1','ip2','ip5','ip8']
   def __init__(self,name,**data):
     self.name=name
     self.__dict__.update(data)
+    self.beam_data_unit=Scenario.beam_data_unit_tmp[:]
+    self.beam_data_unit[2]=self.beam_data_unit_tmp[2]%(self.npart_unit)
     for cname,cdata in self.confs.items():
       Configuration._instances[(name,cname)]=cdata
     for cname,cdata in self.confs.items():
-      self.confs[cname]=Configuration(name=cname,scenario=name,**cdata)
+      self.confs[cname]=Configuration(name=cname,scenario=name,scn=self,**cdata)
       setattr(self,cname, self.confs[cname])
+
 
 class Configuration(object):
   selection=['LHC', 'IR1', 'Arc12', 'IR2', 'Arc23', 'IR3', 'Arc34',
                     'IR4', 'Arc45', 'IR5', 'Arc56', 'IR6', 'Arc67',
                     'IR7', 'Arc78', 'IR8', 'Arc81']
   _instances={}
-  pmass={'p':0.938272046}
+  pdata={'p'  :(0.931494061,1), #GeV,charge
+         'Pb' : (193.68715,82)}  #GeV,charge
   def __init__(self,**data):
     scenario=data['scenario']
     if 'template' in data:
@@ -53,14 +56,20 @@ class Configuration(object):
       part2,self.nrj2,self.np2,self.nb2,self.emit_n2=self.settings['beam2']
       if part1=='p':
         self.part1='proton'
+      else:
+        self.part1='ion'
       if part2=='p':
         self.part2='proton'
-      self.pmass1=self.pmass[part1]
-      self.pmass2=self.pmass[part2]
+      else:
+        self.part2='ion'
+      self.part1_web=part1
+      self.part2_web=part2
+      self.pmass1,self.charge1=self.pdata[part1]
+      self.pmass2,self.charge2=self.pdata[part2]
       self.emit1=self.emit_n1/self.nrj1*self.pmass1
       self.emit2=self.emit_n2/self.nrj2*self.pmass2
-      self.np1_web=float(self.np1)/1e11
-      self.np2_web=float(self.np2)/1e11
+      self.np1_web=float(self.np1)/10**self.scn.npart_unit
+      self.np2_web=float(self.np2)/10**self.scn.npart_unit
       self.emit_n1_web=self.emit_n1*1e6
       self.emit_n2_web=self.emit_n2*1e6
   def get_conf_dir(self):
@@ -74,9 +83,12 @@ class Configuration(object):
       t=optics.open(self.get_twiss_fn(b12))
       for nn,ipn in enumerate([1,2,5,8]):
         print get_ip_data(t,ipn)
-        exp=self.settings['exp'][nn]
-        self.settings['ip%sb%s'%(ipn,b12)]=get_ip_data(t,ipn)+[exp]
+        #exp=self.settings['exp'][nn]
+        #self.settings['ip%sb%s'%(ipn,b12)]=get_ip_data(t,ipn)+[exp]
+        self.settings['ip%sb%s'%(ipn,b12)]=get_ip_data(t,ipn)
     return self
+
+
 
 
 def get_ip_data(t,n):
@@ -101,11 +113,11 @@ LHCopt=None
 basedir='/afs/cern.ch/work/l/lhcopt/public/lhc_optics_web/www'
 datafn=os.path.join(basedir,'data.json')
 if os.path.exists(datafn):
-    try:
+    #try:
       import simplejson
       data=simplejson.load(open(datafn))
       LHCopt=Scenarios(data)
-    except:
-      pass
+    #except:
+    #  pass
 
 
