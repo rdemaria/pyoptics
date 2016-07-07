@@ -8,7 +8,7 @@ from numpy import array,dtype
 
 
 from view import view
-from expr import expr
+from expr import expr, expr_list
 
 
 comment=[re.compile(r"//.*"),
@@ -100,20 +100,18 @@ class madelem(view):
     return self
   def __setitem__(self,k,v):
     self._data[k]=v
-    if isinstance(v,expr):
-      v.lcl=self._lcl
-    elif hasattr(v,'_bind'):
-      v._bind(self,k)
+    if hasattr(v,'_bind'):
+      v._bind(self._lcl,k)
+  def to_dict(self):
+    return dict( [ (n,getattr(self,n)) for n in self._data])
 
 basenames=['hkicker', 'vkicker', 'ecollimator', 'instrument',
  'kicker', 'marker', 'monitor', 'multipole', 'octupole',
  'quadrupole', 'rbend', 'sbend', 'rcollimator', 'rfcavity',
- 'sextupole', 'solenoid','tkicker','placeholder']
-for i in basenames:
-  base[i]=madelem(name=i,elemclass=i)
+ 'sextupole', 'solenoid','tkicker','placeholder','drift',
+ 'vmonitor','hmonitor','beam']
 
-
-
+basemad=view(dict([ (i,madelem(name=i,elemclass=i)) for i in basenames]))
 
 seqdata=namedtuple('seqdata','position element at From sequence')
 
@@ -164,6 +162,11 @@ class sequence(madelem):
     else:
       end=-1
     return [i.element for i in self._elements[start:end]]
+  def get_element_flat(self):
+      out=[]
+      for el in self._elements:
+          out.append(el)
+      return out
   def startpos(self,data):
     if self.refer=='centre':
       position=data.at-data.element.l/2.
@@ -191,7 +194,8 @@ def open(fn):
 
 def fromast(ast,root=None,lcl=None,special=[],name='mad'):
   if root is None:
-    root=madelem(name=name)
+    root=madelem(name=name,proto=basemad)
+    root.beam=madelem('beam',view({}))
   if lcl is None:
     lcl=root
   current_seq=None
@@ -239,7 +243,7 @@ def fromast(ast,root=None,lcl=None,special=[],name='mad'):
           ne=madelem(name,proto)
         setattr(root,name,ne)
         ne._parent=root
-        fromast(value[1:],root=ne,lcl=lcl,special=['refer','From','apertype'])
+        fromast(value[1:],root=root,lcl=lcl,special=['refer','From'])
         if current_seq is not None and current_seq is not ne:
           current_seq._append(ne)
   return root
@@ -275,7 +279,8 @@ def mkexpr(value):
     value=pyname(value)
     value=expr(value)
   elif type(value) is list:
-    value=mkexpr(repr(value))
+    value=[pyname(v) for v in value]
+    value=expr_list(value)
   return value
 
 

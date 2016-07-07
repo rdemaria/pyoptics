@@ -55,6 +55,33 @@ class Actor(object):
     return 'Actor(%s,%s,%s)' % (self.message,self.method,self.target)
 
 
+def get_attrs(obj):
+     import types
+     if not hasattr(obj, '__dict__'):
+         return []  # slots only
+     if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
+         raise TypeError("%s.__dict__ is not a dictionary"
+                         "" % obj.__name__)
+     return obj.__dict__.keys()
+
+def dir2(obj):
+    attrs = set()
+    if not hasattr(obj, '__bases__'):
+        # obj is an instance
+        if not hasattr(obj, '__class__'):
+            # slots
+            return sorted(get_attrs(obj))
+        klass = obj.__class__
+        attrs.update(get_attrs(klass))
+    else:
+        # obj is a class
+        klass = obj
+    for cls in klass.__bases__:
+        attrs.update(get_attrs(cls))
+        attrs.update(dir2(cls))
+    attrs.update(get_attrs(obj))
+    return list(attrs)
+
 class view(object):
   """ Generic data user interface"""
   _objectified=True
@@ -115,13 +142,15 @@ class view(object):
     if self._objectified:
       out=self._keys()
       for i in self._proto:
-        out.extend(i._getAttributeNames())
+        out.extend(i.__dir__())
     else:
       out=[]
-    out.extend(dir(self))
+    #out.extend(dir(self))
     return out
-#  def __dir__(self):
-#    return self._getAttributeNames()
+  def __dir__(self):
+    out=self._getAttributeNames()
+    out.extend(dir2(self))
+    return out
   def __getattribute__(self,k):
     if k.startswith('_'):
       return object.__getattribute__(self,k)

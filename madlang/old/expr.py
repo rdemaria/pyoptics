@@ -25,7 +25,7 @@ class expr(object):
     return self
   def _get(self,obj=None,k=None):
     try:
-      return eval(self.expr,self.gbl,self.lcl)
+       return eval(self.expr,self.gbl,self.lcl)
     except NameError, msg:
       print msg
       print "Expr: error in %s"%(self.expr.co_filename)
@@ -46,11 +46,49 @@ class expr(object):
     return '%s%s%s' % (exp,unit,desc)
 
 
+class expr_list(object):
+  __slots__=('expr','lcl','gbl','unit','desc','name')
+  def __init__(self,exprl,unit=None,desc=None,lcl=Empty,gbl=globals()):
+    self.expr=[ expr(ex,unit,desc,lcl,gbl) for ex in exprl]
+    self.desc=desc
+    self.unit=unit
+    self.gbl=gbl
+    self.lcl=lcl
+  def _bind(self,obj,name):
+    self.name=name
+    self.lcl=obj
+    for ex in self.expr:
+        ex._bind(obj,name)
+    return self
+  def _get(self,obj=None,k=None):
+    try:
+      return [ex._get() for ex in self.expr]
+    except NameError, msg:
+      print msg
+      print "Expr: error in %s"%(self)
+      return 0
+  def __repr__(self):
+    #typ=self.__class__.__name__
+    exp=','.join((map(repr,self.expr)))
+    return '[%s]' % exp
+  def __str__(self):
+    typ=self.__class__.__name__
+    exp=repr(self)
+    lcl=str(self.lcl)
+    unit=desc=""
+    if self.unit:
+      unit=' %s' % repr(self.unit)
+    if self.desc:
+      desc=' %s' % repr(self.desc)
+    return '%s%s%s' % (exp,unit,desc)
+
+
+
 
 
 from view import view
 
-def expr_list(data,proto):
+def parse_expr(data,proto):
   self=view()
   self._proto=[proto]
   for i in data.split('\n'):
