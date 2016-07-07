@@ -253,7 +253,7 @@ class Sequence(Elem):
                        l=elem.lrad,hxl=0,hyl=elem.kick,rel=0)
           out.append((elem._name,ne))
       elif elem.keyword in ['rfcavity']:
-          nvolt=elem.volt/self['beam'].energy/1000
+          nvolt=elem.volt/self['beam'].pc/1000
           ne=cav(vn=nvolt,f=elem.freq*1e6,lag=elem.lag*360,scav=-1)
           out.append((elem._name,ne))
       else:
