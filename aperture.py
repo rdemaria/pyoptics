@@ -21,6 +21,12 @@ def plot_ap(apfn="temp/ap_ir5b1.tfs",nlim=30,ref=12):
   return t,ap
 
 class BeamEnvelope(object):
+  @classmethod
+  def from_apname(cls,apname="twiss/ap_ir5b1.tfs"):
+      ap=optics.open(apname)
+      twiss=optics.open(apname.replace('ap_','twiss_'))
+      survey=optics.open(apname.replace('ap_','survey_'))
+      return cls(ap,twiss,survey)
   def __init__(self,ap,twiss,survey,apfiles=None,offset=None):
     self.twiss=twiss
     self.survey=survey
@@ -54,29 +60,69 @@ class BeamEnvelope(object):
       return self.exn/self.gamma/self.beta
   def get_ey(self):
       return self.eyn/self.gamma/self.beta
-  def plot_aper_sx(self,st='k'):
+  def get_survey(self,ref='IP5'):
+      idx=where(self.survey//ref)[0][0]
+      theta0=self.survey.theta[idx]
+      c0=cos(theta0);s0=sin(theta0)
+      x0=self.survey.x[idx]
+      y0=self.survey.y[idx]
+      z0=self.survey.z[idx]
+      print theta0,c0,s0
+      xx=self.survey.x-x0
+      yy=self.survey.y-y0
+      zz=self.survey.z-z0
+      xxx=xx*c0-zz*s0;
+      zzz=xx*s0+zz*c0;
+      return xxx,yy,zzz
+  def get_co_survey(self,ref):
+      s=self.survey
+      vro = array([s.x[i],s.y[i],s.z[i]])
+      theta,phi,psi = s.theta[i],s.phi[i],s.psi[i]
+      x,y= t.x[i],t.y[i]
+      thetam=array([[cos(theta) ,           0,sin(theta)],
+           [          0,           1,         0],
+           [-sin(theta),           0,cos(theta)]])
+      phim=  array([[          1,          0,          0],
+          [          0,cos(phi)   ,   sin(phi)],
+          [          0,-sin(phi)  ,   cos(phi)]])
+      psim=  array([[   cos(psi),  -sin(psi),          0],
+          [   sin(psi),   cos(psi),          0],
+          [          0,          0,          1]])
+      wm=dot(thetam,dot(phim,psim))
+      ex=dot(wm,array([1,0,0]))
+      ey=dot(wm,array([0,1,0]))
+      self.co[i]=vro+x * ex + y * ey
+  def plot_aper_sx(self,st='k',ref=None):
       ap=self.ap
       idx=(ap.aper_1>0)&(ap.aper_1<1)
       lim=ap.aper_1[idx]
       lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
+      if ref is not None:
+          xx,yy,zz=self.get_survey(ref=ref)
+          lim+=xx[idx]
+          lim2+=xx[idx]
       pl.plot(ap.s[idx],lim,st)
       pl.plot(ap.s[idx],lim2,st)
       pl.plot(ap.s[idx],-lim,st)
       pl.plot(ap.s[idx],-lim2,st)
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
-  def plot_aper_sy(self,st='k'):
+  def plot_aper_sy(self,st='k',ref=None):
       ap=self.ap
       idx=(ap.aper_2>0)&(ap.aper_2<1)
       lim=ap.aper_2[idx]
       lim2=ap.aper_2[idx]-ap.rtol[idx]-ap.ytol[idx]
+      if ref is not None:
+          xx,yy,zz=self.get_survey(ref=ref)
+          lim+=yy[idx]
+          lim2+=yy[idx]
       pl.plot(ap.s[idx],lim,st)
       pl.plot(ap.s[idx],lim2,st)
       pl.plot(ap.s[idx],-lim,st)
       pl.plot(ap.s[idx],-lim2,st)
       pl.ylabel('y [m]')
       pl.xlabel('s [m]')
-  def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None):
+  def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None,ref=None):
       ap=self.ap
       sig=sqrt(ap.betx[n1:n2]*self.get_ex())
       if nsig==None:
@@ -84,11 +130,14 @@ class BeamEnvelope(object):
       env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
       ss=ap.s[n1:n2]
       xx=ap.x[n1:n2]
+      if ref is not None:
+          xxx,yyy,zzz=self.get_survey(ref=ref)
+          xx+=xxx
       pl.fill_between(ss,xx+env,xx-env,color=color,alpha=0.2)
       pl.fill_between(ss,xx+sig,xx-sig,color=color,alpha=0.5)
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
-  def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None):
+  def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None,ref=None):
     ap=self.ap
     sig=sqrt(ap.bety[n1:n2]*self.get_ey())
     if nsig==None:
@@ -96,6 +145,9 @@ class BeamEnvelope(object):
     env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
     ss=ap.s[n1:n2]
     yy=ap.y[n1:n2]
+    if ref is not None:
+          xxx,yyy,zzz=self.get_survey(ref=ref)
+          yy+=yyy
     pl.fill_between(ss,yy+env,yy-env,color=color,alpha=0.2)
     pl.fill_between(ss,yy+sig,yy-sig,color=color,alpha=0.5)
     pl.ylabel('y [m]')
@@ -164,6 +216,15 @@ class BeamEnvelope(object):
       a=self.ap.aper_3[n]
       b=self.ap.aper_4[n]
       return rectellipse_to_polygon(0,0,h,v,a,b)
+    elif apertype=='CIRCLE':
+      a=self.ap.aper_1[n]
+      return rectellipse_to_polygon(0,0,a,a,a,a)
+    elif apertype=='RACETRACK':
+      h=self.ap.aper_1[n]
+      v=self.ap.aper_2[n]
+      a=self.ap.aper_3[n]
+      b=self.ap.aper_4[n]
+      return racetrack_to_polygon(0,0,h,v,a,b)
     else:
       #x,y=interpolate_ap(self.apfiles[apertype],2)
       x,y=self.apfiles[apertype]
@@ -302,13 +363,15 @@ class BeamEnvelope(object):
     #self.twiss.plotap(self.ap,nlim=nlim)
     t=self.twiss
     ap=self.ap
-    tlt=os.path.split(t.filename)[1].split('.')[0].split('_')[1]
     t.ss=ap.s
     t.n1=ap.n1
     t.plot(x='ss',yl='n1')
     t._plot.figure.gca().set_ylim(0,nlim)
     pl.plot(t.ss,t.ss*0+ref)
     t._plot.figure.canvas.draw()
+    if hasattr(t,'filename'):
+      tlt=os.path.split(t.filename)[1].split('.')[0].split('_')[1]
+    return self
   def get_n1_name(self,name):
     idx=np.where(self.ap//name)[0]
     ap=self.ap
@@ -324,10 +387,12 @@ class BeamEnvelope(object):
           lbl=None
           lblap=None
       if n1 is None:
-        nv=self.ap.n1[n]
+        n1=self.ap.n1[n]
+      if hasattr(n1,'__len__'):
+           nv1,nv2,nv3=n1
       else:
-        nv=n1
-      self.plot_halo(n,nv,nv,nv,color=color,lbl=lbl)
+           nv1,nv2,nv3=n1,n1,n1
+      self.plot_halo(n,nv1,nv2,nv3,color=color,lbl=lbl)
       self.plot_aperture(n,color='k',lbl=lblap)
       self.plot_pos_tol(n,color=color,lbl=None)
       self.plot_pos_btol(n,color=color,lbl=None)
