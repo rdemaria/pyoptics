@@ -36,7 +36,11 @@ def poly_val(p,x):
   return sum([p[i]*x**i for i in range(len(p))],axis=0)
 
 def poly_print(p,x='x',power='**',mul='*'):
-  res=['%+.10e%s%s%s%d'%(p[i],mul,x,power,i) for  i in range(len(p))]
+  res=['%.10e'%p[0]]
+  if len(p)>1:
+      res.append('%+.10e%s%s'%(p[1],mul,x))
+  for i in range(2,len(p)):
+      res.append('%+.10e%s%s%s%d'%(p[i],mul,x,power,i))
   return ''.join(res)
 
 def poly_fit(N,xdata,ydata,x0=[],y0=[],xp0=[],yp0=[],xpp0=[],ypp0=[]):
@@ -51,9 +55,10 @@ def poly_fit(N,xdata,ydata,x0=[],y0=[],xp0=[],yp0=[],xpp0=[],ypp0=[]):
   return p
 
 if __name__=='__main__':
+ from matplotlib.pyplot import *
  x=linspace(0,1.0,101)
  p=array([2,3,-8,5])
- y=pol_val(p,x)
+ y=poly_val(p,x)
  n=.02*sin(2*pi*8*x)
  N=len(p)-1
  clf()

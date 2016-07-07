@@ -52,7 +52,7 @@ class StrTable(dataobj):
   def get_triplet(self):
     return self.get_vars('kqx\.r[2815]|kt?qx[123].*r[15]')
   def plot_triplet(self,n1,n2,x=None):
-    scale=StrTable.scale
+    scale=self.scale
     if x is None:
       xv=arange(len(self[self.keys()[0]][n1:n2]))
     else:
@@ -64,8 +64,10 @@ class StrTable(dataobj):
     if x is not None:
       pl.xlabel(x)
     pl.ylabel('k [T/m]')
+    a,b=pl.xticks()
+    pl.xticks(a[::2])
   def plot_2in1(self,kq,n1,n2,x=None,sign=False,ylab='k [T/m]'):
-    scale=StrTable.scale
+    scale=self.scale
     if x is None:
       xv=arange(len(self[self.keys()[0]][n1:n2]))
     else:
@@ -80,6 +82,8 @@ class StrTable(dataobj):
     if x is not None:
       pl.xlabel(x)
     pl.ylabel(ylab)
+    a,b=pl.xticks()
+    pl.xticks(a[::2])
   def plot_ipbeta(self,n1=None,n2=None,x=None):
     if x is None:
       xv=arange(len(self[self.keys()[0]][n1:n2]))
@@ -106,6 +110,8 @@ class StrTable(dataobj):
     if x is not None:
       pl.xlabel(x)
     pl.ylabel(r'mu [2$\pi$]')
+    a,b=pl.xticks()
+    pl.xticks(a[::2])
   def plot_squeeze(self,n1=0,n2=None,x=None):
     fig=pl.figure('squeeze',figsize=(16,12))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
@@ -121,9 +127,10 @@ class StrTable(dataobj):
       if len(self.get_kq(n))>0:
         pl.subplot(3,4,n-2)
         self.plot_2in1(n,n1,n2,x=x,sign=True)
-    #pl.subplot(3,4,12)
+    pl.subplot(3,4,12)
     #self.plot_ipbeta(n1,n2,x=x)
-    pl.tight_layout()
+    self.plot_phase(n1,n2,x=x)
+    #pl.tight_layout()
     self.xvar=x
     return self
   def plot_betsqueeze(self,n1=0,n2=None,figname=None):
@@ -183,8 +190,10 @@ class StrTable(dataobj):
     print tmp%(name,t[name][n1],par,t[name][n2],par)
   def button_press(self,event):
     self.event=event
-  def poly_fit(self,var,order,n1=None,n2=None,param="betxip8b1",slope0=[]):
-    scale=StrTable.scale
+  def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[]):
+    if param is None:
+        param=[k for k in self.keys() if k.startswith('betx')][0]
+    scale=self.scale
     x=self[param][n1:n2]; y=self[var][n1:n2]
     x0=[x[0],x[-1]]
     y0=[y[0],y[-1]]
@@ -194,28 +203,29 @@ class StrTable(dataobj):
         yp0.append(0)
     pol=poly_fit(order,x,y,x0,y0,xp0,yp0)
     out="%s:=%s;"%(var, poly_print(pol,x=param,power='^'))
-    n=re.match('[kqtxl]+([0-9]+)\.',var)
-    if n is None:
-        if re.match('kqt?x\.',var):
-            n=3
-        else:
-            n=14;scale=1
+    if re.match('kqt?x[0-9]?[ab]?\.',var):
+        n=3
     else:
-        n=int(n.groups()[0])
+      n=re.match('[kqtxl]+([0-9]+)\.',var)
+      if n is None:
+         n=14;scale=1
+      else:
+         n=int(n.groups()[0])
     pl.subplot(3,4,n-2)
-    yv=poly_val(pol,x)
-    print ' '.join(['%2d'%i for i in  sign(diff(yv))])
+    xv=self[param]
+    yv=poly_val(pol,xv)
+    print '!',' '.join(['%2d'%i for i in  sign(diff(yv))])
     if n<11:
         yv=abs(yv)
-    pl.plot(self[self.xvar],yv*scale)
+    pl.plot(xv,yv*scale)
     return out
-  def poly_fit_all(self,order,param,fn):
+  def poly_fit_all(self,order,param,fn,n1=None,n2=None):
     out=[]
-    for kq in self.get_triplet():
-        out.append(self.poly_fit(kq,order,param=param))
+#    for kq in self.get_triplet():
+#        out.append(self.poly_fit(kq,order,param=param))
     for n in range(4,14):
         for kq in self.get_kq(n):
-            out.append(self.poly_fit(kq,order,param=param))
+            out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
     open(fn,'w').write('\n'.join(out))
   def check_slopes(self):
     for kq in range(4,14):

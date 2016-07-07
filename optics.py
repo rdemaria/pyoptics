@@ -126,7 +126,11 @@ class optics(dataobj):
     for i,name in enumerate(name):
       data=[i] + map(lambda x: self[x][i],fields)
       setattr(self.idx,name,infot(*data))
-
+  def get_idx(self,name=None,count=0):
+    if type(name) is str:
+       return where(self.name==name.upper())[0][count]
+    else:
+       return count
   def pattern(self,regexp):
     c=re.compile(regexp,flags=re.IGNORECASE)
     out=[c.search(n) is not None for i,n in enumerate(self.name)]
@@ -268,10 +272,13 @@ class optics(dataobj):
     self._plot=_p.gcf()
     return t
 
-  def plotap(t,ap=None,nlim=30,ref=7,newfig=True,**nargs):
+  def plotap(t,ap=None,nlim=30,ref=7,newfig=True,eref=None,**nargs):
     if ap is None:
         apfn=t.filename.replace('twiss','ap')
         ap=optics.open(apfn)
+    if eref is not None:
+       ap.s-=ap.s[ap//eref]
+       t.s-=t.s[t//eref]
     t.ss=ap.s
     t.n1=ap.n1
     t=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
