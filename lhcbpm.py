@@ -23,8 +23,7 @@ class LHCBPM(object):
         else:
             self.xbpm=xdata.reshape(self.nbpms,self.bunches,self.turns)
             self.ybpm=ydata.reshape(self.nbpms,self.bunches,self.turns)
-
-        self.dt=sdds.data[0]['acqStamp']/1e9
+        self.dt=sdds.data[0]['acqStamp'][0]/1e9
         self.date=dumpdate(self.dt)
         self.sdds=sdds
         if 'B2' in self.bpms[0]:
@@ -32,8 +31,7 @@ class LHCBPM(object):
         elif 'B1' in self.bpms[0]:
             self.beam=1
         #print self.nbpms,self.bunches,self.turns
-    f()
-    ef __repr__(self):
+    def __repr__(self):
         return "<LHCBPM Beam%d %db %s>"%(self.beam,self.bunches,self.date)
     def get_xy(self,bpm,bunch):
         return self.xbpm[bpm,bunch,:],self.ybpm[bpm,bunch,:]
@@ -89,7 +87,7 @@ class LHCBPM(object):
         return self
     def plot_tunes(self,tune_fit=maxharm_brent):
         for b in range(self.bunches):
-            tunex,tuney=self.get_tune_b(b)
+            tunex,tuney=self.get_tunes_bunch(b)
             qx,ax,px,rx=zip(*tunex)
             qy,ay,py,ry=zip(*tuney)
             plot(qx,qy,'.')
@@ -102,7 +100,7 @@ class LHCBPM(object):
             cc=fit_coupled_lsq2(xx,yy)
             out.append([b,p]+list(cc))
         return out
-    def get_tunes_bunch(self,bunch,tune_fit=maxharm_brent):
+    def get_tunes_bunch(self,bunch,tune_fit=maxharm_brent,turns=None):
         qx=[];qy=[]
         x=self.xbpm;y=self.ybpm
         bpms,bunches,turns=x.shape
@@ -111,6 +109,7 @@ class LHCBPM(object):
             if xx[0]==0 and yy[0]==0:
                 xx=xx[1:];yy=yy[1:]
             #if sum(xx**2)>0:
+            xx=xx[:turns];yy=yy[:turns];
             qx.append(tune_fit(xx-xx.mean()))
             #if sum(yy**2)>0:
             qy.append(tune_fit(yy-yy.mean()))
@@ -138,10 +137,10 @@ class LHCBPM(object):
         ylabel('Vertical tune')
         xlabel('Amplitude [a.u]')
         return self
-    def get_tune_stats(self,tune_fit=maxharm_brent,tunecut=0.03):
+    def get_tune_stats(self,tune_fit=maxharm_brent,tunecut=0.03,turns=None):
         qqx=[];qqy=[];qqxs=[];qqys=[]
         for bb in range(self.bunches):
-          fitx,fity=self.get_tunes_bunch(bb,tune_fit=tune_fit)
+          fitx,fity=self.get_tunes_bunch(bb,tune_fit=tune_fit,turns=turns)
           qx,ax,px,rx=fitx.T
           qy,ay,py,ry=fity.T
           if len(qx)>0:
@@ -184,8 +183,8 @@ class LHCBPM(object):
           qqy.append(qym)
           qqys.append(qys)
         return array([qqx,qqy,qqxs,qqys])
-    def plot_tune_stats(self,tune_fit=maxharm_brent,tunecut=0.03):
-        qqx,qqy,qqxs,qqys=self.get_tune_stats(tune_fit,tunecut)
+    def plot_tune_stats(self,tune_fit=maxharm_brent,tunecut=0.03,turns=None):
+        qqx,qqy,qqxs,qqys=self.get_tune_stats(tune_fit,tunecut,turns=turns)
         figure(figsize=(12,4))
         #suptitle("%s"%(self.date),fontsize=18)
         s1=subplot(121)
