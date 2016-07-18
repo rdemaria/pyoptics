@@ -6,12 +6,19 @@ import ast
 def get_names(expr):
     tree=ast.parse(expr)
     out=[]
+    toremove=[]
     for node in ast.walk(tree):
         if type(node) is ast.Attribute:
-           out.append([node.value.id,a.attr])
+           name=_get_names(node.value).pop()
+           out.append('.'.join([name,node.attr]))
+           toremove.append(name)
         elif type(node) is ast.Name:
            out.append(node.id)
-    return names
+    for name in toremove:
+       out.remove(name)
+    return set(out)
+
+
 
 
 class ExprUndefined(Exception):
@@ -50,11 +57,11 @@ class Elem(object):
   gbl={}
   def __init__(self,name=None,parent=None,**kwargs):
     self._data={}
-    self._name=name
+    self.name=name
     self._ns=Elem.gbl
     self._parent=None
     if parent is not None:
-        self._parent=parent._name
+        self._parent=parent.name
         self._data.update(parent._data)
     self._data.update(kwargs)
   def __repr__(self):
@@ -70,7 +77,7 @@ class Elem(object):
         data='%d objects'%len(self._data)
     if self._parent is not None:
         data='%s,%s'%(self._parent,data)
-    tmp="<%s: %s>"%(self._name,data)
+    tmp="<%s: %s>"%(self.name,data)
     return tmp
   def __getitem__(self,k,opt=None):
     try:
@@ -97,10 +104,11 @@ class Elem(object):
   def __getattribute__(self,k):
       if k.startswith('_'):
          return object.__getattribute__(self,k)
-      elif k in self._data:
-        return self[k]
       else:
-        return object.__getattribute__(self,k)
+        try:
+          return self[k]
+        except KeyError:
+          return object.__getattribute__(self,k)
 #    print k, k in self.__class__.__dict__
 #    if k in self.__class__.__dict__ or k.startswith('_'):
 #       return object.__getattribute__(self,k)
@@ -161,7 +169,9 @@ class Expr(object):
     try:
          return eval(self.expr,gbl,lcl)
     except NameError as e:
-        return ExprUndefined(e.message)
+        print("Warning %r undefined"%(self))
+        #return ExprUndefined(e.message)
+        return 0
   def __repr__(self):
       return "Expr(%r)"%(self.expr.co_filename)
   def get_names(self,ix=None):
@@ -223,7 +233,10 @@ class Sequence(Elem):
     lasts=0
     drifts={}
     for el in self.elems:
-      elem=self[el._name]
+        if el.From is None:
+          pos[el.name]=el.at
+    for el in self.elems:
+      elem=self[el.name]
       s=el.at
       if el.From is not None:
           s+=pos[el.From]
@@ -239,25 +252,25 @@ class Sequence(Elem):
       if elem.keyword=='multipole':
           ne=mult(knl=elem.knl, ksl=elem.ksl,
                   l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0],rel=0)
-          out.append((elem._name,ne))
+          out.append((elem.name,ne))
       elif elem.keyword in ['marker','hmonitor','vmonitor','instrument',
                             'monitor','rcollimator']:
           ne=drift(l=0)
-          out.append((elem._name,ne))
+          out.append((elem.name,ne))
       elif elem.keyword in ['hkicker']:
           ne=mult(knl=[-elem.kick],ksl=[],
                        l=elem.lrad,hxl=elem.kick,hyl=0,rel=0)
-          out.append((elem._name,ne))
+          out.append((elem.name,ne))
       elif elem.keyword in ['vkicker']:
           ne=mult(knl=[],ksl=[elem.kick],
                        l=elem.lrad,hxl=0,hyl=elem.kick,rel=0)
-          out.append((elem._name,ne))
+          out.append((elem.name,ne))
       elif elem.keyword in ['rfcavity']:
           nvolt=elem.volt/self['beam'].pc/1000
           ne=cav(vn=nvolt,f=elem.freq*1e6,lag=elem.lag*360,scav=-1)
-          out.append((elem._name,ne))
+          out.append((elem.name,ne))
       else:
-          rest.append((elem._name,elem))
+          rest.append((elem.name,elem))
       lasts=s+l/2
     return out,rest
 
@@ -274,6 +287,9 @@ for e in elements:
 
 Elem.gbl['multipole']._data.update(knl=[0],ksl=[0])
 Elem.gbl['rfcavity']._data.update(lag=0)
+Elem.gbl['hkicker']._data.update(lrad=0)
+Elem.gbl['vkicker']._data.update(lrad=0)
+Elem.gbl['kicker']._data.update(lrad=0)
 
 for e in commands:
   Elem.gbl[e]=Elem(e)
