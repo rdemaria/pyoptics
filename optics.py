@@ -194,10 +194,12 @@ class optics(dataobj):
 
   def plot(self,yl='',yr='',x='s',idx=slice(None),
       clist='k r b g c m',lattice=True,newfig=True,pre=None,
-           autoupdate=False,
+           autoupdate=False,ip_label=False,
           ):
     out=qdplot(self,x=x,yl=yl,yr=yr,idx=idx,lattice=lattice,newfig=newfig,clist=clist,pre=pre)
     self._plot=out
+    if ip_label:
+        self.set_xaxis_ip()
     if autoupdate:
         self._plot.wx_autoupdate()
 #    self._target.append(out)
@@ -217,8 +219,7 @@ class optics(dataobj):
     bval=_n.array([n*10**dd for dd in rng for n in [1,2,5] ])
     bval=bval[bval<bmax]
     pl.ylim(ya,yb)
-    self._plot=_p.gcf()
-    return t
+    return self
 
   def plotcross(self,**nargs):
     return self.plot('x y','dx dy',**nargs)
@@ -244,8 +245,7 @@ class optics(dataobj):
     #_p.text(0.0,qy,r"$Q_y$")
     _p.grid(True)
     _p.legend(loc=0)
-    self._plot=_p.gcf()
-    return t
+    return self
 
   def plotbetabeat(self,t1,dp='0.0003',**nargs):
     _p.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
@@ -257,8 +257,7 @@ class optics(dataobj):
             label=r'$\Delta\beta_y/\beta_y$',**nargs)
     _p.grid(True)
     _p.legend()
-    self._plot=_p.gcf()
-    return t
+    return self
 
   def plotw(self,lbl='',**nargs):
     _p.title(r"Chromatic function: %s"%lbl)
@@ -269,8 +268,7 @@ class optics(dataobj):
     _p.plot(self.s,self.wy,label=r'$w_y$',**nargs)
     _p.grid(True)
     _p.legend()
-    self._plot=_p.gcf()
-    return t
+    return self
 
   def plotap(t,ap=None,nlim=30,ref=7,newfig=True,eref=None,**nargs):
     if ap is None:
@@ -287,7 +285,7 @@ class optics(dataobj):
     p.figure.gca().set_ylim(0,nlim)
     p.figure.canvas.draw()
     t._plot=p
-    return t
+    return self
 
   def mk_betamax(self):
     self.betxmax=zeros_like(self.betx)
@@ -344,14 +342,14 @@ class optics(dataobj):
   #  if not hasattr(f,'k1l'):
   #    f.k1l=f.k1l
   #  return sum(f.k1l*f.bety)/4/pi
-  def ndx(t):
-    return t.dx/sqrt(t.betx)
-  def ndpx(t):
-    return t.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
-  def alphac(t):
-    return sum(t('dx*kn0l'))/sum(t.l)
-  def gammatr(t):
-    af=t._alphac()
+  def ndx(self):
+    return self.dx/sqrt(t.betx)
+  def ndpx(self):
+    return self.dpx*sqrt(t.betx)+t.dx/sqrt(t.betx)*t.alfx
+  def alphac(self):
+    return sum(self('dx*kn0l'))/sum(t.l)
+  def gammatr(self):
+    af=self._alphac()
     if af>0:
       return sqrt(1/af)
     else:
@@ -490,6 +488,22 @@ class optics(dataobj):
     print "Qy' = %10g%+10g = %10g"%(qp1y,qp2y,qpy)
     print "Qx''= %10g%+10g%+10g%+10g = %10g"%(qpp1x,qpp2x,qpp3x,qpp4x,qppx)
     print "Qy''= %10g%+10g%+10g%+10g = %10g"%(qpp1y,qpp2y,qpp3y,qpp4y,qppy)
+    self.qp1x =qp1x
+    self.qp2x =qp2x
+    self.qpx  =qpx
+    self.qpp1x=qpp1x
+    self.qpp2x=qpp2x
+    self.qpp3x=qpp3x
+    self.qpp4x=qpp4x
+    self.qppx =qppx
+    self.qp1y =qp1y
+    self.qp2y =qp2y
+    self.qpy  =qpy
+    self.qpp1y=qpp1y
+    self.qpp2y=qpp2y
+    self.qpp3y=qpp3y
+    self.qpp4y=qpp4y
+    self.qppy =qppy
     return self
   def interp(self,snew,namenew=None,sname='s'):
     "Interpolate with piecewise linear all columns using a new s coordinate"
@@ -499,7 +513,7 @@ class optics(dataobj):
         self[cname]=_n.interp(snew,self[sname],self[cname])
     self[sname]=snew
     self.name=namenew
-  def cycle(t,name,reorder=True):
+  def cycle(self,name,reorder=True):
     if type(name) is str:
       name=_n.where(t.name==name.upper())[0][0]
     for vn in ['s','mux','muy','phix','phiy']:
@@ -514,7 +528,7 @@ class optics(dataobj):
         vn=vn.lower()
         v=t[vn]
         t[vn]=_n.concatenate([v[name:],v[:name]])
-    return t
+    return self
   def select(t,a,b,shift=True):
     if type(a) is str:
       a=_n.where(t.name==a.upper())[0][0]
@@ -633,6 +647,14 @@ class optics(dataobj):
       tunx.append(dqx)
       tuny.append(dqy)
     return Footprint(x,y,tunx,tuny,nsigma,nangles)
+  def set_xaxis_ip(self):
+      idx=self//'IP.$'
+      sl=self.s[idx]
+      ns=self.name[idx]
+      ax=_p.gca()
+      ax.set_xticks(sl)
+      ax.set_xticklabels(ns)
+
 
 
 
