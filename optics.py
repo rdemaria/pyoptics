@@ -270,21 +270,21 @@ class optics(dataobj):
     _p.legend()
     return self
 
-  def plotap(t,ap=None,nlim=30,ref=7,newfig=True,eref=None,**nargs):
+  def plotap(self,ap=None,nlim=30,ref=7,newfig=True,eref=None,**nargs):
     if ap is None:
-        apfn=t.filename.replace('twiss','ap')
+        apfn=self.filename.replace('twiss','ap')
         ap=optics.open(apfn)
     if eref is not None:
        ap.s-=ap.s[ap//eref]
-       t.s-=t.s[t//eref]
-    t.ss=ap.s
-    t.n1=ap.n1
-    t=t.plot(x='ss',yl='n1',newfig=newfig,**nargs)
-    p=t._plot
-    p.figure.gca().plot(t.ss,t.ss*0+ref)
+       self.s-=self.s[t//eref]
+    self.ss=ap.s
+    self.n1=ap.n1
+    self=self.plot(x='ss',yl='n1',newfig=newfig,**nargs)
+    p=self._plot
+    p.figure.gca().plot(self.ss,self.ss*0+ref)
     p.figure.gca().set_ylim(0,nlim)
     p.figure.canvas.draw()
-    t._plot=p
+    self._plot=p
     return self
 
   def mk_betamax(self):
@@ -515,28 +515,28 @@ class optics(dataobj):
     self.name=namenew
   def cycle(self,name,reorder=True):
     if type(name) is str:
-      name=_n.where(t.name==name.upper())[0][0]
+      name=_n.where(self.name==name.upper())[0][0]
     for vn in ['s','mux','muy','phix','phiy']:
-      if vn in t:
-        v=t[vn]
+      if vn in self:
+        v=self[vn]
         vm=v[-1]
         v-=v[name]
         if reorder:
           v[:name]+=vm
     if reorder:
-      for vn in t.col_names:
+      for vn in self.col_names:
         vn=vn.lower()
-        v=t[vn]
-        t[vn]=_n.concatenate([v[name:],v[:name]])
+        v=self[vn]
+        self[vn]=_n.concatenate([v[name:],v[:name]])
     return self
-  def select(t,a,b,shift=True):
+  def select(self,a,b,shift=True):
     if type(a) is str:
-      a=_n.where(t.name==a.upper())[0][0]
+      a=_n.where(self.name==a.upper())[0][0]
     if type(b) is str:
-      b=_n.where(t.name==b.upper())[0][0]
+      b=_n.where(self.name==b.upper())[0][0]
     data={}
-    ln=len(t.name)
-    for k,v in t._data.items():
+    ln=len(self.name)
+    for k,v in self._data.items():
       if hasattr(v,'__len__') and len(v)==ln:
         vv=v[a:b+1]
       elif hasattr(v,'copy'):
@@ -959,7 +959,7 @@ class Footprint(object):
     if label is None:
       label=t.label
     if color is None:
-      color=colorrotate()
+       color='k'
     for i in ranges:
       if lbl:
          p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw,label=label)
