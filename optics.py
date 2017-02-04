@@ -529,14 +529,14 @@ class optics(dataobj):
         v=self[vn]
         self[vn]=_n.concatenate([v[name:],v[:name]])
     return self
-  def select(t,a,b,shift=True):
+  def select(self,a,b,shift=True):
     if type(a) is str:
-      a=_n.where(t.name==a.upper())[0][0]
+      a=_n.where(self.name==a.upper())[0][0]
     if type(b) is str:
-      b=_n.where(t.name==b.upper())[0][0]
+      b=_n.where(self.name==b.upper())[0][0]
     data={}
-    ln=len(t.name)
-    for k,v in t._data.items():
+    ln=len(self.name)
+    for k,v in self._data.items():
       if hasattr(v,'__len__') and len(v)==ln:
         vv=v[a:b+1]
       elif hasattr(v,'copy'):
@@ -959,7 +959,7 @@ class Footprint(object):
     if label is None:
       label=t.label
     if color is None:
-      color=colorrotate()
+       color='k'
     for i in ranges:
       if lbl:
          p=pl.plot(t.tunx[i],t.tuny[i],'-%s'%color,lw=lw,label=label)

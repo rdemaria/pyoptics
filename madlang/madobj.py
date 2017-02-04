@@ -130,6 +130,8 @@ class Elem(object):
     out=dir2(self)
     out.extend(self._data.keys())
     return out
+  def __iter__(self):
+    return self._data.__iter__()
   def __hasattr__(self,k):
     return k in self._data
   def build_dep(self):
@@ -155,6 +157,8 @@ class Elem(object):
         print "%s%-20s = %s"%(indent,objs,expr)
         if objs in deps:
             self.print_dep(objs,indent+'  ',deps)
+  def __call__(self,expr):
+      return eval(expr,{},self)
 
 
 class Expr(object):

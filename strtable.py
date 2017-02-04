@@ -49,8 +49,11 @@ class StrTable(dataobj):
       pl.ylabel(r'angle [$\mu$rad]')
     else:
       pl.ylabel('k0l [Tm]')
-  def get_triplet(self):
-    return self.get_vars('kqx\.r[2815]|kt?qx[123].*r[15]')
+  def get_triplet(self,trim=True):
+    tp=self.get_vars('kqx[123]?\.[rl][2815]')
+    if trim:
+        tp+=self.get_vars('kqtx[123]\.[rl][2815]')
+    return tp
   def plot_triplet(self,n1,n2,x=None):
     scale=self.scale
     if x is None:
@@ -203,7 +206,7 @@ class StrTable(dataobj):
         yp0.append(0)
     pol=poly_fit(order,x,y,x0,y0,xp0,yp0)
     out="%s:=%s;"%(var, poly_print(pol,x=param,power='^'))
-    if re.match('kqt?x[0-9]?[ab]?\.',var):
+    if re.match('kt?qx[0-9]?[ab]?\.',var):
         n=3
     else:
       n=re.match('[kqtxl]+([0-9]+)\.',var)
@@ -221,8 +224,8 @@ class StrTable(dataobj):
     return out
   def poly_fit_all(self,order,param,fn,n1=None,n2=None):
     out=[]
-#    for kq in self.get_triplet():
-#        out.append(self.poly_fit(kq,order,param=param))
+    for kq in self.get_triplet():
+        out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
     for n in range(4,14):
         for kq in self.get_kq(n):
             out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
