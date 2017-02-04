@@ -56,6 +56,12 @@ class BeamEnvelope(object):
     #        self.ap.aper_2[idx2]=self.twiss.aper_2[idx][0]
     #        self.ap.aper_3[idx2]=self.twiss.aper_3[idx][0]
     #        self.ap.aper_4[idx2]=self.twiss.aper_4[idx][0]
+  def shift(self,ref):
+      s0=self.twiss.s[self.twiss//ref][0]
+      self.ap.s-=s0
+      self.twiss.s-=s0
+      self.survey.s-=s0
+      return self
   def get_ex(self):
       return self.exn/self.gamma/self.beta
   def get_ey(self):
