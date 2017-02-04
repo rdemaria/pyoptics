@@ -93,10 +93,11 @@ class BeamEnvelope(object):
       ey=dot(wm,array([0,1,0]))
       self.co[i]=vro+x * ex + y * ey
   def plot_aper_sx(self,st='k',ref=None):
-      ap=self.ap
+      ap=self.twiss
       idx=(ap.aper_1>0)&(ap.aper_1<1)
       lim=ap.aper_1[idx]
-      lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
+      lim2=ap.aper_1[idx]-ap.aptol_1[idx]-ap.aptol_2[idx]
+      #lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
       if ref is not None:
           xx,yy,zz=self.get_survey(ref=ref)
           lim+=xx[idx]
@@ -108,10 +109,11 @@ class BeamEnvelope(object):
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
   def plot_aper_sy(self,st='k',ref=None):
-      ap=self.ap
+      ap=self.twiss
       idx=(ap.aper_2>0)&(ap.aper_2<1)
       lim=ap.aper_2[idx]
-      lim2=ap.aper_2[idx]-ap.rtol[idx]-ap.ytol[idx]
+      lim2=ap.aper_2[idx]-ap.aptol_1[idx]-ap.aptol_3[idx]
+      #lim2=ap.aper_2[idx]-ap.rtol[idx]-ap.ytol[idx]
       if ref is not None:
           xx,yy,zz=self.get_survey(ref=ref)
           lim+=yy[idx]

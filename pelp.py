@@ -19,7 +19,7 @@ def pelp(time,Ii,If,A,D,R,Te,Ti):
 
 pelp=vectorize(pelp,excluded=[1,2,3,4,5,6,7,8])
 
-t=arange(0,1000)
+t=arange(0,2000)
 p=pelp(t,750,11800,0.009,0.02,10.,325,0)
 
 
