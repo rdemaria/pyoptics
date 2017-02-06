@@ -1,4 +1,4 @@
-import os
+import os,re
 
 
 import numpy as np
@@ -35,17 +35,21 @@ class BeamEnvelope(object):
     self.offset=offset
     self.energy=ap.param['energy']
     self.gamma=ap.param['gamma']
-    self.exn=ap.param['exn']
-    self.eyn=ap.param['eyn']
-    self.bbeat=ap.param['beta_beating']
-    self.deltap=ap.param['dp_bucket_size']
-    self.co=ap.param['co_radius']
-    self.d_arc=ap.param['dqf']*ap.param['paras_dx']
-    self.b_arc=ap.param['betaqfx']
-    self.halo_prim=ap.param['halo_prim']
-    self.halo_r=ap.param['halo_r']
-    self.halo_v=ap.param['halo_v']
-    self.halo_h=ap.param['halo_h']
+    if 'exn' in ap.param:
+      self.exn=ap.param['exn']
+      self.eyn=ap.param['eyn']
+    else:
+      self.exn= ap.param['ex']*self.gamma
+      self.eyn= ap.param['ey']*self.gamma
+    self.bbeat=ap.param.get('beta_beating',1.1)
+    self.deltap=ap.param.get('dp_bucket_size',2e-4)
+    self.co=ap.param.get('co_radius',2e-3)
+    self.d_arc=ap.param.get('dqf',2.086)*ap.param.get('paras_dx',0.1)
+    self.b_arc=ap.param.get('betaqfx',170.25)
+    self.halo_prim=ap.param.get('halo_prim',6)
+    self.halo_r=ap.param.get('halo_r',6)
+    self.halo_v=ap.param.get('halo_v',6)
+    self.halo_h=ap.param.get('halo_h',6)
     # dependent quantities
     self.beta=self.energy/ap.param['pc']
     #for k in self.apfiles:
@@ -66,6 +70,12 @@ class BeamEnvelope(object):
       return self.exn/self.gamma/self.beta
   def get_ey(self):
       return self.eyn/self.gamma/self.beta
+  def plot_labels(self,pattern='M',ylev=0):
+      t=self.twiss
+      reg=re.compile(pattern)
+      for ss,name in zip(t.s,t.name):
+          if reg.match(name):
+            pl.text(ss,ylev,name,rotation=90)
   def get_survey(self,ref='IP5'):
       idx=where(self.survey//ref)[0][0]
       theta0=self.survey.theta[idx]
@@ -103,17 +113,50 @@ class BeamEnvelope(object):
       idx=(ap.aper_1>0)&(ap.aper_1<1)
       lim=ap.aper_1[idx]
       lim2=ap.aper_1[idx]-ap.aptol_1[idx]-ap.aptol_2[idx]
+      nlim=-lim
+      nlim2=-lim2
       #lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
       if ref is not None:
           xx,yy,zz=self.get_survey(ref=ref)
+          #xx=self.twiss.mech_sep/2
           lim+=xx[idx]
           lim2+=xx[idx]
+          nlim+=xx[idx]
+          nlim2+=xx[idx]
       pl.plot(ap.s[idx],lim,st)
       pl.plot(ap.s[idx],lim2,st)
-      pl.plot(ap.s[idx],-lim,st)
-      pl.plot(ap.s[idx],-lim2,st)
+      pl.plot(ap.s[idx],nlim,st)
+      pl.plot(ap.s[idx],nlim2,st)
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
+  def get_beam_sx(self,nsig=None,color='b',n1=None,n2=None,ref=None,
+                  pattern='.'):
+      ap=self.ap
+      sig=sqrt(ap.betx[n1:n2]*self.get_ex())
+      idx=self.ap//pattern
+      env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
+      ss=ap.s[idx][n1:n2]
+      xx=ap.x[idx][n1:n2]
+      env=env[idx][n1:n2]
+      sig=sig[idx][n1:n2]
+      if ref is not None:
+          xxx,yyy,zzz=self.get_survey(ref=ref)
+          xx+=xxx[idx]
+      return ss,xx,sig,env
+  def get_beam_sy(self,nsig=None,color='b',n1=None,n2=None,ref=None,
+                   pattern='.'):
+      ap=self.ap
+      sig=sqrt(ap.bety[n1:n2]*self.get_ey())
+      idx=self.ap//pattern
+      env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
+      ss=ap.s[idx][n1:n2]
+      yy=ap.y[idx][n1:n2]
+      env=env[idx][n1:n2]
+      sig=sig[idx][n1:n2]
+      if ref is not None:
+            xxx,yyy,zzz=self.get_survey(ref=ref)
+            yy+=yyy
+      return ss,yy,sig,env
   def plot_aper_sy(self,st='k',ref=None):
       ap=self.twiss
       idx=(ap.aper_2>0)&(ap.aper_2<1)
@@ -130,36 +173,44 @@ class BeamEnvelope(object):
       pl.plot(ap.s[idx],-lim2,st)
       pl.ylabel('y [m]')
       pl.xlabel('s [m]')
-  def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None,ref=None):
+  def plot_beam_sx(self,nsig=None,color='b',n1=None,n2=None,ref=None,
+                  pattern='^(?!DRIFT)'):
       ap=self.ap
       sig=sqrt(ap.betx[n1:n2]*self.get_ex())
+      idx=self.ap//pattern
       if nsig==None:
           nsig=ap.param['n1min']*self.halo_h/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
-      ss=ap.s[n1:n2]
-      xx=ap.x[n1:n2]
+      ss=ap.s[idx][n1:n2]
+      xx=ap.x[idx][n1:n2]
+      env=env[idx][n1:n2]
+      sig=sig[idx][n1:n2]
       if ref is not None:
           xxx,yyy,zzz=self.get_survey(ref=ref)
-          xx+=xxx
+          xx+=xxx[idx]
       pl.fill_between(ss,xx+env,xx-env,color=color,alpha=0.2)
       pl.fill_between(ss,xx+sig,xx-sig,color=color,alpha=0.5)
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
-  def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None,ref=None):
-    ap=self.ap
-    sig=sqrt(ap.bety[n1:n2]*self.get_ey())
-    if nsig==None:
-       nsig=ap.param['n1min']*self.halo_v/self.halo_prim
-    env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
-    ss=ap.s[n1:n2]
-    yy=ap.y[n1:n2]
-    if ref is not None:
-          xxx,yyy,zzz=self.get_survey(ref=ref)
-          yy+=yyy
-    pl.fill_between(ss,yy+env,yy-env,color=color,alpha=0.2)
-    pl.fill_between(ss,yy+sig,yy-sig,color=color,alpha=0.5)
-    pl.ylabel('y [m]')
-    pl.xlabel('s [m]')
+  def plot_beam_sy(self,nsig=None,color='b',n1=None,n2=None,ref=None,
+                   pattern='^(?!DRIFT)'):
+      ap=self.ap
+      sig=sqrt(ap.bety[n1:n2]*self.get_ey())
+      idx=self.ap//pattern
+      if nsig==None:
+         nsig=ap.param['n1min']*self.halo_v/self.halo_prim
+      env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
+      ss=ap.s[idx][n1:n2]
+      yy=ap.y[idx][n1:n2]
+      env=env[idx][n1:n2]
+      sig=sig[idx][n1:n2]
+      if ref is not None:
+            xxx,yyy,zzz=self.get_survey(ref=ref)
+            yy+=yyy
+      pl.fill_between(ss,yy+env,yy-env,color=color,alpha=0.2)
+      pl.fill_between(ss,yy+sig,yy-sig,color=color,alpha=0.5)
+      pl.ylabel('y [m]')
+      pl.xlabel('s [m]')
   def get_surv_range(self,a=None,b=None,ref=None):
     sss=self.survey
     ttt=self.twiss
