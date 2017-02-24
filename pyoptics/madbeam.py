@@ -48,7 +48,7 @@ class MadBeam(object):
        out['sigma']  =out['tau']*out['beta0']
        out['psigma'] =out['ptau']/out['beta0']
        out['rpp']    =pt2rpp(self.pt,out['beta0'])
-       out['rvv']    =1/(out['rpp']*(1+self.pt*out['beta0']))
+       out['rvv']    =1/(out['rpp']*(1+self.pt*out['beta0']**2))
        out['delta']  =1/out['rpp']-1
        out['beta']   =self.pt*out['p0c']-out['p0c']
        out['gamma']  =self.e/out['m0']
