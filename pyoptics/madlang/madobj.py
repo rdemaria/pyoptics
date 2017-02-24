@@ -204,15 +204,43 @@ class SeqElem(namedtuple('SeqElem','at From mech_sep slot_id')):
       return cls(*[data[k] for k in cls._fields])
 
 
+classes=dict(
+  drift=namedtuple('drift',['l']),
+  mult =namedtuple('mult','knl ksl hxl hyl l rel'),
+  cav  =namedtuple('cav','vn f lag scav'),
+  align=namedtuple('align','x y tilt'),
+  block=namedtuple('block','elems'),
+)
+
+
+class Line(Elem):
+  def __init__(self,name=None,parent=None,value=None,**kwargs):
+      Elem.__init__(self)
+      self.value=value
+  def expand_struct(self,convert=classes):
+      drift=convert['drift']
+      mult =convert['mult']
+      cav  =convert['cav']
+      align=convert['align']
+      block=convert['block']
+      rest=[]
+      def flatten(lst):
+          for elem in lst:
+              if type(elem) is tuple:
+                  yield convert(elem)
+              elif elem.keyword=='drift':
+                  yield drift(l=elem.l)
+              elif elem.keyword=='multipole':
+                  yield mult(knl=elem.knl, ksl=elem.ksl,
+                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0],rel=0)
+              else :
+                  rest.append(el)
+      elems=list(flatten(eval(self.value,{},self._ns)))
+      return elems,rest
+
+
 class Sequence(Elem):
   _fields='at From mech_sep slot_id'.split()
-  classes=dict(
-    drift=namedtuple('drift',['l']),
-    mult =namedtuple('mult','knl ksl hxl hyl l rel'),
-    cav  =namedtuple('cav','vn f lag scav'),
-    align=namedtuple('align','x y tilt'),
-    block=namedtuple('block','elems'),
-  )
   def __init__(self,name=None,parent=None,elems=None,**kwargs):
     Elem.__init__(self)
     if elems is None:
@@ -284,12 +312,25 @@ elements=['hkicker', 'vkicker', 'ecollimator', 'instrument',
  'sextupole', 'solenoid','tkicker','placeholder','drift',
  'hmonitor','vmonitor','sequence']
 
-commands=['beam','twiss']
+commands=['beam',
+ 'endmatch',
+ 'global',
+ 'jacobian',
+ 'match',
+ 'track',
+ 'twiss',
+ 'use',
+ 'value',
+ 'vary',
+ 'line']
+
+
 
 for e in elements:
   Elem.gbl[e]=Elem(e,keyword=e,l=0)
 
-Elem.gbl['multipole']._data.update(knl=[0],ksl=[0])
+
+Elem.gbl['multipole']._data.update(knl=[0],ksl=[0],lrad=0)
 Elem.gbl['rfcavity']._data.update(lag=0)
 Elem.gbl['hkicker']._data.update(lrad=0)
 Elem.gbl['vkicker']._data.update(lrad=0)

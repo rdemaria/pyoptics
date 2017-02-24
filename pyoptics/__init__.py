@@ -12,3 +12,5 @@ from lhcbpm import LHCBPM
 from adtbox import ADTBox
 
 from luminosity import *
+
+from madbeam import MadBeam

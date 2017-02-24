@@ -7,7 +7,7 @@ comment=[re.compile(r"//.*"),
          re.compile(r"\s",re.S)]
 statement=re.compile("[^;]*;")
 variable=re.compile("(^[\w\.]+)(:?=)([^;:,]+)")
-element=re.compile("(^[\w\.()]+)(:([\w\.]+))?(,.+)?")
+element=re.compile("(^[\w\.()]+)(:([\w\.]+))?([,=]?.+)?")
 ropt=re.compile("(^[\w]+)")
 
 def parse_attr(attr):

@@ -1,4 +1,4 @@
-from madobj import Elem, Expr, ExprList, Sequence
+from madobj import Elem, Expr, ExprList, Sequence, Line
 
 from parser import parse, pyname,parses
 
@@ -45,8 +45,12 @@ def fromast(ast,name='mad',root=None,special=None):
       elif  name=='return':
           break
       elif proto=='sequence':
-        ne=Sequence(name,parent=root['sequence'])
+        ne=Sequence(madname,parent=root['sequence'])
         current_seq=ne
+      elif proto=='line':
+        # right hand side of line statement is not interpret as assignment
+        # later by fromast(attrs,....)
+        ne=Line(name=madname,parent=root['line'],value=value[1][1][1])
       elif proto==None:
         ne=root[name]
       else:
