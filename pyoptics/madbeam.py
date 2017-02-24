@@ -30,7 +30,7 @@ class MadBeam(object):
        out['s']      =self.s
        out['x']      =self.x
        out['px']     =self.px
-       out['y']      =self.x
+       out['y']      =self.y
        out['py']     =self.py
        out['tau']    =self.t
        out['ptau']   =self.pt
