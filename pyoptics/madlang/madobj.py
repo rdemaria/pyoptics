@@ -206,17 +206,46 @@ class SeqElem(namedtuple('SeqElem','at From mech_sep slot_id')):
 
 classes=dict(
   drift=namedtuple('drift',['l']),
-  mult =namedtuple('mult','knl ksl hxl hyl l rel'),
-  cav  =namedtuple('cav','vn f lag scav'),
-  align=namedtuple('align','x y tilt'),
+  mult =namedtuple('mult','knl ksl hxl hyl l'),
+  cav  =namedtuple('cav','volt freq lag scav'),
+  align=namedtuple('align','dx dy tilt'),
   block=namedtuple('block','elems'),
 )
+
+def flatten(container):
+    for i in container:
+        if isinstance(i, (list,tuple)):
+            for j in flatten(i):
+                yield j
+        else:
+            yield i
+
+class fakedict(object):
+    def __getitem__(self,k):
+        return k
+
+fakedict=fakedict()
 
 
 class Line(Elem):
   def __init__(self,name=None,parent=None,value=None,**kwargs):
       Elem.__init__(self)
       self.value=value
+  def flatten_names(self):
+      return tuple(flatten(eval(self.value,{},fakedict)))
+  def flatten_objects(self):
+      def _flatten(lst):
+        for elem in lst:
+           if type(elem) is tuple:
+              for ee in _flatten(elem):
+                yield ee
+           elif elem.keyword=='line':
+              for ee in elem.flatten_objects():
+                yield ee
+           else:
+              yield elem
+      elems=list(_flatten(eval(self.value,{},self._ns)))
+      return elems
   def expand_struct(self,convert=classes):
       drift=convert['drift']
       mult =convert['mult']
@@ -224,20 +253,22 @@ class Line(Elem):
       align=convert['align']
       block=convert['block']
       rest=[]
-      def flatten(lst):
-          for elem in lst:
-              if type(elem) is tuple:
-                  yield convert(elem)
-              elif elem.keyword=='drift':
-                  yield drift(l=elem.l)
-              elif elem.keyword=='multipole':
-                  yield mult(knl=elem.knl, ksl=elem.ksl,
-                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0],rel=0)
-              else :
-                  rest.append(el)
-      elems=list(flatten(eval(self.value,{},self._ns)))
-      return elems,rest
-
+      names=self.flatten_names()
+      elems=self.flatten_objects()
+      newelems=[]
+      types=[]
+      for elem in elems:
+          if elem.keyword=='drift':
+            newelems.append(drift(l=elem.l))
+            types.append(elem.keyword)
+          elif elem.keyword=='multipole':
+            newelems.append(mult(knl=elem.knl, ksl=elem.ksl,
+                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
+            types.append(elem.keyword)
+          else:
+            rest.append(el)
+      newelems=[dict(i._asdict()) for i in newelems]
+      return zip(names,types,newelems),rest
 
 class Sequence(Elem):
   _fields='at From mech_sep slot_id'.split()
@@ -322,7 +353,11 @@ commands=['beam',
  'use',
  'value',
  'vary',
- 'line']
+ 'line',
+ 'track',
+ 'start',
+ 'run',
+ 'endtrack' ]
 
 
 
