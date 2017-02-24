@@ -212,13 +212,16 @@ classes=dict(
   block=namedtuple('block','elems'),
 )
 
-def flatten(container):
-    for i in container:
+def flatten(lst):
+    if isinstance(lst, (list,tuple)):
+      for i in lst:
         if isinstance(i, (list,tuple)):
             for j in flatten(i):
                 yield j
         else:
             yield i
+    else:
+      yield lst
 
 class fakedict(object):
     def __getitem__(self,k):
@@ -235,15 +238,18 @@ class Line(Elem):
       return tuple(flatten(eval(self.value,{},fakedict)))
   def flatten_objects(self):
       def _flatten(lst):
-        for elem in lst:
-           if type(elem) is tuple:
-              for ee in _flatten(elem):
-                yield ee
-           elif elem.keyword=='line':
-              for ee in elem.flatten_objects():
-                yield ee
-           else:
-              yield elem
+        if isinstance(lst, (list,tuple)):
+          for elem in lst:
+             if type(elem) is tuple:
+                for ee in _flatten(elem):
+                  yield ee
+             elif elem.keyword=='line':
+                for ee in elem.flatten_objects():
+                  yield ee
+             else:
+                yield elem
+        else:
+          yield lst
       elems=list(_flatten(eval(self.value,{},self._ns)))
       return elems
   def expand_struct(self,convert=classes):
@@ -260,7 +266,7 @@ class Line(Elem):
       for elem in elems:
           if elem.keyword=='drift':
             newelems.append(drift(l=elem.l))
-            types.append(elem.keyword)
+            types.append('driftexact')
           elif elem.keyword=='multipole':
             newelems.append(mult(knl=elem.knl, ksl=elem.ksl,
                   l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
@@ -357,7 +363,8 @@ commands=['beam',
  'track',
  'start',
  'run',
- 'endtrack' ]
+ 'endtrack',
+ 'set']
 
 
 
