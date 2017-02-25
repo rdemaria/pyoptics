@@ -205,11 +205,11 @@ class SeqElem(namedtuple('SeqElem','at From mech_sep slot_id')):
 
 
 classes=dict(
-  drift=namedtuple('drift',['l']),
-  mult =namedtuple('mult','knl ksl hxl hyl l'),
-  cav  =namedtuple('cav','volt freq lag scav'),
-  align=namedtuple('align','dx dy tilt'),
-  block=namedtuple('block','elems'),
+  drift    =namedtuple('drift',['l']),
+  multipole=namedtuple('multipole','knl ksl hxl hyl l'),
+  cavity   =namedtuple('cavity','volt freq lag'),
+  align    =namedtuple('align','dx dy tilt'),
+  block    =namedtuple('block','elems'),
 )
 
 def flatten(lst):
@@ -253,11 +253,11 @@ class Line(Elem):
       elems=list(_flatten(eval(self.value,{},self._ns)))
       return elems
   def expand_struct(self,convert=classes):
-      drift=convert['drift']
-      mult =convert['mult']
-      cav  =convert['cav']
-      align=convert['align']
-      block=convert['block']
+      drift     =convert['drift']
+      multipole =convert['multipole']
+      cavity    =convert['cavity']
+      align     =convert['align']
+      block     =convert['block']
       rest=[]
       names=self.flatten_names()
       elems=self.flatten_objects()
@@ -268,22 +268,22 @@ class Line(Elem):
             newelems.append(drift(l=elem.l))
             types.append('driftexact')
           elif elem.keyword=='multipole':
-            newelems.append(mult(knl=elem.knl, ksl=elem.ksl,
+            newelems.append(multipole(knl=elem.knl, ksl=elem.ksl,
                   l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
             types.append(elem.keyword)
           elif elem.keyword in ['hkicker']:
-            ne=mult(knl=[-elem.kick],ksl=[],
+            ne=multipole(knl=[-elem.kick],ksl=[],
                          l=elem.lrad,hxl=elem.kick,hyl=0)
             newelems.append(ne)
             types.append('multipole')
           elif elem.keyword in ['vkicker']:
-            ne=mult(knl=[],ksl=[elem.kick],
-                           l=elem.lrad,hxl=0,hyl=elem.kick,rel=0)
+            ne=multipole(knl=[],ksl=[elem.kick],
+                           l=elem.lrad,hxl=0,hyl=elem.kick)
             newelems.append(ne)
             types.append('multipole')
           elif elem.keyword in ['rfcavity']:
             nvolt=elem.volt*1e6
-            ne=cav(volt=nvolt,freq=elem.freq*1e6,lag=elem.lag*360)
+            ne=cavity(volt=nvolt,freq=elem.freq*1e6,lag=elem.lag*360)
             newelems.append(ne)
             types.append('cavity')
           else:
@@ -308,11 +308,11 @@ class Sequence(Elem):
     out=[]
     rest=[]
     count={}
-    drift=convert['drift']
-    mult =convert['mult']
-    cav  =convert['cavity']
-    align=convert['align']
-    block=convert['block']
+    drift     =convert['drift']
+    multipole =convert['multipole']
+    cavity    =convert['cavity']
+    align     =convert['align']
+    block     =convert['block']
     pos={}
     lasts=0
     drifts={}
@@ -334,24 +334,24 @@ class Sequence(Elem):
               drifts[l]=dr
           out.append((drname,dr))
       if elem.keyword=='multipole':
-          ne=mult(knl=elem.knl, ksl=elem.ksl,
-                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0],rel=0)
+          ne=multipole(knl=elem.knl, ksl=elem.ksl,
+                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0])
           out.append((elem.name,ne))
       elif elem.keyword in ['marker','hmonitor','vmonitor','instrument',
                             'monitor','rcollimator']:
           ne=drift(l=0)
           out.append((elem.name,ne))
       elif elem.keyword in ['hkicker']:
-          ne=mult(knl=[-elem.kick],ksl=[],
-                       l=elem.lrad,hxl=elem.kick,hyl=0,rel=0)
+          ne=multipole(knl=[-elem.kick],ksl=[],
+                       l=elem.lrad,hxl=elem.kick,hyl=0)
           out.append((elem.name,ne))
       elif elem.keyword in ['vkicker']:
-          ne=mult(knl=[],ksl=[elem.kick],
-                       l=elem.lrad,hxl=0,hyl=elem.kick,rel=0)
+          ne=multipole(knl=[],ksl=[elem.kick],
+                       l=elem.lrad,hxl=0,hyl=elem.kick)
           out.append((elem.name,ne))
       elif elem.keyword in ['rfcavity']:
-          nvolt=elem.volt/self['beam'].pc/1000
-          ne=cav(vn=nvolt,f=elem.freq*1e6,lag=elem.lag*360,scav=-1)
+          nvolt=elem.volt*1e6
+          ne=cavity(volt=nvolt,freq=elem.freq*1e6,lag=elem.lag*360)
           out.append((elem.name,ne))
       else:
           rest.append((elem.name,elem))
