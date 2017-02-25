@@ -42,9 +42,9 @@ class MadBeam(object):
        out['elemid'] =0
        out['turn']   =self.turn
        out['state']  =0
-       out['p0c']    =self.twiss.param['pc']*1e6
-       out['e0']     =self.twiss.param['energy']*1e6
-       out['m0']     =self.twiss.param['mass']*1e6
+       out['p0c']    =self.twiss.param['pc']*1e9
+       out['e0']     =self.twiss.param['energy']*1e9
+       out['m0']     =self.twiss.param['mass']*1e9
        out['gamma0'] =self.twiss.param['gamma']
        beta0         =out['p0c']/out['e0']
        out['beta0']  =beta0
