@@ -271,6 +271,21 @@ class Line(Elem):
             newelems.append(mult(knl=elem.knl, ksl=elem.ksl,
                   l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
             types.append(elem.keyword)
+          elif elem.keyword in ['hkicker']:
+            ne=mult(knl=[-elem.kick],ksl=[],
+                         l=elem.lrad,hxl=elem.kick,hyl=0)
+            newelems.append(ne)
+            types.append('multipole')
+          elif elem.keyword in ['vkicker']:
+            ne=mult(knl=[],ksl=[elem.kick],
+                           l=elem.lrad,hxl=0,hyl=elem.kick,rel=0)
+            newelems.append(ne)
+            types.append('multipole')
+          elif elem.keyword in ['rfcavity']:
+            nvolt=elem.volt*1e6
+            ne=cav(volt=nvolt,freq=elem.freq*1e6,lag=elem.lag*360)
+            newelems.append(ne)
+            types.append('cavity')
           else:
             rest.append(el)
       newelems=[dict(i._asdict()) for i in newelems]
@@ -295,7 +310,7 @@ class Sequence(Elem):
     count={}
     drift=convert['drift']
     mult =convert['mult']
-    cav  =convert['cav']
+    cav  =convert['cavity']
     align=convert['align']
     block=convert['block']
     pos={}
