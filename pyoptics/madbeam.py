@@ -60,6 +60,7 @@ class MadBeam(object):
        out['energy'] =self.e*1e6
        out['gamma']  =1/np.sqrt(1-out['beta']**2)
        out['charge0']=self.twiss.param['charge']
+       out['charge']=self.twiss.param['charge']
        out['qratio'] =one
        out['chi']    =one
        return out

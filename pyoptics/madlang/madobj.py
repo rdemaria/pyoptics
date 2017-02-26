@@ -205,8 +205,8 @@ class SeqElem(namedtuple('SeqElem','at From mech_sep slot_id')):
 
 
 classes=dict(
-  drift    =namedtuple('drift',['l']),
-  multipole=namedtuple('multipole','knl ksl hxl hyl l'),
+  drift    =namedtuple('drift','length'),
+  multipole=namedtuple('multipole','knl ksl hxl hyl length'),
   cavity   =namedtuple('cavity','volt freq lag'),
   align    =namedtuple('align','dx dy tilt'),
   block    =namedtuple('block','elems'),
@@ -265,20 +265,20 @@ class Line(Elem):
       types=[]
       for elem in elems:
           if elem.keyword=='drift':
-            newelems.append(drift(l=elem.l))
+            newelems.append(drift(length=elem.l))
             types.append('driftexact')
           elif elem.keyword=='multipole':
             newelems.append(multipole(knl=elem.knl, ksl=elem.ksl,
-                  l=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
+                  length=elem.lrad, hxl=elem.knl[0],hyl=elem.ksl[0]))
             types.append(elem.keyword)
           elif elem.keyword in ['hkicker']:
             ne=multipole(knl=[-elem.kick],ksl=[],
-                         l=elem.lrad,hxl=elem.kick,hyl=0)
+                         length=elem.lrad,hxl=elem.kick,hyl=0)
             newelems.append(ne)
             types.append('multipole')
           elif elem.keyword in ['vkicker']:
             ne=multipole(knl=[],ksl=[elem.kick],
-                           l=elem.lrad,hxl=0,hyl=elem.kick)
+                           length=elem.lrad,hxl=0,hyl=elem.kick)
             newelems.append(ne)
             types.append('multipole')
           elif elem.keyword in ['rfcavity']:
