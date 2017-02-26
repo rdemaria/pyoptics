@@ -23,6 +23,8 @@ class MadBeam(object):
             self.twiss=optics.open(twissfile)
         self.twissfile=twissfile
         return self
+    xp    =property(lambda p: p.xp*p.rpp)
+    yp    =property(lambda p: p.yp*p.rpp)
     def __init__(self,**args):
        self.__dict__.update(args)
     def get_full_beam(self):
@@ -43,10 +45,10 @@ class MadBeam(object):
        out['turn']   =self.turn
        out['state']  =0
        out['p0c']    =self.twiss.param['pc']*1e9
-       out['e0']     =self.twiss.param['energy']*1e9
-       out['m0']     =self.twiss.param['mass']*1e9
+       out['energy0']     =self.twiss.param['energy']*1e9
+       out['mass0']  =self.twiss.param['mass']*1e9
        out['gamma0'] =self.twiss.param['gamma']
-       beta0         =out['p0c']/out['e0']
+       beta0         =out['p0c']/out['energy0']
        out['beta0']  =beta0
        out['sigma']  =out['tau']*beta0
        out['psigma'] =out['ptau']/beta0
@@ -57,8 +59,8 @@ class MadBeam(object):
        out['rvv']    =beta0/out['beta']
        out['energy'] =self.e*1e6
        out['gamma']  =1/np.sqrt(1-out['beta']**2)
-       out['q0']     =self.twiss.param['charge']
-       out['q']      =one
+       out['charge0']=self.twiss.param['charge']
+       out['qratio'] =one
        out['chi']    =one
        return out
 
