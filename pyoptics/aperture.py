@@ -35,6 +35,14 @@ class BeamEnvelope(object):
     self.offset=offset
     self.energy=ap.param['energy']
     self.gamma=ap.param['gamma']
+    if 'aptol_1' in self.ap:
+        self.ap.rtol=self.ap.aptol_1
+        self.ap.xtol=self.ap.aptol_2
+        self.ap.ytol=self.ap.aptol_3
+    if 'apoff_x' not in self.ap:
+        self.ap.apoff_x=0*self.ap.s
+    if 'apoff_y' not in self.ap:
+        self.ap.apoff_y=0*self.ap.s
     if 'exn' in ap.param:
       self.exn=ap.param['exn']
       self.eyn=ap.param['eyn']
@@ -239,7 +247,10 @@ class BeamEnvelope(object):
     by=sqrt(ttt.bety[idxa:idxb]*emity)
     return zn,cox,coy,bx,by
   def get_pos(self,n):
-    return self.ap.x[n],self.ap.y[n]
+    if len(self.ap.x)==len(self.survey.x):
+      return self.ap.x[n]+self.survey.x[n],self.ap.y[n]+self.survey.y[n]
+    else:
+      return self.ap.x[n],self.ap.y[n]
   def get_pos_deltap(self,n,pm=1):
     x,y=self.get_pos(n)
     dx=self.ap.dx[n]
@@ -269,25 +280,30 @@ class BeamEnvelope(object):
     return racetrack_to_polygon(x,y,0,0,co+dx,co+dy,9)
   def get_aperture(self,n):
     apertype=self.ap.apertype[n]
+    if len(self.survey.x)==len(self.ap.apoff_x):
+      x=self.survey.x[n]+self.ap.apoff_x[n]
+      y=self.survey.y[n]+self.ap.apoff_y[n]
+    else:
+      x=0;y=0
     if apertype=='RECTELLIPSE':
       h=self.ap.aper_1[n]
       v=self.ap.aper_2[n]
       a=self.ap.aper_3[n]
       b=self.ap.aper_4[n]
-      return rectellipse_to_polygon(0,0,h,v,a,b)
+      return rectellipse_to_polygon(x,y,h,v,a,b)
     elif apertype=='CIRCLE':
       a=self.ap.aper_1[n]
-      return rectellipse_to_polygon(0,0,a,a,a,a)
+      return rectellipse_to_polygon(x,y,a,a,a,a)
     elif apertype=='RACETRACK':
       h=self.ap.aper_1[n]
       v=self.ap.aper_2[n]
       a=self.ap.aper_3[n]
       b=self.ap.aper_4[n]
-      return racetrack_to_polygon(0,0,h,v,a,b)
+      return racetrack_to_polygon(x,y,h,v,a,b)
     else:
       #x,y=interpolate_ap(self.apfiles[apertype],2)
-      x,y=self.apfiles[apertype]
-      return x,y
+      xx,yy=self.apfiles[apertype]
+      return xx+x,yy+y
   def get_ap_defined(self):
     apt=self.ap.apertype
     lst=[n for n,ap in enumerate(apt) if ap=='RECTELLIPSE' or ap in self.apfiles]
@@ -457,10 +473,10 @@ class BeamEnvelope(object):
       self.plot_pos_btol(n,color=color,lbl=None)
     #pl.axes().set_aspect('equal', 'datalim')
     pl.title(name)
-    tv,tt=pl.xticks()
-    pl.xticks(tv,map(str,tv*1000))
-    tv,tt=pl.yticks()
-    pl.yticks(tv,map(str,tv*1000))
+    #tv,tt=pl.xticks()
+    #pl.xticks(tv,map(str,tv*1000))
+    #tv,tt=pl.yticks()
+    #pl.yticks(tv,map(str,tv*1000))
     pl.xlabel('x [mm]')
     pl.ylabel('y [mm]')
     pl.grid(True)

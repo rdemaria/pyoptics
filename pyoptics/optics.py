@@ -654,6 +654,20 @@ class optics(dataobj):
       ax=_p.gca()
       ax.set_xticks(sl)
       ax.set_xticklabels(ns)
+  def idx_from_namelist(self,namelist):
+      iilist=0
+      currname=namelist[iilist]
+      out=[]
+      for ii,name in enumerate(self.name):
+          if name==currname:
+              iilist+=1
+              if iilist< len(namelist):
+                currname=namelist[iilist]
+              out.append(ii)
+      return out
+
+
+
 
 
 

@@ -23,6 +23,10 @@ class StrTable(dataobj):
   def get_phases(self):
     out=self.get_vars(r'mu[xy]ip[1-8]b[12]$')
     out+=self.get_vars(r'mu[xy]ip[1-8]b[12]_l')
+    out+=self.get_vars(r'mu[xy]ip[1-8]b[12]_r')
+    return out
+  def get_betas(self):
+    out=self.get_vars(r'bet[xy]ip[1-8]b[12]')
     return out
   def get_acb(self,n,knob='on_sep'):
     out=[]
@@ -50,9 +54,9 @@ class StrTable(dataobj):
     else:
       pl.ylabel('k0l [Tm]')
   def get_triplet(self,trim=True):
-    tp=self.get_vars('kqx[123]?\.[rl][2815]')
+    tp=self.get_vars('kqx[123]?[ab]?\.[rl][2815]')
     if trim:
-        tp+=self.get_vars('kqtx[123]\.[rl][2815]')
+        tp+=self.get_vars('ktqx[123]\.[rl][2815]')
     return tp
   def plot_triplet(self,n1,n2,x=None):
     scale=self.scale
@@ -136,8 +140,100 @@ class StrTable(dataobj):
     #pl.tight_layout()
     self.xvar=x
     return self
+
+  def plot_ir6(self,figname=None):
+    x=self['scxir5']
+    if figname is None:
+      fig=pl.figure(self.filename,figsize=(16,12))
+    else:
+      fig=pl.figure(figname,figsize=(16,12))
+    pl.clf()
+    pl.subplot(3,4,1)
+    w=360
+    pl.plot(x,w*self.refdmuxkickb1_tcdqa,label='TCDQ.A B1')
+    pl.plot(x,w*self.refdmuxkickb1_tcdqb,label='TCDQ.B B1')
+    pl.plot(x,w*self.refdmuxkickb1_tcdqc,label='TCDQ.C B1')
+    pl.plot(x,w*self.refdmuxkickb2_tcdqa,label='TCDQ.A B2')
+    pl.plot(x,w*self.refdmuxkickb2_tcdqb,label='TCDQ.B B2')
+    pl.plot(x,w*self.refdmuxkickb2_tcdqc,label='TCDQ.C B2')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\Delta \mu_x$ MKD-TCDQ [degree]')
+    pl.axhline(94,color='k')
+    pl.axhline(86,color='k')
+    pl.legend()
+    pl.subplot(3,4,2)
+    pl.plot(x,self.refbxdumpb1,label=r'$\beta_x$ TDE B1')
+    pl.plot(x,self.refbxdumpb2,label=r'$\beta_x$ TDE B2')
+    pl.axhline(4000,color='k',label='lim1')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,3)
+    pl.plot(x,self.refbydumpb1,label=r'$\beta_y$ TDE B1')
+    pl.plot(x,self.refbydumpb2,label=r'$\beta_y$ TDE B2')
+    pl.axhline(3200,color='k',label='lim1')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,4)
+    pl.plot(x,self.refbdumpb1, label=r'$\sqrt{\beta_x\beta_y}$ TDE B1')
+    pl.plot(x,self.refbdumpb2, label=r'$\sqrt{\beta_x\beta_y}$ TDE B2')
+    pl.axhline(4500,color='k',label='lim1')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,5)
+    pl.plot(x,self.refbetxtcdqb1, label=r'$\beta_x$ TCDQ.A B1')
+    pl.plot(x,self.refbetxtcdqb2, label=r'$\beta_x$ TCDQ.A B2')
+    #pl.axhline(500,color='k',label='lim')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,6)
+    pl.plot(x,self.refbetytcdqb1, label=r'$\beta_y$ TCDQ.A B1')
+    pl.plot(x,self.refbetytcdqb2, label=r'$\beta_y$ TCDQ.A B2')
+    pl.axhline(145,color='k',label='lim')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,7)
+    pl.plot(x,self.refbetxtcdsb1, label=r'$\beta_x$ TCDSA.4 B1')
+    pl.plot(x,self.refbetxtcdsb2, label=r'$\beta_x$ TCDSA.4 B2')
+    pl.axhline(175,color='k',label='lim at inj.')
+    #pl.fill_between([x[0],x[-1]],[200,200],180,color='k',label='lim',alpha=.3)
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,8)
+    pl.plot(x,self.refbetytcdsb1, label=r'$\beta_y$ TCDSA.4 B1')
+    pl.plot(x,self.refbetytcdsb2, label=r'$\beta_y$ TCDSA.4 B2')
+    pl.axhline(200,color='k',label='lim')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$\beta$ [m]')
+    pl.legend()
+    pl.subplot(3,4,9)
+    gaptcdqb1=10.1*sqrt(self.refbetxtcdqb1*2.5e-6/7000*0.938)
+    gaptcdqb2=10.1*sqrt(self.refbetxtcdqb2*2.5e-6/7000*0.938)
+    pl.plot(x,1e3*gaptcdqb1, label=r'gap TCDQ.4 B1 $10.1\sigma$')
+    pl.plot(x,1e3*gaptcdqb2, label=r'gap TCDQ.4 B2 $10.1\sigma$')
+    pl.axhline(3,color='k',label='limit 3 mm')
+    pl.axhline(4,color='k',label='margin 1 mm')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'gap [mm]')
+    pl.legend()
+    pl.subplot(3,4,10)
+    pl.plot(x,self.refdxtcdqb1, label=r'$D_x$ TCDSA.4 B1')
+    pl.plot(x,self.refdxtcdqb2, label=r'$D_x$ TCDSA.4 B2')
+    #pl.plot(x,self.refdxq4r6b1, label=r'$D_x$ Q4 B1')
+    #pl.plot(x,self.refdxq4r6b2, label=r'$D_x$ Q4 B2')
+    pl.xlabel('scxir5')
+    pl.ylabel(r'$D_x$ [m]')
+    pl.legend()
+    pl.tight_layout()
+    return self
   def plot_betsqueeze(self,n1=0,n2=None,figname=None):
     x=self.get_vars('betxip')[0]
+    xv=self[x]
     if figname is None:
       fig=pl.figure(x,figsize=(16,12))
     else:
@@ -147,14 +243,22 @@ class StrTable(dataobj):
     pl.subplot(3,4,1)
     if len(self.get_vars('kqx'))>0:
       self.plot_triplet(n1,n2,x=x)
+      pl.xlim(xv.min(),xv.max())
+      pl.semilogx()
     for n in range(4,11):
       pl.subplot(3,4,n-2)
       self.plot_2in1(n,n1,n2,x=x,sign=False)
+      pl.xlim(xv.min(),xv.max())
+      pl.semilogx()
     for n in range(11,14):
       pl.subplot(3,4,n-2)
       self.plot_2in1(n,n1,n2,x=x,sign=True)
+      pl.xlim(xv.min(),xv.max())
+      pl.semilogx()
     pl.subplot(3,4,12)
     self.plot_phase(n1,n2,x=x)
+    pl.xlim(xv.min(),xv.max())
+    pl.semilogx()
     pl.tight_layout()
     self.xvar=x
     return self
@@ -194,6 +298,7 @@ class StrTable(dataobj):
   def button_press(self,event):
     self.event=event
   def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[]):
+    print(var)
     if param is None:
         param=[k for k in self.keys() if k.startswith('betx')][0]
     scale=self.scale
@@ -229,6 +334,10 @@ class StrTable(dataobj):
     for n in range(4,14):
         for kq in self.get_kq(n):
             out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
+    for ph in self.get_phases():
+        out.append(self.poly_fit(ph,order,param=param,n1=n1,n2=n2))
+    for ph in self.get_betas():
+        out.append(self.poly_fit(ph,order,param=param,n1=n1,n2=n2))
     open(fn,'w').write('\n'.join(out))
   def check_slopes(self):
     for kq in range(4,14):
