@@ -22,15 +22,30 @@ def plot_ap(apfn="temp/ap_ir5b1.tfs",nlim=30,ref=12):
 
 class BeamEnvelope(object):
   @classmethod
-  def from_apname(cls,apname="twiss/ap_ir5b1.tfs"):
-      ap=optics.open(apname)
-      twiss=optics.open(apname.replace('ap_','twiss_'))
-      survey=optics.open(apname.replace('ap_','survey_'))
+  def from_apname(cls,fn="temp/ap_ir5b1.tfs"):
+      ap=optics.open(fn)
+      twiss=optics.open(fn.replace('ap_','twiss_'))
+      survey=optics.open(fn.replace('ap_','survey_'))
       return cls(ap,twiss,survey)
-  def __init__(self,ap,twiss,survey,apfiles=None,offset=None):
+  @classmethod
+  def from_twissname(cls,fn="twiss_lhcb1.tfs"):
+      twiss=optics.open(fn)
+      ap=twiss
+      survey=optics.open(fn.replace('twiss_','survey_'))
+      return cls(ap,twiss,survey)
+  def __init__(self,ap,twiss=None,survey=None,apfiles=None,offset=None):
+    if twiss is None:
+        twiss=ap
     self.twiss=twiss
     self.survey=survey
     self.ap=ap
+    if apfiles is None:
+        apfiles={}
+        apnames=list(set(ap.apertype))
+        apnames+=map(str.lower,apnames)
+        for fn in apnames:
+            if os.path.isfile(fn):
+                apfiles[fn.upper()]=np.loadtxt(fn).T
     self.apfiles=apfiles
     self.offset=offset
     self.energy=ap.param['energy']

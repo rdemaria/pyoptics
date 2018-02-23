@@ -6,7 +6,7 @@ def fromast(ast,name='mad',root=None,special=None):
   if special is None:
     special=[]
   if root is None:
-    root=Elem(name=name,_orig={})
+    root=Elem(name=name,_orig={},_rorig={})
   macros={}
   current_seq=None
   for st in ast:
@@ -18,6 +18,8 @@ def fromast(ast,name='mad',root=None,special=None):
     kind=value[0]
     if hasattr(root,'_orig'):
       root._orig[madname]=name
+    if hasattr(root,'_rorig'):
+      root._rorig[name]=madname
     if kind=='variable':
         #print 'value',value
         if name in special:

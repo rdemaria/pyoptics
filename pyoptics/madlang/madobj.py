@@ -55,14 +55,18 @@ def dir2(obj):
 class Elem(object):
 #  __slots__=['name','parent','_data','_ns','_orig']
   gbl={}
-  def __init__(self,name=None,parent=None,**kwargs):
+  def __init__(self,name=None,parent=None,_orig=None,_rorig=None,**kwargs):
     self._data={}
-    self.name=name
     self._ns=Elem.gbl
     self._parent=None
     if parent is not None:
         self._parent=parent.name
         self._data.update(parent._data)
+    self.name=name
+    if _orig is not None:
+      self._orig=_orig
+    if _rorig is not None:
+      self._rorig=_rorig
     self._data.update(kwargs)
   def __repr__(self):
     def _str(k,v):
@@ -297,6 +301,8 @@ class Sequence(Elem):
     Elem.__init__(self)
     if elems is None:
       self.elems=[]
+  def get_names(self):
+      return [ el.name for el in self.elems]
   def append(self,name,elem):
     ne=Elem(name=name,
               at=elem._data.get('at'),

@@ -1,9 +1,6 @@
 from numpy import *
 
-@vectorize
 def pelp(time,Ii,If,A,D,R,Te,Ti):
-  iaTe=A / 2 * (Te-Ti)**2 + Ii
-  iapTe=A*(Te-Ti)
   b=iapTe/iaTe
   a=iaTe * exp(-b*Te)
   tl = log( R/(a*b) ) / b if Te!=0 else R/A + Ti

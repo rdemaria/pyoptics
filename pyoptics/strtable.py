@@ -3,11 +3,15 @@ import re
 import matplotlib.pyplot as pl
 
 from numpy import *
+import numpy as np
 
 from pydataobj import dataobj
 import tfsdata
 
 from poly_fit import poly_fit, poly_print, poly_val
+
+import scipy.interpolate
+
 
 class StrTable(dataobj):
   scale=23348.89927
@@ -141,8 +145,8 @@ class StrTable(dataobj):
     self.xvar=x
     return self
 
-  def plot_ir6(self,figname=None):
-    x=self['scxir5']
+  def plot_ir6(self,figname=None,x='scyir5'):
+    xv=self[x]
     if figname is None:
       fig=pl.figure(self.filename,figsize=(16,12))
     else:
@@ -150,83 +154,83 @@ class StrTable(dataobj):
     pl.clf()
     pl.subplot(3,4,1)
     w=360
-    pl.plot(x,w*self.refdmuxkickb1_tcdqa,label='TCDQ.A B1')
-    pl.plot(x,w*self.refdmuxkickb1_tcdqb,label='TCDQ.B B1')
-    pl.plot(x,w*self.refdmuxkickb1_tcdqc,label='TCDQ.C B1')
-    pl.plot(x,w*self.refdmuxkickb2_tcdqa,label='TCDQ.A B2')
-    pl.plot(x,w*self.refdmuxkickb2_tcdqb,label='TCDQ.B B2')
-    pl.plot(x,w*self.refdmuxkickb2_tcdqc,label='TCDQ.C B2')
-    pl.xlabel('scxir5')
+    pl.plot(xv,w*self.refdmuxkickb1_tcdqa,label='TCDQ.A B1')
+    pl.plot(xv,w*self.refdmuxkickb1_tcdqb,label='TCDQ.B B1')
+    pl.plot(xv,w*self.refdmuxkickb1_tcdqc,label='TCDQ.C B1')
+    pl.plot(xv,w*self.refdmuxkickb2_tcdqa,label='TCDQ.A B2')
+    pl.plot(xv,w*self.refdmuxkickb2_tcdqb,label='TCDQ.B B2')
+    pl.plot(xv,w*self.refdmuxkickb2_tcdqc,label='TCDQ.C B2')
+    pl.xlabel(x)
     pl.ylabel(r'$\Delta \mu_x$ MKD-TCDQ [degree]')
     pl.axhline(94,color='k')
     pl.axhline(86,color='k')
     pl.legend()
     pl.subplot(3,4,2)
-    pl.plot(x,self.refbxdumpb1,label=r'$\beta_x$ TDE B1')
-    pl.plot(x,self.refbxdumpb2,label=r'$\beta_x$ TDE B2')
+    pl.plot(xv,self.refbxdumpb1,label=r'$\beta_x$ TDE B1')
+    pl.plot(xv,self.refbxdumpb2,label=r'$\beta_x$ TDE B2')
     pl.axhline(4000,color='k',label='lim1')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,3)
-    pl.plot(x,self.refbydumpb1,label=r'$\beta_y$ TDE B1')
-    pl.plot(x,self.refbydumpb2,label=r'$\beta_y$ TDE B2')
+    pl.plot(xv,self.refbydumpb1,label=r'$\beta_y$ TDE B1')
+    pl.plot(xv,self.refbydumpb2,label=r'$\beta_y$ TDE B2')
     pl.axhline(3200,color='k',label='lim1')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,4)
-    pl.plot(x,self.refbdumpb1, label=r'$\sqrt{\beta_x\beta_y}$ TDE B1')
-    pl.plot(x,self.refbdumpb2, label=r'$\sqrt{\beta_x\beta_y}$ TDE B2')
+    pl.plot(xv,self.refbdumpb1, label=r'$\sqrt{\beta_x\beta_y}$ TDE B1')
+    pl.plot(xv,self.refbdumpb2, label=r'$\sqrt{\beta_x\beta_y}$ TDE B2')
     pl.axhline(4500,color='k',label='lim1')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,5)
-    pl.plot(x,self.refbetxtcdqb1, label=r'$\beta_x$ TCDQ.A B1')
-    pl.plot(x,self.refbetxtcdqb2, label=r'$\beta_x$ TCDQ.A B2')
+    pl.plot(xv,self.refbetxtcdqb1, label=r'$\beta_x$ TCDQ.A B1')
+    pl.plot(xv,self.refbetxtcdqb2, label=r'$\beta_x$ TCDQ.A B2')
     #pl.axhline(500,color='k',label='lim')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,6)
-    pl.plot(x,self.refbetytcdqb1, label=r'$\beta_y$ TCDQ.A B1')
-    pl.plot(x,self.refbetytcdqb2, label=r'$\beta_y$ TCDQ.A B2')
+    pl.plot(xv,self.refbetytcdqb1, label=r'$\beta_y$ TCDQ.A B1')
+    pl.plot(xv,self.refbetytcdqb2, label=r'$\beta_y$ TCDQ.A B2')
     pl.axhline(145,color='k',label='lim')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,7)
-    pl.plot(x,self.refbetxtcdsb1, label=r'$\beta_x$ TCDSA.4 B1')
-    pl.plot(x,self.refbetxtcdsb2, label=r'$\beta_x$ TCDSA.4 B2')
+    pl.plot(xv,self.refbetxtcdsb1, label=r'$\beta_x$ TCDSA.4 B1')
+    pl.plot(xv,self.refbetxtcdsb2, label=r'$\beta_x$ TCDSA.4 B2')
     pl.axhline(175,color='k',label='lim at inj.')
     #pl.fill_between([x[0],x[-1]],[200,200],180,color='k',label='lim',alpha=.3)
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,8)
-    pl.plot(x,self.refbetytcdsb1, label=r'$\beta_y$ TCDSA.4 B1')
-    pl.plot(x,self.refbetytcdsb2, label=r'$\beta_y$ TCDSA.4 B2')
+    pl.plot(xv,self.refbetytcdsb1, label=r'$\beta_y$ TCDSA.4 B1')
+    pl.plot(xv,self.refbetytcdsb2, label=r'$\beta_y$ TCDSA.4 B2')
     pl.axhline(200,color='k',label='lim')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'$\beta$ [m]')
     pl.legend()
     pl.subplot(3,4,9)
     gaptcdqb1=10.1*sqrt(self.refbetxtcdqb1*2.5e-6/7000*0.938)
     gaptcdqb2=10.1*sqrt(self.refbetxtcdqb2*2.5e-6/7000*0.938)
-    pl.plot(x,1e3*gaptcdqb1, label=r'gap TCDQ.4 B1 $10.1\sigma$')
-    pl.plot(x,1e3*gaptcdqb2, label=r'gap TCDQ.4 B2 $10.1\sigma$')
+    pl.plot(xv,1e3*gaptcdqb1, label=r'gap TCDQ.4 B1 $10.1\sigma$')
+    pl.plot(xv,1e3*gaptcdqb2, label=r'gap TCDQ.4 B2 $10.1\sigma$')
     pl.axhline(3,color='k',label='limit 3 mm')
     pl.axhline(4,color='k',label='margin 1 mm')
-    pl.xlabel('scxir5')
+    pl.xlabel(x)
     pl.ylabel(r'gap [mm]')
     pl.legend()
     pl.subplot(3,4,10)
-    pl.plot(x,self.refdxtcdqb1, label=r'$D_x$ TCDSA.4 B1')
-    pl.plot(x,self.refdxtcdqb2, label=r'$D_x$ TCDSA.4 B2')
-    #pl.plot(x,self.refdxq4r6b1, label=r'$D_x$ Q4 B1')
-    #pl.plot(x,self.refdxq4r6b2, label=r'$D_x$ Q4 B2')
-    pl.xlabel('scxir5')
+    pl.plot(xv,self.refdxtcdqb1, label=r'$D_x$ TCDSA.4 B1')
+    pl.plot(xv,self.refdxtcdqb2, label=r'$D_x$ TCDSA.4 B2')
+    #pl.plot(xv,self.refdxq4r6b1, label=r'$D_x$ Q4 B1')
+    #pl.plot(xv,self.refdxq4r6b2, label=r'$D_x$ Q4 B2')
+    pl.xlabel(x)
     pl.ylabel(r'$D_x$ [m]')
     pl.legend()
     pl.tight_layout()
@@ -365,6 +369,80 @@ class StrTable(dataobj):
       self.plot_knobs()
       pl.savefig(self.filename.replace('.tfs','_knobs.png'))
     return self
+  def select(self,n1,n2):
+      cls=self.__class__
+      data={}
+      for key,val in self._data.items():
+          if hasattr(val,'dtype'):
+              if n2>n1:
+                  data[key]=val[n1:n2].copy()
+              else:
+                  data[key]=val[n1:n2:-1].copy()
+          elif hasattr(val,'copy'):
+            data[key]=val.copy()
+          else:
+            data[key]=val
+      return cls(data)
+  def interpolate(self,varname,varvalues):
+      cls=self.__class__
+      data={}
+      xx=self[varname]
+      for key,val in self._data.items():
+          if hasattr(val,'dtype'):
+              newval=scipy.interpolate.interp1d(xx,val,
+                      'cubic',assume_sorted=False)
+              data[key]=newval(varvalues)
+          elif hasattr(val,'copy'):
+            data[key]=val.copy()
+          else:
+            data[key]=key
+      return cls(data)
+  def mk_function(self,variable):
+      vv=self[variable]
+      xx=np.linspace(0,1,len(vv),dtype=float)
+      return scipy.interpolate.interp1d(xx,vv,
+                                       'cubic',assume_sorted=False)
+  def merge(self,other):
+      cls=self.__class__
+      data={}
+      for key,val in self._data.items():
+          if hasattr(val,'copy'):
+            data[key]=val.copy()
+          else:
+            data[key]=val
+      for key,val in other._data.items():
+          if hasattr(val,'copy'):
+            data[key]=val.copy()
+          else:
+            data[key]=val
+      data['col_names']=self.col_names+other.col_names
+      return cls(data)
+  def select(self,keys):
+      cls=self.__class__
+      data={}
+      for key,val in self._data.items():
+          if key.upper() in self.col_names:
+            if key in keys:
+              data[key]=val.copy()
+          else:
+            if hasattr(val,'copy'):
+              data[key]=val.copy()
+            else:
+              data[key]=val
+      data['col_names']=[key.upper() for key in keys]
+      return cls(data)
+  def trim(self,n1,n2):
+      cls=self.__class__
+      data={}
+      for key,val in self._data.items():
+          if key.upper() in self.col_names:
+            data[key]=val[n1:n2]
+          else:
+            if hasattr(val,'copy'):
+              data[key]=val.copy()
+            else:
+              data[key]=val
+      return cls(data)
 
 
 
