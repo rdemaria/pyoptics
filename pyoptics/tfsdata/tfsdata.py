@@ -54,13 +54,13 @@ def load(fh):
         try:
           param[_topythonname(f[1])]=_fromtfs(f[2],f[3])
         except:
-          print "bad descriptor"," ".join(f)
+          print("bad descriptor"," ".join(f))
         param_names.append(f[1])
       elif ( lead == '*'): # labels lines
         f=line.split()
         f.pop(0)
         col_names=f
-        plabels=map(_topythonname,col_names)
+        plabels=list(map(_topythonname,col_names))
         for l in plabels: data[l]=[]
       elif (lead == '$'):  # type lines
         f=line.split()
@@ -69,7 +69,7 @@ def load(fh):
         pass
       else :   # data lines
         f=line.split()
-        f=map(_fromtfs,types,f)
+        f=list(map(_fromtfs,types,f))
         datalines+=1
         for l in plabels:
           d=f.pop(0)
@@ -96,7 +96,7 @@ def dump(data,fh):
     dump(data,fh)
   """
   param=data['param']
-  param_names=data.get('param_names',param.keys())
+  param_names=data.get('param_names',list(param.keys()))
   col_names=data['col_names']
   for k in param_names:
     v=param[_topythonname(k)]
@@ -156,7 +156,7 @@ def dump_csv(data,fh):
   def myrepr(v):
     return repr(v).replace("'",'"')
   param=data['param']
-  param_names=data.get('param_names',param.keys())
+  param_names=data.get('param_names',list(param.keys()))
   col_names=data['col_names']
   for k in param_names:
     v=param[_topythonname(k)]
