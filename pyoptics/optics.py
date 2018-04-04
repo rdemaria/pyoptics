@@ -531,7 +531,7 @@ class optics(dataobj):
     return self
   def center(self,ref):
       idx=_n.where(self//ref)[0][0]
-      if self.param['type']=="TWISS":
+      if self.param['type'] in ["TWISS","APERTURE"]:
           for vn in ['s','mux','muy','phix','phiy']:
               if vn in self:
                   v=self[vn]

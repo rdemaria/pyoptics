@@ -131,7 +131,7 @@ class BeamEnvelope(object):
       ex=dot(wm,array([1,0,0]))
       ey=dot(wm,array([0,1,0]))
       self.co[i]=vro+x * ex + y * ey
-  def plot_aper_sx(self,st='k',ref=None):
+  def plot_aper_sx(self,st='k',ref=None,lbl=None):
       ap=self.twiss
       idx=(ap.aper_1>0)&(ap.aper_1<1)
       lim=ap.aper_1[idx]
@@ -146,7 +146,7 @@ class BeamEnvelope(object):
           lim2+=xx[idx]
           nlim+=xx[idx]
           nlim2+=xx[idx]
-      pl.plot(ap.s[idx],lim,st)
+      pl.plot(ap.s[idx],lim,st,label=lbl)
       pl.plot(ap.s[idx],lim2,st)
       pl.plot(ap.s[idx],nlim,st)
       pl.plot(ap.s[idx],nlim2,st)
@@ -180,7 +180,7 @@ class BeamEnvelope(object):
             xxx,yyy,zzz=self.get_survey(ref=ref)
             yy+=yyy
       return ss,yy,sig,env
-  def plot_aper_sy(self,st='k',ref=None):
+  def plot_aper_sy(self,st='k',ref=None,lbl=None):
       ap=self.twiss
       idx=(ap.aper_2>0)&(ap.aper_2<1)
       lim=ap.aper_2[idx]
@@ -190,7 +190,7 @@ class BeamEnvelope(object):
           xx,yy,zz=self.get_survey(ref=ref)
           lim+=yy[idx]
           lim2+=yy[idx]
-      pl.plot(ap.s[idx],lim,st)
+      pl.plot(ap.s[idx],lim,st,label=lbl)
       pl.plot(ap.s[idx],lim2,st)
       pl.plot(ap.s[idx],-lim,st)
       pl.plot(ap.s[idx],-lim2,st)
