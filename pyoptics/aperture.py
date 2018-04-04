@@ -315,6 +315,12 @@ class BeamEnvelope(object):
       a=self.ap.aper_3[n]
       b=self.ap.aper_4[n]
       return racetrack_to_polygon(x,y,h,v,a,b)
+    elif apertype=='OCTAGON':
+      h=self.ap.aper_1[n]
+      v=self.ap.aper_2[n]
+      a=self.ap.aper_3[n]
+      b=self.ap.aper_4[n]
+      return octagon_to_polygon(x,y,h,v,a,b)
     else:
       #x,y=interpolate_ap(self.apfiles[apertype],2)
       xx,yy=self.apfiles[apertype]
@@ -477,17 +483,20 @@ class BeamEnvelope(object):
           lbl=None
           lblap=None
       if n1 is None:
-        n1=self.ap.n1[n]
-      if hasattr(n1,'__len__'):
-           nv1,nv2,nv3=n1
+        halor=self.ap.n1[n]
+        halox=self.ap.n1[n]
+        haloy=self.ap.n1[n]
+      elif hasattr(n1,'__len__'):
+           halor,halox,haloy=n1
       else:
-           nv1,nv2,nv3=n1,n1,n1
-      self.plot_halo(n,nv1,nv2,nv3,color=color,lbl=lbl)
+           halor,halox,haloy=n1,n1,n1
+      self.plot_halo(n,halor,halox,haloy,color=color,lbl=lbl)
       self.plot_aperture(n,color='k',lbl=lblap)
       self.plot_pos_tol(n,color=color,lbl=None)
       self.plot_pos_btol(n,color=color,lbl=None)
-    #pl.axes().set_aspect('equal', 'datalim')
-    pl.title(name)
+    pl.axes().set_aspect('equal', 'datalim')
+    tlt=r"%s: $(h_r,h_x,h_y)=(%.1f,%.1f,%.1f)\sigma $"
+    pl.title(tlt%(name,halor,halox,haloy))
     #tv,tt=pl.xticks()
     #pl.xticks(tv,map(str,tv*1000))
     #tv,tt=pl.yticks()
@@ -524,7 +533,7 @@ def racetrack_to_polygon(x0,y0,h,v,a,b,steps=9):
   yy=np.r_[y+v,  y[::-1]+v, -y-v, -y[::-1]-v, y[0]+v]
   return xx+x0,yy+y0
 
-def octagon_to_polygon(x0,y0,hv,d):
+def octagon_to_polygon2(x0,y0,hv,d):
   #alf=arctan(2/sqrt(2)*d/h-1)
   a=2/sqrt(2)*d-hv
   if a<0:
@@ -533,6 +542,12 @@ def octagon_to_polygon(x0,y0,hv,d):
   yy=np.array([a,hv, hv, a,-a,-hv,-hv,-a,a])
   return xx+x0,yy+y0
 
+def octagon_to_polygon(x0,y0,h,v,a1,a2):
+  y=h*np.tan(a1)
+  x=v*np.tan(np.pi/2-a2)
+  xx=np.array([h,x,-x,-h,-h,-x, x, h,h])
+  yy=np.array([y,v, v, y,-y,-v,-v,-y,y])
+  return xx+x0,yy+y0
 
 def distance_point_segment(x, y, x1, y1, x2, y2):
     A = x - x1; B = y - y1; C = x2 - x1; D = y2 - y1;

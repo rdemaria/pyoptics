@@ -529,6 +529,28 @@ class optics(dataobj):
         v=self[vn]
         self[vn]=_n.concatenate([v[name:],v[:name]])
     return self
+  def center(self,ref):
+      idx=_n.where(self//ref)[0][0]
+      if self.param['type']=="TWISS":
+          for vn in ['s','mux','muy','phix','phiy']:
+              if vn in self:
+                  v=self[vn]
+                  v-=v[idx]
+      elif self.param['type']=="SURVEY":
+          theta0=self.theta[idx]
+          c0=cos(theta0);s0=sin(theta0)
+          x0=self.x[idx]
+          y0=self.y[idx]
+          z0=self.z[idx]
+          xx=self.x-x0
+          yy=self.y-y0
+          zz=self.z-z0
+          xxx=xx*c0-zz*s0;
+          zzz=xx*s0+zz*c0;
+          self.x=xxx
+          self.z=zzz
+      return self
+
   def select(self,a,b,shift=True):
     if type(a) is str:
       a=_n.where(self.name==a.upper())[0][0]
