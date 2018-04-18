@@ -16,11 +16,11 @@ from numpy import sqrt, sum, array, sin, cos, dot, pi,cosh,sinh,tan,arctan
 from numpy import zeros_like, zeros
 from numpy.linalg import inv
 
-from utils import mystr as _mystr
-from utils import pyname
+from .utils import mystr as _mystr
+from .utils import pyname
 from collections import namedtuple
-from pydataobj import dataobj
-import tfsdata
+from .pydataobj import dataobj
+from . import tfsdata
 
 try:
   from objdebug import ObjDebug
@@ -87,7 +87,7 @@ class optics(dataobj):
         return cls(tfsdata.open(fn))
       raise IOError
     except IOError:
-      raise IOError,"%s does not exists or wrong format" % fn
+      raise IOError("%s does not exists or wrong format" % fn)
   def __init__(self,data={},idx=False):
     self.cos=cos
     self.sin=sin
@@ -99,10 +99,10 @@ class optics(dataobj):
       try:
         self._mkidx()
       except KeyError:
-        print 'Warning: error in idx generation'
+        print('Warning: error in idx generation')
   def copy(self):
     data={}
-    for k,v in self._data.items():
+    for k,v in list(self._data.items()):
       if hasattr(v,'copy'):
         vv=v.copy()
       elif  hasattr(v,'__getitem__'):
@@ -120,11 +120,11 @@ class optics(dataobj):
          return True
     return False
   def _mkidx(self):
-    name=map(pyname,list(self.name))
+    name=list(map(pyname,list(self.name)))
     self.idx=dataobj()
     fields=infot._fields[1:]
     for i,name in enumerate(name):
-      data=[i] + map(lambda x: self[x][i],fields)
+      data=[i] + [self[x][i] for x in fields]
       setattr(self.idx,name,infot(*data))
   def get_idx(self,name=None,count=0):
     if type(name) is str:
@@ -162,7 +162,7 @@ class optics(dataobj):
   def dumpstr(self,rows=None,cols=None):
     return '\n'.join(self.dumplist(rows=rows,cols=cols))
   def show(self,rows=None,cols=None):
-    print self.dumpstr(rows=rows,cols=cols)
+    print(self.dumpstr(rows=rows,cols=cols))
   def twissdata(self,location,data):
     idx=_n.where(self.pattern(location))[0][-1]
     out=dict(location=location)
@@ -179,11 +179,11 @@ class optics(dataobj):
     try:
       id1=_n.where(self.pattern(pat1))[0][-1]
     except IndexError:
-      raise ValueError,"%s pattern not found in table"%pat1
+      raise ValueError("%s pattern not found in table"%pat1)
     try:
       id2=_n.where(self.pattern(pat2))[0][-1]
     except IndexError:
-      raise ValueError,"%s pattern not found in table"%pat2
+      raise ValueError("%s pattern not found in table"%pat2)
     out=_n.zeros(len(self.name),dtype=bool)
     if id2>id1:
       out[id1:id2+1]=True
@@ -215,7 +215,7 @@ class optics(dataobj):
     ya,yb=pl.ylim()
     pl.twinx()
     bmax=max(self.betx.max(),self.bety.max())
-    rng=range(0,int(_n.ceil(_n.log10(bmax)))+1)
+    rng=list(range(0,int(_n.ceil(_n.log10(bmax)))+1))
     bval=_n.array([n*10**dd for dd in rng for n in [1,2,5] ])
     bval=bval[bval<bmax]
     pl.ylim(ya,yb)
@@ -484,10 +484,10 @@ class optics(dataobj):
     qpp3y=self.qpp3y[-1]
     qpp4y=self.qpp4y[-1]
     qppy=self.qppy[-1]
-    print "Qx' = %10g%+10g = %10g"%(qp1x,qp2x,qpx)
-    print "Qy' = %10g%+10g = %10g"%(qp1y,qp2y,qpy)
-    print "Qx''= %10g%+10g%+10g%+10g = %10g"%(qpp1x,qpp2x,qpp3x,qpp4x,qppx)
-    print "Qy''= %10g%+10g%+10g%+10g = %10g"%(qpp1y,qpp2y,qpp3y,qpp4y,qppy)
+    print("Qx' = %10g%+10g = %10g"%(qp1x,qp2x,qpx))
+    print("Qy' = %10g%+10g = %10g"%(qp1y,qp2y,qpy))
+    print("Qx''= %10g%+10g%+10g%+10g = %10g"%(qpp1x,qpp2x,qpp3x,qpp4x,qppx))
+    print("Qy''= %10g%+10g%+10g%+10g = %10g"%(qpp1y,qpp2y,qpp3y,qpp4y,qppy))
     self.qp1x =qp1x
     self.qp2x =qp2x
     self.qpx  =qpx
@@ -558,7 +558,7 @@ class optics(dataobj):
       b=_n.where(self.name==b.upper())[0][0]
     data={}
     ln=len(self.name)
-    for k,v in self._data.items():
+    for k,v in list(self._data.items()):
       if hasattr(v,'__len__') and len(v)==ln:
         vv=v[a:b+1]
       elif hasattr(v,'copy'):
@@ -575,7 +575,7 @@ class optics(dataobj):
     return optics(data)
   def append(self,t):
     data={}
-    for k,v in self._data.items():
+    for k,v in list(self._data.items()):
       if k.upper() in self.col_names:
         data[k]=_n.concatenate([v,t[k]])
       else:
@@ -584,7 +584,7 @@ class optics(dataobj):
   def errors_add(self,error_table):
     """Add error columns"""
     klist=[]
-    for k,val in error_table.items():
+    for k,val in list(error_table.items()):
       if k.startswith('k') and sum(abs(val))>0:
         klist.append([k,val])
         self[k]=self.get(k,zeros(len(self.name)))
@@ -598,7 +598,7 @@ class optics(dataobj):
     dv=dv*_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
     return dv
   def errors_kvector(self,i,maxorder=10):
-    rng=range(maxorder)
+    rng=list(range(maxorder))
     kn,ks=[],[]
     for n in rng:
       kname='k%dl'%n
@@ -614,7 +614,7 @@ class optics(dataobj):
     return kn,ks
   def errors_ktob(self,maxorder=6):
     nelem=len(self.name)
-    rng=range(maxorder)
+    rng=list(range(maxorder))
     xx=self.x
     yy=self.y
     for n in rng:
@@ -658,7 +658,7 @@ class optics(dataobj):
     tuny=[]
     for order in orders:
       if order%2==1 or order<2 or order>8:
-        print "Order supported are 2,4,6,8,10,12,14,16"
+        print("Order supported are 2,4,6,8,10,12,14,16")
     for xs,ys in zip(x,y):
       dqx=wp[0]
       dqy=wp[1]
@@ -765,7 +765,7 @@ class qdplot(object):
   def __init__(self,t,x='',yl='',yr='',idx=slice(None),
       clist='k r b g c m',lattice=None,newfig=True,pre=None,
               ):
-    yl,yr,clist=map(str.split,(yl,yr,clist))
+    yl,yr,clist=list(map(str.split,(yl,yr,clist)))
 #    timeit('Init',True)
     self.color={}
     self.left=None
@@ -821,7 +821,7 @@ class qdplot(object):
     return object.__repr__(self)
 
   def _trig(self):
-    print 'optics trig'
+    print('optics trig')
     self.run()
 
   def update(self):
@@ -895,7 +895,7 @@ class qdplot(object):
     name=event.artist.elemname
     prop=event.artist.elemprop
     value=event.artist.elemvalue
-    print '\n %s.%s=%s' % (name, prop,value),
+    print('\n %s.%s=%s' % (name, prop,value), end=' ')
 
 #  def button_press(self,mouseevent):
 #    rel=_n.array([mouseevent.x,mouseevent.y])
