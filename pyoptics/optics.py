@@ -928,9 +928,9 @@ class qdplot(object):
             m=abs(vd[c]).max()
           vd[c]/=m
           if self.ont._is_s_begin:
-            plt=self.lattice.bar(s[c],vd[c],l[c],picker=True)
+            plt=self.lattice.bar(s[c]+l[c]/2,vd[c],l[c],picker=True) #changed
           else:
-            plt=self.lattice.bar(s[c]-l[c],vd[c],l[c],picker=True)
+            plt=self.lattice.bar(s[c]-l[c]/2,vd[c],l[c],picker=True) #changed
           _p.setp(plt,facecolor=color,edgecolor=color)
           if plt:
             self.lines.append(plt[0])
