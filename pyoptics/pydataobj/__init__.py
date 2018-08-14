@@ -1,1 +1,1 @@
-from pydataobj import datadict, dataobj
+from .pydataobj import datadict, dataobj

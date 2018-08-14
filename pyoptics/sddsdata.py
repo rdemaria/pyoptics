@@ -25,10 +25,11 @@
 #     q:long long;
 #     Q:unsigned long long
 
-import StringIO
+import io
 import gzip
 import numpy as n
 import struct
+from functools import reduce
 
 
 
@@ -134,7 +135,7 @@ class sddsdata(object):
       assert fendian in ['big','little']
       endian=fendian
     except AssertionError:
-      print 'Warning sddsdata: forcing endianess to %s' % endian
+      print('Warning sddsdata: forcing endianess to %s' % endian)
       fh.seek(0)
       self.version=fh.readline()
     self.endian={'little':'<','big':'>'}[endian]
@@ -175,7 +176,7 @@ class sddsdata(object):
               d=n.array(ss,typ)
               i['value']=d
             elif i['header']=='&array':
-              dims=map(int,myreadline(fh).split())
+              dims=list(map(int,myreadline(fh).split()))
               i['shape']=dims
               cnt=reduce(lambda a,b:a*b,dims)
   #            ss=myreadline(fh)
@@ -218,7 +219,7 @@ class sddsdata(object):
     out=['%s: %s' % (self.filename,self.version)]
     for i in self.header:
       oo=[]
-      for n,k in i.items():
+      for n,k in list(i.items()):
         if n is not 'header':
           oo.append('%s=%s' % (n,k))
       out.append(i['header'][1:]+' '+', '.join(oo))

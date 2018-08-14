@@ -1,5 +1,4 @@
 from collections import defaultdict
-import new
 import operator
 
 class EventHandler(object):
@@ -16,7 +15,7 @@ EventHandler=EventHandler()
 class Empty(object):
   __slots__=()
   def __getitem__(self,k):
-    raise KeyError, '"%s" key not found eventually' % k
+    raise KeyError('"%s" key not found eventually' % k)
 
 Empty=Empty()
 
@@ -54,10 +53,10 @@ class datadict(object):
     except KeyError:
       return default
   def __iter__(self):
-    for i in self.keys():
+    for i in list(self.keys()):
       yield i
   def items(self):
-    for k in self.keys():
+    for k in list(self.keys()):
       yield k,self[k]
   def __setitem__(self,k,v):
     self._data[k]=v
@@ -70,7 +69,7 @@ class datadict(object):
     if self._dispatcher:
       self._dispatcher.push('changestate',self)
   def keys(self):
-    return self._data.keys()
+    return list(self._data.keys())
   def setdefault(self,k,d=None):
     return self._data.setdefault(k,d)
   def __contains__(self,k):
@@ -82,7 +81,7 @@ class datadict(object):
       self._dispatcher=None
   def __repr__(self):
     """long representation"""
-    attrs=[ k for k in self._data.keys() if not k.startswith('_')]
+    attrs=[ k for k in list(self._data.keys()) if not k.startswith('_')]
     name=' %s' % id(self)
     if self._proto is not Empty:
       proto='_proto=%s' % self._proto

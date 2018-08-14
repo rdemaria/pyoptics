@@ -1,6 +1,6 @@
-from madobj import Elem, Expr, ExprList, Sequence, Line
+from .madobj import Elem, Expr, ExprList, Sequence, Line
 
-from parser import parse, pyname,parses
+from .parser import parse, pyname,parses
 
 def fromast(ast,name='mad',root=None,special=None):
   if special is None:
@@ -92,8 +92,8 @@ def evaluate(value,lcl):
       if lcl:
         value=eval(value,Elem.gbl,lcl)
     except NameError as e:
-      print 'Warning',value,'not evaluated'
-      print e.message
+      print('Warning',value,'not evaluated')
+      print(e.message)
   elif type(value) is list:
     value=[ evaluate(i,lcl) for i in value]
   return value

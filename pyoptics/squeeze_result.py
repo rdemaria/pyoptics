@@ -2,8 +2,8 @@ import os
 
 import matplotlib.pyplot as pl
 
-import tfsdata
-from pydataobj import dataobj
+from . import tfsdata
+from .pydataobj import dataobj
 
 
 class SqueezeRes(dataobj):

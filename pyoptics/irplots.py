@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as pl
 
 
-from optics import optics
+from .optics import optics
 
 class IRPlots(object):
   def __init__(self,name,basedir='.'):
@@ -27,7 +27,7 @@ class IRPlots(object):
     f2='%sb2_%s.png'%(self.name,figname)
     self.t1._plot.figure.savefig(f1)
     self.t2._plot.figure.savefig(f2)
-    print f1,f2
+    print(f1,f2)
     return self
   def scalebeta(self,betamax):
     self.t1._plot.left.set_ylim((0,betamax))

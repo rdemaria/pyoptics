@@ -1,6 +1,6 @@
 import numpy as np
 
-import tfsdata
+from . import tfsdata
 from .optics import optics
 
 def pt2delta(pt,beta0=1):

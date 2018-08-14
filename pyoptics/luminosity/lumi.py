@@ -22,7 +22,7 @@ def ftoint(u,alpha=1.0,Ax=1.0,Ay=1.0):
 def mkint(alpha=290e-6,Ax=1.0,Ay=1.0,debug=True):
   i=scipy.integrate.quad(ftoint,0,inf,args=(alpha,Ax,Ay))
   if debug:
-    print "Integral tolerance: %e"%i[1]
+    print("Integral tolerance: %e"%i[1])
   return 2/sqrt(pi)*i[0]
 
 
@@ -45,14 +45,14 @@ def luminosity(nb=2808,N=1.7e11,frev=clight/26658.8832,
   LL=L*factor
   Fgeo=1/sqrt(1+((sigma_z*dsep)/(2*betx)**2))
   if debug:
-    print "Head-on Luminosity [cm^-2 s^-1]: %e" % (L/1e4)
-    print "Ext Crossing angle [urad]: %g" % (thetac*1e6)
-    print "Crab Crossing angle [urad]: %g" % (acrab*1e6)
-    print "beta_w: %g" % (alpha*sigma_z)
-    print "Piwinski angle: %g" % (betw/betx)
-    print "Loss factor : %g" % factor
-    print "Fgeo        : %g" % Fgeo
-    print "Luminosity  [cm^-2 s^-1] : %e" % (LL*1e-4)
+    print("Head-on Luminosity [cm^-2 s^-1]: %e" % (L/1e4))
+    print("Ext Crossing angle [urad]: %g" % (thetac*1e6))
+    print("Crab Crossing angle [urad]: %g" % (acrab*1e6))
+    print("beta_w: %g" % (alpha*sigma_z))
+    print("Piwinski angle: %g" % (betw/betx))
+    print("Loss factor : %g" % factor)
+    print("Fgeo        : %g" % Fgeo)
+    print("Luminosity  [cm^-2 s^-1] : %e" % (LL*1e-4))
   return LL
 
 
@@ -82,12 +82,12 @@ def integrated_lumi(nb=2808,N=1.7e11,frev=clight/26658.8832,
       alpha+=0.1
       lumi=luminosity(nb=nb,N=N,betx=betx,bety=bety,emit_n=emit_n,
                       sigma_z=sigma_z,alpha=alpha,debug=False)
-      print lumi
+      print(lumi)
     intlumi+=lumi*dt
     tt+=dt
     burnout=lumi*sigma_cross*dt
     N-=burnout
-    print tt,lumi,N,burnout
+    print(tt,lumi,N,burnout)
 
 
 def kfactor(betx,bety,dsepA,dsepB,vcrabA,vcrabB,emit_n=3.75e-6,sigma_z=0.0755,pc=7e12):
@@ -95,7 +95,7 @@ def kfactor(betx,bety,dsepA,dsepB,vcrabA,vcrabB,emit_n=3.75e-6,sigma_z=0.0755,pc
                 emit_n=emit_n,sigma_z=sigma_z,pc=pc)
   Lb=luminosity(betx=betx,bety=bety,dsep=dsepB,vcrab=vcrabB,
                 emit_n=emit_n,sigma_z=sigma_z,pc=pc)
-  print La/Lb
+  print(La/Lb)
 
 
 if __name__=='__main__':

@@ -1,3 +1,3 @@
-from lumi import luminosity, piwibeta
-from beam import Beam
+from .lumi import luminosity, piwibeta
+from .beam import Beam
 

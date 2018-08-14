@@ -7,7 +7,7 @@ import matplotlib
 import numpy as np
 
 
-from optics import *
+from .optics import *
 
 
 class Scenarios(object):
@@ -30,9 +30,9 @@ class Scenario(object):
     self.__dict__.update(data)
     self.beam_data_unit=Scenario.beam_data_unit_tmp[:]
     self.beam_data_unit[2]=self.beam_data_unit_tmp[2]%(self.npart_unit)
-    for cname,cdata in self.confs.items():
+    for cname,cdata in list(self.confs.items()):
       Configuration._instances[(name,cname)]=cdata
-    for cname,cdata in self.confs.items():
+    for cname,cdata in list(self.confs.items()):
       self.confs[cname]=Configuration(name=cname,scenario=name,scn=self,**cdata)
       setattr(self,cname, self.confs[cname])
 
@@ -82,7 +82,7 @@ class Configuration(object):
     for b12 in '12':
       t=optics.open(self.get_twiss_fn(b12))
       for nn,ipn in enumerate([1,2,5,8]):
-        print get_ip_data(t,ipn)
+        print((get_ip_data(t,ipn)))
         #exp=self.settings['exp'][nn]
         #self.settings['ip%sb%s'%(ipn,b12)]=get_ip_data(t,ipn)+[exp]
         self.settings['ip%sb%s'%(ipn,b12)]=get_ip_data(t,ipn)
@@ -114,8 +114,8 @@ basedir='/afs/cern.ch/work/l/lhcopt/public/lhc_optics_web/www'
 datafn=os.path.join(basedir,'data.json')
 if os.path.exists(datafn):
     #try:
-      import simplejson
-      data=simplejson.load(open(datafn))
+      import json
+      data=json.load(open(datafn))
       LHCopt=Scenarios(data)
     #except:
     #  pass

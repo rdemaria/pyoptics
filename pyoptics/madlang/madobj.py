@@ -1,4 +1,4 @@
-from __future__ import division
+
 from collections import namedtuple
 
 import ast
@@ -32,7 +32,7 @@ def get_attrs(obj):
      if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
          raise TypeError("%s.__dict__ is not a dictionary"
                          "" % obj.__name__)
-     return obj.__dict__.keys()
+     return list(obj.__dict__.keys())
 
 def dir2(obj):
     attrs = set()
@@ -132,7 +132,7 @@ class Elem(object):
         del self._data[k]
   def __dir__(self):
     out=dir2(self)
-    out.extend(self._data.keys())
+    out.extend(list(self._data.keys()))
     return out
   def __iter__(self):
     return self._data.__iter__()
@@ -140,12 +140,12 @@ class Elem(object):
     return k in self._data
   def build_dep(self):
     out={}
-    for key,att in self._data.items():
+    for key,att in list(self._data.items()):
         if hasattr(att,'expr'):
             for name,idx,expr in att.get_names():
                 out.setdefault(name,[]).append((key,idx,expr))
         elif hasattr(att,'_data'):
-            for name,lst in att.build_dep().items():
+            for name,lst in list(att.build_dep().items()):
                 for ll in lst:
                   out.setdefault(name,[]).append((key,)+ll)
     return out
@@ -158,7 +158,7 @@ class Elem(object):
         objs='.'.join(dep[:-2])
         if idx is not None:
             objs='%s[%d]'%(objs,idx)
-        print "%s%-20s = %s"%(indent,objs,expr)
+        print("%s%-20s = %s"%(indent,objs,expr))
         if objs in deps:
             self.print_dep(objs,indent+'  ',deps)
   def __call__(self,expr):
@@ -177,7 +177,7 @@ class Expr(object):
     try:
          return eval(self.expr,gbl,lcl)
     except NameError as e:
-        print("Warning %r undefined"%(self))
+        print(("Warning %r undefined"%(self)))
         #return ExprUndefined(e.message)
         return 0
   def __repr__(self):
@@ -185,7 +185,7 @@ class Expr(object):
   def get_names(self,ix=None):
       names=self.expr.co_names
       expr=[self.expr.co_filename]*len(names)
-      return zip(names,[ix]*len(names),expr)
+      return list(zip(names,[ix]*len(names),expr))
 
 class ExprList(object):
   __slots__=('expr')
@@ -293,7 +293,7 @@ class Line(Elem):
           else:
             rest.append(el)
       newelems=[dict(i._asdict()) for i in newelems]
-      return zip(names,types,newelems),rest
+      return list(zip(names,types,newelems)),rest
 
 class Sequence(Elem):
   _fields='at From mech_sep slot_id'.split()

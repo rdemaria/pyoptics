@@ -88,11 +88,11 @@ def dumpdate(epoch=None,fmt='myl',tz='local'):
 
 def test():
   epoch=time.time()
-  print epoch
-  print dumpdate(epoch)
-  print parsedate(dumpdate(epoch))
+  print(epoch)
+  print(dumpdate(epoch))
+  print(parsedate(dumpdate(epoch)))
   epoch=parsedate('2010-08-23 10:54:12.123456')
-  print dumpdate(epoch,fmt='myh',tz='bnl')
+  print(dumpdate(epoch,fmt='myh',tz='bnl'))
 
 if __name__=='__main__':
   import sys
@@ -106,5 +106,5 @@ if __name__=='__main__':
   tzout=opt.get('o')
   fmt=opt.get('f','rfc')
   date=opt.get('date',dumpdate(time.time()))
-  print dumpdate(parsedate(date),fmt=fmt,tz=tzout)
+  print(dumpdate(parsedate(date),fmt=fmt,tz=tzout))
 

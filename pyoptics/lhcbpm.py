@@ -1,10 +1,10 @@
-import sddsdata
+from . import sddsdata
 
 from matplotlib.pyplot import *
 from numpy import *
 
-from harmonic_fit_2 import *
-from rdmdate import *
+from .harmonic_fit_2 import *
+from .rdmdate import *
 
 
 class LHCBPM(object):
@@ -76,8 +76,8 @@ class LHCBPM(object):
 
     def plot_tune_hist(self):
         tunex,tuney=self.get_tunes()
-        qx,ax,px,rx=zip(*tunex)
-        qy,ay,py,ry=zip(*tuney)
+        qx,ax,px,rx=list(zip(*tunex))
+        qy,ay,py,ry=list(zip(*tuney))
         hist(qx,bins=10,label='Qx');
         hist(qy,bins=10,label='Qy');
         legend()
@@ -88,14 +88,14 @@ class LHCBPM(object):
     def plot_tunes(self,tune_fit=maxharm_brent):
         for b in range(self.bunches):
             tunex,tuney=self.get_tunes_bunch(b)
-            qx,ax,px,rx=zip(*tunex)
-            qy,ay,py,ry=zip(*tuney)
+            qx,ax,px,rx=list(zip(*tunex))
+            qy,ay,py,ry=list(zip(*tuney))
             plot(qx,qy,'.')
     def get_coupling(self):
         out=[]
         for b in  range(self.bunches):
           for p in range(self.nbpms):
-            print b,p
+            print(b,p)
             xx=self.xbpm[p,b,:]; yy=self.ybpm[p,b,:]
             cc=fit_coupled_lsq2(xx,yy)
             out.append([b,p]+list(cc))
@@ -118,7 +118,7 @@ class LHCBPM(object):
         out=[]
         for bb in range(self.bunches):
             tunex,tuney=self.get_tunes_bunch(bb,tune_fit=tune_fit)
-            out.append(zip(*tunex)+zip(*tuney))
+            out.append(list(zip(*tunex))+list(zip(*tuney)))
         return out
     def plot_tune_vs_amp(self):
         out=self.get_tune_fit()

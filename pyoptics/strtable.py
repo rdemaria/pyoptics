@@ -5,10 +5,10 @@ import matplotlib.pyplot as pl
 from numpy import *
 import numpy as np
 
-from pydataobj import dataobj
-import tfsdata
+from .pydataobj import dataobj
+from . import tfsdata
 
-from poly_fit import poly_fit, poly_print, poly_val
+from .poly_fit import poly_fit, poly_print, poly_val
 
 import scipy.interpolate
 
@@ -21,7 +21,7 @@ class StrTable(dataobj):
     return obj
   def get_vars(self,reg):
     rxp=re.compile(reg)
-    return sorted(l for l in self.keys() if rxp.match(l))
+    return sorted(l for l in list(self.keys()) if rxp.match(l))
   def get_kq(self,n):
     return self.get_vars(r'kq[xt]?l?%da?\.'%n)
   def get_phases(self):
@@ -44,7 +44,7 @@ class StrTable(dataobj):
     else:
         scale*=brho
     if x is None:
-      xv=arange(len(self[self.keys()[0]][n1:n2]))
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
     else:
       xv=self[x][n1:n2]
     ks=self.get_acb(n,knob)
@@ -65,7 +65,7 @@ class StrTable(dataobj):
   def plot_triplet(self,n1,n2,x=None):
     scale=self.scale
     if x is None:
-      xv=arange(len(self[self.keys()[0]][n1:n2]))
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
     else:
       xv=self[x][n1:n2]
     ks=self.get_triplet()
@@ -80,7 +80,7 @@ class StrTable(dataobj):
   def plot_2in1(self,kq,n1,n2,x=None,sign=False,ylab='k [T/m]'):
     scale=self.scale
     if x is None:
-      xv=arange(len(self[self.keys()[0]][n1:n2]))
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
     else:
       xv=self[x][n1:n2]
     for k in self.get_kq(kq):
@@ -97,7 +97,7 @@ class StrTable(dataobj):
     pl.xticks(a[::2])
   def plot_ipbeta(self,n1=None,n2=None,x=None):
     if x is None:
-      xv=arange(len(self[self.keys()[0]][n1:n2]))
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
     else:
       xv=self[x][n1:n2]
     for k in self.get_vars('bet'):
@@ -109,7 +109,7 @@ class StrTable(dataobj):
     pl.ylabel(r"$\beta$ [m]")
   def plot_phase(self,n1=None,n2=None,x=None):
     if x is None:
-      xv=arange(len(self[self.keys()[0]][n1:n2]))
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
     else:
       xv=self[x][n1:n2]
     colors='bgrc'
@@ -298,13 +298,13 @@ class StrTable(dataobj):
     n1=where(t[x]==val1)[0][-1]
     n2=where(t[x]==val2)[0][-1]
     tmp= "%s:=(%g)*(1-%s)+(%g)*(%s);"
-    print tmp%(name,t[name][n1],par,t[name][n2],par)
+    print(tmp%(name,t[name][n1],par,t[name][n2],par))
   def button_press(self,event):
     self.event=event
   def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[]):
     print(var)
     if param is None:
-        param=[k for k in self.keys() if k.startswith('betx')][0]
+        param=[k for k in list(self.keys()) if k.startswith('betx')][0]
     scale=self.scale
     x=self[param][n1:n2]; y=self[var][n1:n2]
     x0=[x[0],x[-1]]
@@ -326,7 +326,7 @@ class StrTable(dataobj):
     pl.subplot(3,4,n-2)
     xv=self[param]
     yv=poly_val(pol,xv)
-    print '!',' '.join(['%2d'%i for i in  sign(diff(yv))])
+    print('!',' '.join(['%2d'%i for i in  sign(diff(yv))]))
     if n<11:
         yv=abs(yv)
     pl.plot(xv,yv*scale)
@@ -349,7 +349,7 @@ class StrTable(dataobj):
           v=self[name]
           slopes=sign(diff(v))
           if sum(abs(diff(slopes)))>0:
-             print name,' '.join(['%2d'%i for i in  slopes])
+             print(name,' '.join(['%2d'%i for i in  slopes]))
   def set_log(self):
     fig=pl.gcf()
     for ax in fig.axes:
@@ -372,7 +372,7 @@ class StrTable(dataobj):
   def select(self,n1,n2):
       cls=self.__class__
       data={}
-      for key,val in self._data.items():
+      for key,val in list(self._data.items()):
           if hasattr(val,'dtype'):
               if n2>n1:
                   data[key]=val[n1:n2].copy()
@@ -387,7 +387,7 @@ class StrTable(dataobj):
       cls=self.__class__
       data={}
       xx=self[varname]
-      for key,val in self._data.items():
+      for key,val in list(self._data.items()):
           if hasattr(val,'dtype'):
               newval=scipy.interpolate.interp1d(xx,val,
                       'cubic',assume_sorted=False)
@@ -405,12 +405,12 @@ class StrTable(dataobj):
   def merge(self,other):
       cls=self.__class__
       data={}
-      for key,val in self._data.items():
+      for key,val in list(self._data.items()):
           if hasattr(val,'copy'):
             data[key]=val.copy()
           else:
             data[key]=val
-      for key,val in other._data.items():
+      for key,val in list(other._data.items()):
           if hasattr(val,'copy'):
             data[key]=val.copy()
           else:
@@ -420,7 +420,7 @@ class StrTable(dataobj):
   def select(self,keys):
       cls=self.__class__
       data={}
-      for key,val in self._data.items():
+      for key,val in list(self._data.items()):
           if key.upper() in self.col_names:
             if key in keys:
               data[key]=val.copy()
@@ -434,7 +434,7 @@ class StrTable(dataobj):
   def trim(self,n1,n2):
       cls=self.__class__
       data={}
-      for key,val in self._data.items():
+      for key,val in list(self._data.items()):
           if key.upper() in self.col_names:
             data[key]=val[n1:n2]
           else:

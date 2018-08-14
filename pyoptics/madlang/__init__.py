@@ -1,1 +1,1 @@
-from madlang import load, loads, open
+from .madlang import load, loads, open

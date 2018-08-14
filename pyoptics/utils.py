@@ -1,5 +1,5 @@
 from numpy import log10,pi,sqrt,exp
-import gzip, StringIO
+import gzip, io
 import re
 
 def pythonname(string):
@@ -123,7 +123,7 @@ import time
 def timeit(s,set=False):
   if set:
     timeit.mytime=time.time()
-  print '%8.3f %s' % (time.time()-timeit.mytime,s)
+  print('%8.3f %s' % (time.time()-timeit.mytime,s))
 timeit.mytime=0
 
 
@@ -134,7 +134,7 @@ def myopen(fn):
     else:
       return open(fn)
   except IOError:
-    return StringIO.StringIO(fn)
+    return io.StringIO(fn)
 
 
 def no_dots(x):

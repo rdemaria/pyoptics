@@ -42,7 +42,7 @@ class BeamEnvelope(object):
     if apfiles is None:
         apfiles={}
         apnames=list(set(ap.apertype))
-        apnames+=map(str.lower,apnames)
+        apnames+=list(map(str.lower,apnames))
         for fn in apnames:
             if os.path.isfile(fn):
                 apfiles[fn.upper()]=np.loadtxt(fn).T
@@ -106,7 +106,7 @@ class BeamEnvelope(object):
       x0=self.survey.x[idx]
       y0=self.survey.y[idx]
       z0=self.survey.z[idx]
-      print theta0,c0,s0
+      print(theta0,c0,s0)
       xx=self.survey.x-x0
       yy=self.survey.y-y0
       zz=self.survey.z-z0
@@ -471,7 +471,7 @@ class BeamEnvelope(object):
   def get_n1_name(self,name):
     idx=np.where(self.ap//name)[0]
     ap=self.ap
-    return zip(ap.n1[idx],ap.name[idx],ap.betx[idx],ap.bety[idx])
+    return list(zip(ap.n1[idx],ap.name[idx],ap.betx[idx],ap.bety[idx]))
   def plot_halo_name(self,name,n1=None,color='m',lbl='halo',lblap=None):
     first=True
     for n in self.get_n_name(name):
@@ -714,7 +714,7 @@ class EnvelopeOld(object):
     self.xsize=zeros(len(s.x),float)
     self.ysize=zeros(len(s.x),float)
 
-    for i in xrange(len(s.x)):
+    for i in range(len(s.x)):
       vro = array([s.x[i],s.y[i],s.z[i]])
       theta,phi,psi = s.theta[i],s.phi[i],s.psi[i]
       betx,bety,dx,dy,x,y= t.betx[i],t.bety[i],t.dx[i],t.dy[i],t.x[i],t.y[i]

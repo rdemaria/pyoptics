@@ -54,7 +54,7 @@ def load(fh):
         try:
           param[_topythonname(f[1])]=_fromtfs(f[2],f[3])
         except:
-          print("bad descriptor"," ".join(f))
+          print(("bad descriptor"," ".join(f)))
         param_names.append(f[1])
       elif ( lead == '*'): # labels lines
         f=line.split()
@@ -171,6 +171,7 @@ def dump_csv(data,fh):
     fh.write('\n')
 
 
+file=open
 
 import gzip
 def open(fn):
@@ -179,9 +180,9 @@ def open(fn):
     data=load(fn)
   """
   if fn.endswith('.gz'):
-    fh=gzip.open(fn)
+    fh=gzip.open(fn,'r')
   else:
-    fh=file(fn)
+    fh=file(fn,'r')
   t=load(fh)
   t['filename']=fn
   return t

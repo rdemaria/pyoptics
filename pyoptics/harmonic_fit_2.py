@@ -222,7 +222,7 @@ def harm_comp_rel(s,n=100,eps=1e-5,refit=False):
     sfit=c*cos(2*pi*ff*t+p)
     out.append([f,a,p])
     s-=sfit
-  return zip(*out)
+  return list(zip(*out))
 
 def mk_coupled_vec(t,co1,co2,f1,f2,a11,a12,a21,a22,p11,p12,p21,p22):
   t1=2*pi*f1*t
@@ -261,7 +261,7 @@ def fit_decay_interp(v,fa,fb):
   phi[int(fb*ns):]=0
   aphi=abs(phi)
   j=aphi.argmax()
-  print ns,j
+  print(ns,j)
   fj=aphi[j]**2;fp=aphi[j+1]**2;fm=aphi[j-1]**2
   eta=(fj-fp)/(fj-fm)*fm/fp
   alpha=(eta+1)/(eta-1)/tan(pi/ns)
@@ -269,7 +269,7 @@ def fit_decay_interp(v,fa,fb):
   arg0=pi*(v-j/ns)
   argp=(fp*sin(arg0-pi/ns)**2-sin(arg0)**2*fj)/(fj-fp)
   if argp<0:
-    print ns,argp
+    print(ns,argp)
     argp=(fm*sin(arg0+pi/ns)**2-sin(arg0)**2*fj)/(fj-fm)
   l=2*arcsinh(sqrt(argp))
   return v,-1/l
@@ -284,8 +284,8 @@ if __name__=='__main__':
   noise2=0.1*(random.rand(3000)-0.5)
   v1=mk_harmreal_vec(t,[0,0.31,0.28],[2,1  ,0.1],[0,0.3,0.4])+noise1
   v2=mk_harmreal_vec(t,[0,0.31,0.28],[3,0.1,1  ],[0,0.2,0.1])+noise2
-  print maxharm_fft(v1-mean(v1))
-  print maxharm_brent(v1-mean(v1))
-  print maxharm_lsq(v1-mean(v1))
-  print fit_single_lsq(v1)
-  print fit_coupled_lsq(v1,v2)
+  print(maxharm_fft(v1-mean(v1)))
+  print(maxharm_brent(v1-mean(v1)))
+  print(maxharm_lsq(v1-mean(v1)))
+  print(fit_single_lsq(v1))
+  print(fit_coupled_lsq(v1,v2))

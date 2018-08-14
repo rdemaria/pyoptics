@@ -2,6 +2,7 @@ from numpy import sum,arange,exp,sqrt,pi
 
 import scipy.integrate
 import scipy.optimize
+import imp
 
 
 clight=299792458
@@ -21,7 +22,7 @@ def ftoint(u,alpha=1.0,Ax=1.0,Ay=1.0):
 def mkint(alpha=290e-6,Ax=1.0,Ay=1.0,debug=True):
   i=scipy.integrate.quad(ftoint,0,scipy.integrate.Inf,args=(alpha,Ax,Ay))
   if debug:
-    print "Integral tolerance: %e"%i[1]
+    print("Integral tolerance: %e"%i[1])
   return 2/sqrt(pi)*i[0]
 
 
@@ -35,8 +36,8 @@ class Expr(object):
 
 class Beam(object):
   def __getattribute__(self,k):
-    import beam
-    reload(beam)
+    from . import beam
+    imp.reload(beam)
     ga=object.__getattribute__
     sa=object.__setattr__
     cls=ga(self,'__class__')
@@ -78,15 +79,15 @@ class Beam(object):
     else:
       self.lumi=self.L*self.factornh
     if debug:
-      print "Virtual Luminosity: %e" % self.L
-      print "Full Crossing angle [urad]: %g" % (self.thetac*1e6)
-      print "beta_w: %g" % (self.alpha*self.sigma_z)
-      print "Piwinski angle: %g" % (self.piwi)
-      print "Loss factor hg: %g" % self.factorh
-      print "Loss factor no hg: %g" % self.factornh
-      print "Luminosity  [cm^-2 s^-1] : %e" % (self.lumi*1e-4)
-      print "Pileup                   : %d" % (self.pileup)
-      print
+      print("Virtual Luminosity: %e" % self.L)
+      print("Full Crossing angle [urad]: %g" % (self.thetac*1e6))
+      print("beta_w: %g" % (self.alpha*self.sigma_z))
+      print("Piwinski angle: %g" % (self.piwi))
+      print("Loss factor hg: %g" % self.factorh)
+      print("Loss factor no hg: %g" % self.factornh)
+      print("Luminosity  [cm^-2 s^-1] : %e" % (self.lumi*1e-4))
+      print("Pileup                   : %d" % (self.pileup))
+      print()
     return self.lumi
   def __call__(self,**args):
     self.__dict__.update(args)
@@ -107,7 +108,7 @@ class Beam(object):
     def ftomin(x):
       return f(x)-target
     x=scipy.optimize.fsolve(ftomin,x0)
-    print "%s=%g"%(vname,x)
+    print("%s=%g"%(vname,x))
     setattr(self,vname,x)
     return self
   def lumi_integrate(self,level,vname,maxtime=3600*6):

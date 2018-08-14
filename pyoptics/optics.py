@@ -118,6 +118,10 @@ class optics(dataobj):
        fdate=os.stat(self.filename).st_ctime
        if fdate>self._fdate:
          self._data=tfsdata.open(self.filename)
+         self.cos=cos
+         self.sin=sin
+         self.pi=pi
+         self.sqrt=sqrt
          self._fdate=fdate
          return True
     return False
