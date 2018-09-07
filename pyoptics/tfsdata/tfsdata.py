@@ -4,6 +4,7 @@ Usage:
   data=open(fn):  Load data from a file name
   dump(data,fh):  Dump data in file object
 """
+import os
 
 
 from numpy import array
@@ -179,10 +180,16 @@ def open(fn):
   Usage:
     data=load(fn)
   """
-  if fn.endswith('.gz'):
-    fh=gzip.open(fn,'r')
+  if os.path.isfile(fn):
+    if fn.endswith('.gz'):
+       fh=gzip.open(fn,'rt')
+    else:
+       fh=file(fn,'r')
+  elif os.path.isfile(fn+'.gz'):
+       fn = fn+'.gz'
+       fh=gzip.open(fn,'rt')
   else:
-    fh=file(fn,'r')
+      raise IOError('%s or %s.gz not found'%(fn,fn))
   t=load(fh)
   t['filename']=fn
   return t

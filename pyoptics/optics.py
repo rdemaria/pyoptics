@@ -77,19 +77,7 @@ class optics(dataobj):
   _entry_prec=3
   @classmethod
   def open(cls,fn):
-    try:
-      if fn.endswith('tfs.gz'):
-        return cls(tfsdata.load(gzip.open(fn)))
-      elif fn.endswith('tfs'):
-        if os.path.exists(fn):
-          return cls(tfsdata.open(fn))
-        elif os.path.exists(fn+'.gz'):
-          return cls(tfsdata.load(gzip.open(fn+'.gz')))
-      else:
-        return cls(tfsdata.open(fn))
-      raise IOError
-    except IOError:
-      raise IOError("%s does not exists or wrong format" % fn)
+    return cls(tfsdata.open(fn))
   def __init__(self,data={},idx=False):
     self.cos=cos
     self.sin=sin

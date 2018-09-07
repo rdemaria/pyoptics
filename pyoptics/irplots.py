@@ -35,6 +35,12 @@ class IRPlots(object):
     self.t1._plot.run()
     self.t2._plot.run()
     return self
+  def scaledisp(self,dmin,dmax):
+    self.t1._plot.right.set_ylim((dmin,dmax))
+    self.t2._plot.right.set_ylim((dmin,dmax))
+    self.t1._plot.run()
+    self.t2._plot.run()
+    return self
   def plotap(self,nlim=30, ref=7):
     irn=self.name[-1]
     for beam in '12':
