@@ -75,12 +75,13 @@ def load(fh,name=None,root=None):
 def loads(s,root=None):
   return fromast(parses(s),root=root)
 
+_pyopen=open
 
 def open(fn,root=None):
   if fn.endswith('.gz'):
     fh=gzip.open(fn)
   else:
-    fh=file(fn)
+    fh=_pyopen(fn)
   if root is not None:
       fn='%s,%s'%(root.name,fn)
   return load(fh,name=fn,root=root)
@@ -93,7 +94,7 @@ def evaluate(value,lcl):
         value=eval(value,Elem.gbl,lcl)
     except NameError as e:
       print('Warning',value,'not evaluated')
-      print(e.message)
+      print(e)
   elif type(value) is list:
     value=[ evaluate(i,lcl) for i in value]
   return value

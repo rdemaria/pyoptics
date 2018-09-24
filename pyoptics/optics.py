@@ -264,7 +264,7 @@ class optics(dataobj):
     _p.legend()
     return self
 
-  def plotap(self,ap=None,nlim=30,ref=7,newfig=True,eref=None,**nargs):
+  def plotap(self,ap=None,nlim=30,ref=12.6,newfig=True,eref=None,**nargs):
     if ap is None:
         apfn=self.filename.replace('twiss','ap')
         ap=optics.open(apfn)

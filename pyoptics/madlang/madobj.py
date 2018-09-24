@@ -208,12 +208,26 @@ class SeqElem(namedtuple('SeqElem','at From mech_sep slot_id')):
       return cls(*[data[k] for k in cls._fields])
 
 
-classes=dict(
-  drift    =namedtuple('drift','length'),
-  multipole=namedtuple('multipole','knl ksl hxl hyl length'),
-  cavity   =namedtuple('cavity','volt freq lag'),
-  align    =namedtuple('align','dx dy tilt'),
-  block    =namedtuple('block','elems'),
+classes = dict(
+    Drift=namedtuple('Drift', 'length'),
+    Multipole=namedtuple('Multipole', 'knl ksl hxl hyl length'),
+    Cavity=namedtuple('Cavity', 'voltage frequency lag'),
+    XYShift=namedtuple('XYShift', 'dx dy'),
+    SRotation=namedtuple('SRotation', 'angle'),
+    Line=namedtuple('Line', 'elems'),
+    BeamBeam4D=namedtuple(
+        'BeamBeam4D', ' '.join(['q_part', 'N_part', 'sigma_x', 'sigma_y', 'beta_s',                              'min_sigma_diff', 'Delta_x', 'Delta_y'])),
+    # BeamBeam6D=namedtuple('BeamBeam6D', ' '.join([
+    #         'q_part N_part_tot sigmaz N_slices min_sigma_diff threshold_singular',
+    #         'phi alpha',
+    #         'Sig_11_0 Sig_12_0 Sig_13_0',
+    #         'Sig_14_0 Sig_22_0 Sig_23_0',
+    #         'Sig_24_0 Sig_33_0 Sig_34_0 Sig_44_0'
+    #         'delta_x delta_y'
+    #         'x_CO px_C0 y_CO py_CO sigma_CO delta_CO'
+    #         'Dx_sub Dpx_sub Dy_sub Dpy_sub Dsigma_sub Ddelta_sub'
+    #         'enabled']))
+    BeamBeam6D=namedtuple('BeamBeam6D', 'BB6D_data')
 )
 
 def flatten(lst):
@@ -314,11 +328,11 @@ class Sequence(Elem):
     out=[]
     rest=[]
     count={}
-    drift     =convert['drift']
-    multipole =convert['multipole']
-    cavity    =convert['cavity']
-    align     =convert['align']
-    block     =convert['block']
+    drift     =convert['Drift']
+    multipole =convert['Multipole']
+    cavity    =convert['Cavity']
+    xyshift   =convert['XYShift']
+    srotation =convert['SRotation']
     pos={}
     lasts=0
     drifts={}
@@ -407,6 +421,7 @@ for k in dir(math):
   if not k.startswith('_'):
     Elem.gbl[k]=getattr(math,k)
 
+Elem.gbl['sinc']=lambda x: math.sin(math.pi*x)/(math.pi*x)
 Elem.gbl['twopi']=2*math.pi
 
 names=['proton','true','false','electron','ion']
