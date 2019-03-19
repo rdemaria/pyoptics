@@ -34,6 +34,8 @@ class datadict(object):
   def update(self,v):
     if hasattr(v,'_data'):
       self._data.update(v._data)
+    elif  hasattr(v,'items'):
+      self._data.update(v)
     elif hasattr(v,'__dict__'):
       self._data.update(v.__dict__)
     else:

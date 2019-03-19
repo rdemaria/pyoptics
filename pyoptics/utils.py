@@ -68,6 +68,7 @@ def numtostr(n,np=3):
       n=n/10**o
   else:
     fmt='%4.0f.'+' '*(np+4)
+  fmt="%g"
   return fmt % n
 
 

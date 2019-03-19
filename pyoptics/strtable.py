@@ -419,6 +419,10 @@ class StrTable(dataobj):
       return scipy.interpolate.interp1d(xx,vv,
                                        'cubic',assume_sorted=False)
   def merge(self,other):
+      if self.length()!=other.length():
+          aa=self.length()
+          bb=other.length()
+          raise ValueError(f"Tables do not have same length {aa}!={bb}")
       cls=self.__class__
       data={}
       for key,val in list(self._data.items()):
@@ -433,6 +437,17 @@ class StrTable(dataobj):
             data[key]=val
       data['col_names']=self.col_names+other.col_names
       return cls(data)
+
+  def append(self,other):
+      cls=self.__class__
+      data={}
+      for key,val in list(self._data.items()):
+          if hasattr(val,'shape'):
+              data[key]=np.r_[val,other._data[key]]
+          else:
+              data[key]=val
+      return cls(data)
+
   def select(self,keys):
       cls=self.__class__
       data={}
@@ -459,6 +474,54 @@ class StrTable(dataobj):
             else:
               data[key]=val
       return cls(data)
+  def resample(self,newvalues,varname=None):
+      cls=self.__class__
+      data={}
+      if varname is None:
+          xvalues=np.linspace(0,1,self.length())
+          reverse=False
+      else:
+          xvalues=self[varname]
+          dxmax=max(np.diff(xvalues))
+          dxmin=min(np.diff(xvalues))
+          if dxmax>0 and dxmin >0:
+             reverse=False
+          elif dxmax<0 and dxmin <0:
+             reverse=True
+          else:
+             raise ValueError(f"variable {varname} not monotonus")
+      for key,val in list(self._data.items()):
+          if key.upper() in self.col_names:
+              if reverse:
+                  data[key]=np.interp(newvalues,xvalues[::-1],val[::-1])
+              else:
+                 data[key]=np.interp(newvalues,xvalues,val)
+          else:
+            if hasattr(val,'copy'):
+              data[key]=val.copy()
+            else:
+              data[key]=val
+      return cls(data)
+  def length(self):
+      return len(self[self.col_names[0].lower()])
+  def dump_madx(self,val,param,fname):
+      out=[]
+      xx=self[param]
+      for k in self.col_names:
+          vv=self[k.lower()]
+          out.append(f"{k.lower()}={np.interp(val,xx,vv)};")
+      out.append(f"{param}={val};")
+      open(fname,'w').write("\n".join(out))
+
+  def add_col(self,name,val):
+      if len(val)!=self.length():
+          aa=self.length()
+          bb=len(val)
+          raise ValueError(f"Column does not have same table length {aa}!={bb}")
+      if not name.upper() in self.col_names:
+          self.col_names.append(name.upper())
+      self[name]=val
+
 
 
 

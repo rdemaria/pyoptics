@@ -54,10 +54,10 @@ def fromast(ast,name='mad',root=None,special=None):
         # later by fromast(attrs,....)
         ne=Line(name=madname,parent=root['line'],value=value[1][1][1])
       elif proto==None:
-        ne=root[name]
+           ne=root[name]
       else:
-        proelem=root[proto]
-        ne=Elem(name=madname,parent=proelem)
+           proelem=root[proto]
+           ne=Elem(name=madname,parent=proelem)
       root[name]=ne
       attrs=value[1][1:]
       fromast(attrs,name=madname,root=ne,special=['refer','From','apertype'])
