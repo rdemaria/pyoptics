@@ -279,6 +279,7 @@ class optics(dataobj):
     p.figure.gca().set_ylim(0,nlim)
     p.figure.canvas.draw()
     self._plot=p
+    self.ap=ap
     return self
 
   def mk_betamax(self):
@@ -522,6 +523,8 @@ class optics(dataobj):
         vn=vn.lower()
         v=self[vn]
         self[vn]=_n.concatenate([v[name:],v[:name]])
+    if hasattr(self,'ap'):
+        self.ap.cycle(name,reorder=reorder)
     return self
   def center(self,ref):
       idx=_n.where(self//ref)[0][0]

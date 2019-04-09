@@ -38,6 +38,14 @@ class StrTable(dataobj):
       if sum(abs(self[n]))>0:
         out.append(n)
     return sorted(out)
+  def get_arcs(self):
+    out=self.get_vars(r'kq[fd].a[1-8][1-8]')
+    out+=self.get_vars(r'kqt[fd].a[1-8][1-8]b[12]')
+    out+=self.get_vars(r'ks[fd][12].a[1-8][1-8]b[12]')
+    out+=self.get_vars(r'q[xy]b[12]')
+    out+=self.get_vars(r'qp[xy]b[12]')
+    out+=self.get_vars(r'mu[xy][1-8][1-8]b[12]$')
+    return  sorted(out)
   def plot_acb(self,n,knob,n1,n2,x=None,scale=1,brho=None):
     if brho is None:
         scale*=1e6
@@ -317,7 +325,7 @@ class StrTable(dataobj):
     print(tmp%(name,t[name][n1],par,t[name][n2],par))
   def button_press(self,event):
     self.event=event
-  def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[]):
+  def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[],curvep=[]):
     print(var)
     if param is None:
         param=[k for k in list(self.keys()) if k.startswith('betx')][0]
@@ -325,6 +333,9 @@ class StrTable(dataobj):
     x=self[param][n1:n2]; y=self[var][n1:n2]
     x0=[x[0],x[-1]]
     y0=[y[0],y[-1]]
+    for nn in curvep:
+        x0.append(x[nn])
+        y0.append(y[nn])
     xp0=[]; yp0=[]
     for idx in slope0:
         xp0.append(x[idx])
@@ -347,17 +358,17 @@ class StrTable(dataobj):
         yv=abs(yv)
     pl.plot(xv,yv*scale)
     return out
-  def poly_fit_all(self,order,param,fn,n1=None,n2=None):
+  def poly_fit_all(self,order,param,fn,n1=None,n2=None,slope0=[],curvep=[]):
     out=[]
-    for kq in self.get_triplet():
-        out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
-    for n in range(4,14):
-        for kq in self.get_kq(n):
-            out.append(self.poly_fit(kq,order,param=param,n1=n1,n2=n2))
-    for ph in self.get_phases():
-        out.append(self.poly_fit(ph,order,param=param,n1=n1,n2=n2))
-    for ph in self.get_betas():
-        out.append(self.poly_fit(ph,order,param=param,n1=n1,n2=n2))
+    lst=[]
+    lst.extend(  self.get_triplet() )
+    lst.extend([  kq for n in range(4,14) for kq in self.get_kq(n)])
+    lst.extend(self.get_phases())
+    lst.extend(self.get_betas())
+    lst.extend(self.get_arcs())
+    for vv in lst:
+        if param!= vv:
+            out.append(self.poly_fit(vv,order,param=param,n1=n1,n2=n2,slope0=slope0,curvep=curvep))
     open(fn,'w').write('\n'.join(out))
   def check_slopes(self):
     for kq in range(4,14):

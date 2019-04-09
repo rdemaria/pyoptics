@@ -84,10 +84,9 @@ class BeamEnvelope(object):
     #        self.ap.aper_3[idx2]=self.twiss.aper_3[idx][0]
     #        self.ap.aper_4[idx2]=self.twiss.aper_4[idx][0]
   def shift(self,ref):
-      s0=self.twiss.s[self.twiss//ref][0]
-      self.ap.s-=s0
-      self.twiss.s-=s0
-      self.survey.s-=s0
+      self.ap.s-=self.ap.s[self.ap//ref][0]
+      self.twiss.s-=self.twiss.s[self.twiss//ref][0]
+      self.survey.s-=self.survey.s[self.survey//ref][0]
       return self
   def get_ex(self):
       return self.exn/self.gamma/self.beta
@@ -201,7 +200,7 @@ class BeamEnvelope(object):
       ap=self.ap
       sig=sqrt(ap.betx[n1:n2]*self.get_ex())
       idx=self.ap//pattern
-      if nsig==None:
+      if nsig is None:
           nsig=ap.param['n1min']*self.halo_h/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
       ss=ap.s[idx][n1:n2]
