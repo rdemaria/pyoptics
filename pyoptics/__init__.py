@@ -14,3 +14,6 @@ from .adtbox import ADTBox
 from .luminosity import *
 
 from .madbeam import MadBeam
+
+from . import lhccircuit
+from . import funcgen

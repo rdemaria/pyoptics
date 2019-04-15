@@ -32,6 +32,10 @@ class StrTable(dataobj):
   def get_betas(self):
     out=self.get_vars(r'bet[xy]ip[1-8]b[12]')
     return out
+  def get_disps(self):
+    out=self.get_vars(r'd[xy]ip[1-8]b[12]')
+    out+=self.get_vars(r'dp[xy]ip[1-8]b[12]')
+    return out
   def get_acb(self,n,knob='on_sep'):
     out=[]
     for n in self.get_vars('acb.*%d\.[lr][1-8].*%s'%(n,knob)):
@@ -46,6 +50,65 @@ class StrTable(dataobj):
     out+=self.get_vars(r'qp[xy]b[12]')
     out+=self.get_vars(r'mu[xy][1-8][1-8]b[12]$')
     return  sorted(out)
+  def plot_arcs(self,n1=None,n2=None,x=None):
+    fig=pl.figure('squeeze',figsize=(16,12))
+    fig.clf()
+    pl.subplot(4,4,1); self.plot_mq('kqt?[fd].a81',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,2); self.plot_mq('kqt?[fd].a12',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,3); self.plot_mq('kqt?[fd].a45',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,4); self.plot_mq('kqt?[fd].a56',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,5); self.plot_mq('kqt?[fd].a23',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,6); self.plot_mq('kqt?[fd].a34',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,7); self.plot_mq('kqt?[fd].a67',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,8); self.plot_mq('kqt?[fd].a78',n1=n1,n2=n2,x=x)
+    pl.subplot(4,4,8+1); self.plot_ms('ks?[fd]..a81',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+2); self.plot_ms('ks?[fd]..a12',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+3); self.plot_ms('ks?[fd]..a45',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+4); self.plot_ms('ks?[fd]..a56',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+5); self.plot_ms('ks?[fd]..a23',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+6); self.plot_ms('ks?[fd]..a34',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+7); self.plot_ms('ks?[fd]..a67',n1=n1,n2=n2,x=x,brho=None)
+    pl.subplot(4,4,8+8); self.plot_ms('ks?[fd]..a78',n1=n1,n2=n2,x=x,brho=None)
+    pl.tight_layout()
+    return self
+
+  def plot_mq(self,vv,n1=None,n2=None,x=None,brho=True):
+    if brho is None:
+        scale=1
+    else:
+        scale=self.scale
+    if x is None:
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
+    else:
+      xv=self[x][n1:n2]
+    for k in self.get_vars(vv):
+        pl.plot(xv,self[k][n1:n2]*scale,label=k)
+        pl.legend(loc=0,frameon=False)
+    if brho is None:
+        pl.ylabel('k [m${}^{-3}$]')
+    else:
+        pl.ylabel('k [T/m]')
+    return self
+
+  def plot_ms(self,vv,n1=None,n2=None,x=None,brho=True):
+    if brho is None:
+        scale=1
+    else:
+        scale=self.scale
+    if x is None:
+      xv=arange(len(self[list(self.keys())[0]][n1:n2]))
+    else:
+      xv=self[x][n1:n2]
+    for k in self.get_vars(vv):
+        pl.plot(xv,self[k][n1:n2]*scale,label=k)
+        pl.legend(loc=0,frameon=False)
+    if brho is None:
+        pl.ylabel('k [m${}^{-3}$]')
+    else:
+        pl.ylabel('k [T/m${}^2$]')
+    return self
+
+
   def plot_acb(self,n,knob,n1,n2,x=None,scale=1,brho=None):
     if brho is None:
         scale*=1e6
@@ -325,6 +388,25 @@ class StrTable(dataobj):
     print(tmp%(name,t[name][n1],par,t[name][n2],par))
   def button_press(self,event):
     self.event=event
+  def poly_fit_val(self,var,order,n1=None,n2=None,param=None,slope0=[],curvep=[]):
+    if param is None:
+        param=[k for k in list(self.keys()) if k.startswith('betx')][0]
+    scale=self.scale
+    x=self[param][n1:n2]; y=self[var][n1:n2]
+    x0=[x[0],x[-1]]
+    y0=[y[0],y[-1]]
+    for nn in curvep:
+        x0.append(x[nn])
+        y0.append(y[nn])
+    xp0=[]; yp0=[]
+    for idx in slope0:
+        xp0.append(x[idx])
+        yp0.append(0)
+    pol=poly_fit(order,x,y,x0,y0,xp0,yp0)
+    xv=self[param]
+    yv=poly_val(pol,xv)
+    return yv
+
   def poly_fit(self,var,order,n1=None,n2=None,param=None,slope0=[],curvep=[]):
     print(var)
     if param is None:
@@ -353,6 +435,7 @@ class StrTable(dataobj):
     pl.subplot(3,4,n-2)
     xv=self[param]
     yv=poly_val(pol,xv)
+    #self[var+"_fit"]=yv
     print('!',' '.join(['%2d'%i for i in  sign(diff(yv))]))
     if n<11:
         yv=abs(yv)
@@ -365,6 +448,7 @@ class StrTable(dataobj):
     lst.extend([  kq for n in range(4,14) for kq in self.get_kq(n)])
     lst.extend(self.get_phases())
     lst.extend(self.get_betas())
+    lst.extend(self.get_disps())
     lst.extend(self.get_arcs())
     for vv in lst:
         if param!= vv:
