@@ -34,6 +34,13 @@ def get_inequality(x,xmin,xmax,label=None,debug=False):
 
 clight=299792458
 
+def trim_range(vv,vmin,vmax):
+    vv=vv.copy()
+    vv[ (vv>vmin) & (vv<vmax) ] = 0
+    return np.abs(vv)
+
+
+
 def derivative(t,v):
     dt=np.diff(t)
     return t[:-1]+dt,np.diff(v)/dt
@@ -138,6 +145,8 @@ class Circuit2in1(object):
         self.i2p=np.interp(self.t,*derivative(ti2,i2))
         self.v1p=np.interp(self.t,*derivative(tv1,v1))
         self.v2p=np.interp(self.t,*derivative(tv2,v2))
+        self.i1pp=np.interp(self.t,*derivative(self.t,self.i1p))
+        self.i2pp=np.interp(self.t,*derivative(self.t,self.i2p))
         return self
     def mk_simul(self,tsteps,isteps):
         i1=isteps[self.madname1]
@@ -153,6 +162,21 @@ class Circuit2in1(object):
         self.i1pp=np.interp(self.t,*derivative(self.t,self.i1p))
         self.i2pp=np.interp(self.t,*derivative(self.t,self.i2p))
         return self
+    def mk_simul_summ_vec(self):
+        ti1=trim_range(self.i1,self.i1min,self.i1max)
+        ti2=trim_range(self.i2,self.i2min,self.i2max)
+        ti1p=trim_range(self.i1p,self.i1pmin,self.i1pmax)
+        ti2p=trim_range(self.i2p,self.i2pmin,self.i2pmax)
+        ti1pp=trim_range(self.i1pp,self.i1ppmin,self.i1ppmax)
+        ti2pp=trim_range(self.i2pp,self.i2ppmin,self.i2ppmax)
+        tv1=trim_range(self.v1,self.v1min,self.v1max)
+        tv2=trim_range(self.v2,self.v2min,self.v2max)
+        tv1p=trim_range(self.v1p,self.v1pmin,self.v1pmax)
+        tv2p=trim_range(self.v2p,self.v2pmin,self.v2pmax)
+        summ1=ti1+ti1+ti1p+tv1+tv1p+ti1pp
+        summ2=ti2+ti2+ti2p+tv2+tv2p+ti2pp
+        return summ1+summ2
+
     def mk_simul_summ(self):
         i1min=self.i1.min()
         i2min=self.i2.min()
@@ -166,74 +190,99 @@ class Circuit2in1(object):
         v2pmax=abs(self.v2p).max()
         i1ppmax=abs(self.i1pp).max()
         i2ppmax=abs(self.i2pp).max()
-        fmt="%-15s %7.1f %7.1f %7.3f %7.3f %7.3f %7.3f"
-        print(fmt%(self.madname1,i1min,i1max,i1pmax,i1ppmax,v1min,v1pmax))
-        print(fmt%(self.madname2,i2min,i2max,i2pmax,i2ppmax,v2min,v2pmax))
         di1min  =(i1min  -self.i1min  )
         di2min  =(i2min  -self.i2min  )
-        di1max  =(i1max  -self.i1max  )
-        di2max  =(i2max  -self.i2max  )
-        di1pmax =(i1pmax -self.i1pmax )
-        di2pmax =(i2pmax -self.i2pmax )
+        di1max  =(self.i1max  -i1max  )
+        di2max  =(self.i2max  -i2max  )
+        di1pmax =(self.i1pmax -i1pmax )
+        di2pmax =(self.i2pmax -i2pmax )
         dv1min  =(v1min  -self.v1min  )
         dv2min  =(v2min  -self.v2min  )
-        dv1pmax =(v1pmax -self.v1pmax )
-        dv2pmax =(v2pmax -self.v2pmax )
-        di1ppmax=(i1ppmax-self.i1ppmax)
-        di2ppmax=(i2ppmax-self.i2ppmax)
-        return di1min+di2min+di1max+di2max+di1pmax+di2pmax+  \
-               dv1min+dv2min+dv1pmax+dv2pmax+di1ppmax+di2ppmax
-    def plot_vi(self,num=None):
+        dv1pmax =(self.v1pmax -v1pmax )
+        dv2pmax =(self.v2pmax -v2pmax )
+        di1ppmax=(self.i1ppmax-i1ppmax)
+        di2ppmax=(self.i2ppmax-i2ppmax)
+        ti1min  = 0 if di1min  >0 else di1min
+        ti2min  = 0 if di2min  >0 else di2min
+        ti1max  = 0 if di1max  >0 else di1max
+        ti2max  = 0 if di2max  >0 else di2max
+        ti1pmax = 0 if di1pmax >0 else di1pmax
+        ti2pmax = 0 if di2pmax >0 else di2pmax
+        tv1min  = 0 if dv1min  >0 else dv1min
+        tv2min  = 0 if dv2min  >0 else dv2min
+        tv1pmax = 0 if dv1pmax >0 else dv1pmax
+        tv2pmax = 0 if dv2pmax >0 else dv2pmax
+        ti1ppmax= 0 if di1ppmax>0 else di1ppmax
+        ti2ppmax= 0 if di2ppmax>0 else di2ppmax
+        summ1=ti1min+ti1max+ti1pmax+tv1min+tv1pmax+ti1ppmax
+        summ2=ti2min+ti2max+ti2pmax+tv2min+tv2pmax+ti2ppmax
+        fmt="%-15s %7.1f %7.1f %7.3f %7.3f %7.3f %7.3f %7.3f"
+        if abs(summ1)>0:
+           print(fmt%(self.madname1,i1min,i1max,i1pmax,i1ppmax,v1min,v1pmax,summ1))
+        if  abs(summ2)>0:
+           print(fmt%(self.madname2,i2min,i2max,i2pmax,i2ppmax,v2min,v2pmax,summ2))
+        return summ1+summ2
+    def plot_vi(self,num=None,vp=False,label1=None,label2=None):
         if num is None:
           num=self.name1
+        if label1 is None:
+            label1=self.name1
+        if label2 is None:
+            label2=self.name2
         f=pl.figure(num=num,figsize=(8,8))
         f.clf()
-        f,(ax1,ax2,ax3,ax4,ax5) = pl.subplots(5,sharex=True,num=num)
+        if vp:
+           f,(ax1,ax2,ax3,ax4,ax5) = pl.subplots(5,sharex=True,num=num)
+        else:
+           f,(ax1,ax2,ax3,ax4) = pl.subplots(4,sharex=True,num=num)
         print(num)
-        ax1.plot(self.t,self.i1,label=self.name1)
-        ax1.plot(self.t,self.i2,label=self.name2)
-        ax1.set_xlabel('time [sec]')
+        ax1.plot(self.t,self.i1,label=label1)
+        ax1.plot(self.t,self.i2,label=label2)
+        #ax1.set_xlabel('Time [s]')
         ax1.set_ylabel('Current [A]')
         ax1.legend()
         ax1.axhline(self.i1min,color='k')
         ax1.axhline(self.i1max,color='k')
         if self.t[0]>1e6:
           pytimber.set_xaxis_date()
-        ax2.plot(self.t,self.i1p,label=self.name1)
-        ax2.plot(self.t,self.i2p,label=self.name2)
-        ax2.set_xlabel('time [sec]')
+        ax2.plot(self.t,self.i1p,label=label1)
+        ax2.plot(self.t,self.i2p,label=label2)
+        #ax2.set_xlabel('Time [s]')
         ax2.set_ylabel("$I'(t)$  [A/s]")
         ax2.axhline(self.i1pmin,color='k')
         ax2.axhline(self.i1pmax,color='k')
-        ax2.legend()
+        #ax2.legend()
         if self.t[0]>1e6:
           pytimber.set_xaxis_date()
-        ax4.plot(self.t,self.v1,label=self.name1)
-        ax4.plot(self.t,self.v2,label=self.name2)
-        ax4.set_xlabel('time [sec]')
+        ax3.plot(self.t,self.i1pp,label=label1)
+        ax3.plot(self.t,self.i2pp,label=label2)
+        #ax3.set_xlabel('Time [s]')
+        ax3.set_ylabel(r"I''(t) [I/$\rm s^2$]")
+        ax3.axhline(self.i1ppmin,color='k')
+        ax3.axhline(self.i1ppmax,color='k')
+        #ax3.legend(
+        if self.t[0]>1e6:
+          pytimber.set_xaxis_date()
+        if self.t[0]>1e6:
+          pytimber.set_xaxis_date()
+        ax4.plot(self.t,self.v1,label=label1)
+        ax4.plot(self.t,self.v2,label=label2)
+        ax4.set_xlabel('Time [s]')
         ax4.set_ylabel('$V(t)$ [V]')
         if self.v1min==0:
             ax4.axhline(self.v1min,color='k')
         #ax4.axhline(self.v1max,color='k')
-        ax4.legend()
+        #ax4.legend()
         if self.t[0]>1e6:
           pytimber.set_xaxis_date()
-        ax5.plot(self.t,self.v1p*1e3,label=self.name1)
-        ax5.plot(self.t,self.v2p*1e3,label=self.name2)
-        ax5.set_xlabel('time [sec]')
-        ax5.set_ylabel("$V'(t)$ [mV/s]")
-        ax5.legend()
-        if self.t[0]>1e6:
-          pytimber.set_xaxis_date()
-        ax3.plot(self.t,self.i1pp,label=self.name1)
-        ax3.plot(self.t,self.i2pp,label=self.name2)
-        ax3.set_xlabel('time [sec]')
-        ax3.set_ylabel(r"I''(t) [I/$\rm s^2$]")
-        ax3.axhline(self.i1ppmin,color='k')
-        ax3.axhline(self.i1ppmax,color='k')
-        ax3.legend()
-        if self.t[0]>1e6:
-          pytimber.set_xaxis_date()
+        if vp:
+            ax5.plot(self.t,self.v1p*1e3,label=label1)
+            ax5.plot(self.t,self.v2p*1e3,label=label2)
+            #ax5.set_xlabel('Time [s]')
+            ax5.set_ylabel("$V'(t)$ [mV/s]")
+            ax5.axhline(self.v1pmin*1e3,color='k')
+            ax5.axhline(self.v1pmax*1e3,color='k')
+            #ax5.legend()
         return self
     def model_set(self,x):
         self.r1,self.rc,self.r2,self.l1,self.l2,self.c1,self.c2=x
@@ -298,10 +347,21 @@ class Circuit2in1(object):
         pl.plot(self.t,self.v2,label='V2 meas.')
         pl.plot(self.t,v1mod,label='V1 model')
         pl.plot(self.t,v2mod,label='V2 model')
-        pl.xlabel('time [sec]')
+        pl.xlabel('Time [s]')
         pl.ylabel('Voltage [V]')
         pl.legend()
         if self.t[0]>1e6:
+          pytimber.set_xaxis_date()
+    def model_plot_res(self,xaxis_date=True):
+        v1mod,v2mod=self.model_getv()
+        pl.plot(self.t,self.v1,label=r'$V_1$')
+        pl.plot(self.t,self.v2,label=r'$V_2$')
+        pl.plot(self.t,self.v1-v1mod,label=r'$\delta V_1$')
+        pl.plot(self.t,self.v2-v2mod,label=r'$\delta V_2$')
+        pl.xlabel('Time [s]')
+        pl.ylabel('Voltage [V]')
+        pl.legend()
+        if self.t[0]>1e6 and xaxis_date is True:
           pytimber.set_xaxis_date()
         return self
     def set_calib_from_lsa(self,lsa=None):
@@ -741,6 +801,8 @@ class CircuitSingle(object):
         self.i1=np.interp(self.t,ti1,i1)
         self.i1p=np.interp(self.t,*derivative(ti1,i1))
         self.v1p=np.interp(self.t,*derivative(tv1,v1))
+        self.i1pp=np.interp(self.t,*derivative(self.t,self.i1p))
+
         return self
     def k2i(self,k1,momentum):
         field1=self.polarity1*k1*momentum/299792458
@@ -1046,10 +1108,12 @@ class LHCCircuits(object):
             #fmt="%4d: %7.3fs, %7.2f GeV"
             #print(fmt%(tt,tcurrent,momentum(tcurrent)/1e9))
         print("name             Imin    Imax   |I'|max   |I''|max  Vmin    V'max")
+        dsum=0
         for name in sorted(pcnames):
             pc=self.pcs[name]
             pc.mk_simul(tsteps,isteps)
-            pc.mk_simul_summ()
+            dsum+=pc.mk_simul_summ()
+        print(f"Residual {dsum}")
         return tsteps, isteps
     def mk_squeeze(self,strtable,momentum,tstart,tstop,pcnames=None,
             tstepmin=0.02,w1=1,w2=0,w3=0):
@@ -1189,17 +1253,20 @@ class LHCCircuits(object):
             #fmt="%4d: %7.3fs, %7.2f GeV"
             #print(fmt%(tt,tcurrent,momentum(tcurrent)/1e9))
         print("name             Imin    Imax   |I'|max   |I''|max  Vmin    V'max")
+        dsum=0
         for name in sorted(pcnames):
             pc=self.pcs[name]
             pc.mk_simul(tsteps,isteps)
-            pc.mk_simul_summ()
+            dsum+=pc.mk_simul_summ()
+        print(f"Residual {dsum}")
         return tsteps, isteps, ipsteps
     def mk_squeeze_tstep(self,strtable,momentum,
-                         tsteps,ksteps,pcnames=None):
+                         tsteps,ksteps,pcnames=None,newt=None):
         if pcnames is None:
            pcnames=set(self.pcs).intersection(set(strtable))
            pcnames=[p for p in pcnames if 'b1' in p and
                                        p.replace('b1','b2') in pcnames]
+        from scipy.interpolate import Rbf, InterpolatedUnivariateSpline
         isteps={}
         for name in pcnames:
             pc=self.pcs[name]
@@ -1213,13 +1280,27 @@ class LHCCircuits(object):
               i1,i2=pc.k2i(k1,k2,momentum(tcurr))
               isteps[pc.madname1].append(i1)
               isteps[pc.madname2].append(i2)
-        print("name             Imin    Imax   |I'|max   |I''|max  Vmin    V'max")
+            if newt is not None:
+                i1=np.array(isteps[pc.madname1])
+                i2=np.array(isteps[pc.madname2])
+                i1 = InterpolatedUnivariateSpline(tsteps,i1)(newt)
+                i2 = InterpolatedUnivariateSpline(tsteps,i2)(newt)
+                isteps[pc.madname1]=i1
+                isteps[pc.madname2]=i2
+        print("name             Imin    Imax   |I'|max   |I''|max  Vmin    V'max  summ")
         dsum=0
+        if newt is not None:
+            tsteps=newt
+        self.issues={}
         for name in sorted(pcnames):
             pc=self.pcs[name]
             pc.mk_simul(tsteps,isteps)
             dsum+=pc.mk_simul_summ()
-        return isteps,dsum
+            issues=pc.t[np.where(pc.mk_simul_summ_vec()>0)[0]]
+            if len(issues)>0:
+                self.issues[name]=issues
+        print(f"Residual {dsum}")
+        return tsteps,isteps,dsum
     def mk_squeeze_k(self,strtable,momentum,
                           tstart,tstop,tstep,
                           kstart=0.0,kstop=1.0,pcnames=None):
@@ -1474,10 +1555,12 @@ class LHCCircuits(object):
 
         # post processing
         print("name             Imin    Imax   |I'|max   Vmin    V'max   I''max")
+        dsum=0
         for name in sorted(pcnames):
             pc=self.pcs[name]
             pc.mk_simul(tsteps,isteps)
-            pc.mk_simul_summ()
+            dsum+=pc.mk_simul_summ()
+        print(f"Residual {dsum}")
         return tsteps, isteps, ipsteps
     def mk_simul(self,tsteps,isteps):
         for name,pc in self.pcs.items():
