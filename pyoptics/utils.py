@@ -1,4 +1,4 @@
-from numpy import log10,pi,sqrt,exp
+from numpy import log10,pi,sqrt,exp,isreal
 import gzip, io
 import re
 
@@ -68,7 +68,7 @@ def numtostr(n,np=3):
       n=n/10**o
   else:
     fmt='%4.0f.'+' '*(np+4)
-  fmt="%g"
+  #fmt="%g"
   return fmt % n
 
 
@@ -106,8 +106,9 @@ def mystr(d,nd):
    132.100e-06
     -3.211e+06
   """
-  if hasattr(d,'__coerce__'):
+  if isreal(d):
     d=numtostr(d,nd-9)
+    print
   return ('%%-%d.%ds' % (nd,nd)) % d
 
 

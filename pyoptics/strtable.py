@@ -194,7 +194,7 @@ class StrTable(dataobj):
     pl.ylabel(r'mu [2$\pi$]')
     a,b=pl.xticks()
     pl.xticks(a[::2])
-  def plot_squeeze(self,n1=0,n2=None,x=None):
+  def plot_squeeze(self,n1=0,n2=None,x=None,plot_phase=True):
     fig=pl.figure('squeeze',figsize=(16,12))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
     pl.clf()
@@ -209,9 +209,10 @@ class StrTable(dataobj):
       if len(self.get_kq(n))>0:
         pl.subplot(3,4,n-2)
         self.plot_2in1(n,n1,n2,x=x,sign=True)
-    pl.subplot(3,4,12)
-    #self.plot_ipbeta(n1,n2,x=x)
-    self.plot_phase(n1,n2,x=x)
+    if plot_phase:
+      pl.subplot(3,4,12)
+      #self.plot_ipbeta(n1,n2,x=x)
+      self.plot_phase(n1,n2,x=x)
     #pl.tight_layout()
     self.xvar=x
     return self
@@ -322,7 +323,7 @@ class StrTable(dataobj):
     pl.legend()
     pl.tight_layout()
     return self
-  def plot_betsqueeze(self,n1=0,n2=None,figname=None):
+  def plot_betsqueeze(self,n1=0,n2=None,figname=None,plot_phase=True,semilog=True):
     x=self.get_vars('betxip')[0]
     xv=self[x]
     if figname is None:
@@ -334,22 +335,27 @@ class StrTable(dataobj):
     pl.subplot(3,4,1)
     if len(self.get_vars('kqx'))>0:
       self.plot_triplet(n1,n2,x=x)
-      pl.xlim(xv.min(),xv.max())
-      pl.semilogx()
+      if semilog:
+         pl.xlim(xv.min(),xv.max())
+         pl.semilogx()
     for n in range(4,11):
       pl.subplot(3,4,n-2)
       self.plot_2in1(n,n1,n2,x=x,sign=False)
-      pl.xlim(xv.min(),xv.max())
-      pl.semilogx()
+      if semilog:
+        pl.xlim(xv.min(),xv.max())
+        pl.semilogx()
     for n in range(11,14):
       pl.subplot(3,4,n-2)
       self.plot_2in1(n,n1,n2,x=x,sign=True)
-      pl.xlim(xv.min(),xv.max())
-      pl.semilogx()
-    pl.subplot(3,4,12)
-    self.plot_phase(n1,n2,x=x)
-    pl.xlim(xv.min(),xv.max())
-    pl.semilogx()
+      if semilog:
+        pl.xlim(xv.min(),xv.max())
+        pl.semilogx()
+    if plot_phase:
+      pl.subplot(3,4,12)
+      self.plot_phase(n1,n2,x=x)
+      if semilog:
+        pl.xlim(xv.min(),xv.max())
+        pl.semilogx()
     pl.tight_layout()
     self.xvar=x
     return self

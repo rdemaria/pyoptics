@@ -10,9 +10,8 @@ try:
 except:
   pass
 
-import matplotlib.pyplot as _p
 import matplotlib.pyplot as pl
-import numpy as _n
+import numpy as np
 import scipy
 from numpy import sqrt, sum, array, sin, cos, dot, pi,cosh,sinh,tan,arctan
 from numpy import zeros_like, zeros
@@ -84,6 +83,10 @@ class optics(dataobj):
     self.pi=pi
     self.sqrt=sqrt
     self.update(data)
+    if hasattr(data,'summary'):
+        self.param=data.summary
+    if hasattr(data,'name'):
+        self.name=np.array([a.split(':')[0].upper() for a in self.name])
     self._fdate=0
     if idx:
       try:
@@ -95,8 +98,8 @@ class optics(dataobj):
     for k,v in list(self._data.items()):
       if hasattr(v,'copy'):
         vv=v.copy()
-      elif  hasattr(v,'__getitem__'):
-        vv=v[:]
+#      elif  hasattr(v,'__getitem__'):
+#        vv=v[:]
       else:
         vv=v
       data[k]=vv
@@ -128,15 +131,15 @@ class optics(dataobj):
   def pattern(self,regexp):
     c=re.compile(regexp,flags=re.IGNORECASE)
     out=[c.search(n) is not None for i,n in enumerate(self.name)]
-    return _n.array(out)
+    return np.array(out)
   __floordiv__=pattern
 
   def dumplist(self,rows=None,cols=None):
     if rows is None:
-      rows=_n.ones(len(self.name),dtype=bool)
+      rows=np.ones(len(self.name),dtype=bool)
     elif isinstance(rows,str):
       rows=self.pattern(rows)
-    rows=_n.where(rows)[0]
+    rows=np.where(rows)[0]
 
     if cols is None:
       cols=''
@@ -158,7 +161,7 @@ class optics(dataobj):
   def show(self,rows=None,cols=None):
     print(self.dumpstr(rows=rows,cols=cols))
   def twissdata(self,location,data):
-    idx=_n.where(self.pattern(location))[0][-1]
+    idx=np.where(self.pattern(location))[0][-1]
     out=dict(location=location)
     for name in data.split():
       vec=self.__dict__.get(name)
@@ -171,14 +174,14 @@ class optics(dataobj):
   def range(self,pat1,pat2):
     """ return a mask relative to range"""
     try:
-      id1=_n.where(self.pattern(pat1))[0][-1]
+      id1=np.where(self.pattern(pat1))[0][-1]
     except IndexError:
       raise ValueError("%s pattern not found in table"%pat1)
     try:
-      id2=_n.where(self.pattern(pat2))[0][-1]
+      id2=np.where(self.pattern(pat2))[0][-1]
     except IndexError:
       raise ValueError("%s pattern not found in table"%pat2)
-    out=_n.zeros(len(self.name),dtype=bool)
+    out=np.zeros(len(self.name),dtype=bool)
     if id2>id1:
       out[id1:id2+1]=True
     else:
@@ -209,8 +212,8 @@ class optics(dataobj):
     ya,yb=pl.ylim()
     pl.twinx()
     bmax=max(self.betx.max(),self.bety.max())
-    rng=list(range(0,int(_n.ceil(_n.log10(bmax)))+1))
-    bval=_n.array([n*10**dd for dd in rng for n in [1,2,5] ])
+    rng=list(range(0,int(np.ceil(np.log10(bmax)))+1))
+    bval=np.array([n*10**dd for dd in rng for n in [1,2,5] ])
     bval=bval[bval<bmax]
     pl.ylim(ya,yb)
     return self
@@ -230,38 +233,38 @@ class optics(dataobj):
     fmty=fmt%('Q_y',q0y,q1y,q2y*2e-3,q3y*6e-6)
     if newfig:
       pl.figure()
-    _p.title(r"Tune vs $\delta$")
-    _p.xlabel("$\delta$")
-    _p.ylabel("Fractional tune")
-    _p.plot(self.deltap,self.q1-self.q1.round(),label=fmtx,**nargs)
-    _p.plot(self.deltap,self.q2-self.q2.round(),label=fmty,**nargs)
-    #_p.text(0.0,qx,r"$Q_x$")
-    #_p.text(0.0,qy,r"$Q_y$")
-    _p.grid(True)
-    _p.legend(loc=0)
+    pl.title(r"Tune vs $\delta$")
+    pl.xlabel("$\delta$")
+    pl.ylabel("Fractional tune")
+    pl.plot(self.deltap,self.q1-self.q1.round(),label=fmtx,**nargs)
+    pl.plot(self.deltap,self.q2-self.q2.round(),label=fmty,**nargs)
+    #pl.text(0.0,qx,r"$Q_x$")
+    #pl.text(0.0,qy,r"$Q_y$")
+    pl.grid(True)
+    pl.legend(loc=0)
     return self
 
   def plotbetabeat(self,t1,dp='0.0003',**nargs):
-    _p.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
-    _p.ylabel(r"$\Delta\beta/\beta$")
-    _p.xlabel(r"$s$")
-    _p.plot(self.s,1-t1.betx/self.betx,
+    pl.title(r"$\rm{Beta beat: 1 - \beta(\delta=%s)/\beta(\delta=0)}$" % dp)
+    pl.ylabel(r"$\Delta\beta/\beta$")
+    pl.xlabel(r"$s$")
+    pl.plot(self.s,1-t1.betx/self.betx,
             label=r'$\Delta\beta_x/\beta_x$',**nargs)
-    _p.plot(self.s,1-t1.bety/self.bety,
+    pl.plot(self.s,1-t1.bety/self.bety,
             label=r'$\Delta\beta_y/\beta_y$',**nargs)
-    _p.grid(True)
-    _p.legend()
+    pl.grid(True)
+    pl.legend()
     return self
 
   def plotw(self,lbl='',**nargs):
-    _p.title(r"Chromatic function: %s"%lbl)
-  # _p.ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
-    _p.ylabel(r"$w$")
-    _p.xlabel(r"$s$")
-    _p.plot(self.s,self.wx,label=r'$w_x$',**nargs)
-    _p.plot(self.s,self.wy,label=r'$w_y$',**nargs)
-    _p.grid(True)
-    _p.legend()
+    pl.title(r"Chromatic function: %s"%lbl)
+  # pl.ylabel(r"$w=(\Delta\beta/\beta)/\delta$")
+    pl.ylabel(r"$w$")
+    pl.xlabel(r"$s$")
+    pl.plot(self.s,self.wx,label=r'$w_x$',**nargs)
+    pl.plot(self.s,self.wy,label=r'$w_y$',**nargs)
+    pl.grid(True)
+    pl.legend()
     return self
 
   def plotap(self,ap=None,nlim=30,ref=12.6,newfig=True,eref=None,**nargs):
@@ -314,7 +317,7 @@ class optics(dataobj):
         name=self.name[i].split('..')[0]
         if bufname!=name:
           if bufname!='':
-            idx=_n.where(self.name==bufname)[0][0]
+            idx=np.where(self.name==bufname)[0][0]
             self.betxmax[idx]=max(bufx)
             self.betymax[idx]=max(bufy)
           bufx=[self.betx[i]]
@@ -447,20 +450,20 @@ class optics(dataobj):
     self.Ay=bety*self.wy*sin(2*pi*self.phiy)
     k1l=self.k1l
     k2l=self.k2l
-    self.qp1x = 1./4/pi*_n.cumsum(-betx*k1l)
-    self.qp1y = 1./4/pi*_n.cumsum( bety*k1l)
-    self.qp2x = 1./4/pi*_n.cumsum( betx*k2l*dx)
-    self.qp2y = 1./4/pi*_n.cumsum(-bety*k2l*dx)
+    self.qp1x = 1./4/pi*np.cumsum(-betx*k1l)
+    self.qp1y = 1./4/pi*np.cumsum( bety*k1l)
+    self.qp2x = 1./4/pi*np.cumsum( betx*k2l*dx)
+    self.qp2y = 1./4/pi*np.cumsum(-bety*k2l*dx)
     self.qpx  = self.qp1x+self.qp2x
     self.qpy  = self.qp1y+self.qp2y
     self.qpp1x=-2*self.qpx
     self.qpp1y=-2*self.qpy
-    self.qpp2x= 1./2/pi*_n.cumsum( k2l*self.ddx*betx)
-    self.qpp2y= 1./2/pi*_n.cumsum(-k2l*self.ddx*bety)
-    self.qpp3x= 1./4/pi*_n.cumsum(-k1l*self.Bx)
-    self.qpp3y= 1./4/pi*_n.cumsum( k1l*self.By)
-    self.qpp4x= 1./4/pi*_n.cumsum( k2l*dx*self.Bx)
-    self.qpp4y= 1./4/pi*_n.cumsum(-k2l*dx*self.By)
+    self.qpp2x= 1./2/pi*np.cumsum( k2l*self.ddx*betx)
+    self.qpp2y= 1./2/pi*np.cumsum(-k2l*self.ddx*bety)
+    self.qpp3x= 1./4/pi*np.cumsum(-k1l*self.Bx)
+    self.qpp3y= 1./4/pi*np.cumsum( k1l*self.By)
+    self.qpp4x= 1./4/pi*np.cumsum( k2l*dx*self.Bx)
+    self.qpp4y= 1./4/pi*np.cumsum(-k2l*dx*self.By)
     self.qppx=self.qpp1x+self.qpp2x+self.qpp3x+self.qpp4x
     self.qppy=self.qpp1y+self.qpp2y+self.qpp3y+self.qpp4y
     qp1x=self.qp1x[-1]
@@ -504,13 +507,16 @@ class optics(dataobj):
     "Interpolate with piecewise linear all columns using a new s coordinate"
     for cname in self.col_names:
       cname=cname.lower()
-      if cname!=sname and _n.isreal(self[cname][0]):
-        self[cname]=_n.interp(snew,self[sname],self[cname])
+      if cname!=sname and np.isreal(self[cname][0]):
+        self[cname]=np.interp(snew,self[sname],self[cname])
     self[sname]=snew
     self.name=namenew
-  def cycle(self,name,reorder=True):
+  def _first_idx(self,name):
     if type(name) is str:
-      name=_n.where(self.name==name.upper())[0][0]
+      name=np.where(self.name==name.upper())[0][0]
+    return name
+  def cycle(self,name,reorder=True):
+    name=self._first_idx(name)
     for vn in ['s','mux','muy','phix','phiy']:
       if vn in self:
         v=self[vn]
@@ -522,12 +528,12 @@ class optics(dataobj):
       for vn in self.col_names:
         vn=vn.lower()
         v=self[vn]
-        self[vn]=_n.concatenate([v[name:],v[:name]])
+        self[vn]=np.concatenate([v[name:],v[:name]])
     if hasattr(self,'ap'):
         self.ap.cycle(name,reorder=reorder)
     return self
   def center(self,ref):
-      idx=_n.where(self//ref)[0][0]
+      idx=np.where(self//ref)[0][0]
       if self.param['type'] in ["TWISS","APERTURE"]:
           for vn in ['s','mux','muy','phix','phiy']:
               if vn in self:
@@ -549,10 +555,8 @@ class optics(dataobj):
       return self
 
   def select(self,a,b,shift=True):
-    if type(a) is str:
-      a=_n.where(self.name==a.upper())[0][0]
-    if type(b) is str:
-      b=_n.where(self.name==b.upper())[0][0]
+    a=self._first_idx(a)
+    b=self._first_idx(b)
     data={}
     ln=len(self.name)
     for k,v in list(self._data.items()):
@@ -560,8 +564,8 @@ class optics(dataobj):
         vv=v[a:b+1]
       elif hasattr(v,'copy'):
         vv=v.copy()
-      elif hasattr(v,'__getitem__'):
-        vv=v[:]
+#      elif hasattr(v,'__getitem__'):
+#        vv=v[:]
       else:
         vv=v
       data[k]=vv
@@ -574,7 +578,7 @@ class optics(dataobj):
     data={}
     for k,v in list(self._data.items()):
       if k.upper() in self.col_names:
-        data[k]=_n.concatenate([v,t[k]])
+        data[k]=np.concatenate([v,t[k]])
       else:
         data[k]=v
     return  optics(data)
@@ -586,13 +590,13 @@ class optics(dataobj):
         klist.append([k,val])
         self[k]=self.get(k,zeros(len(self.name)))
     for idxerror,name in enumerate(error_table['name']):
-      idxself=_n.where(self.name==name)[0]
+      idxself=np.where(self.name==name)[0]
       for k,val in klist:
         self[k][idxself]+=val[idxerror]
     return self
   def drvterm(t,m=0,n=0,p=0,q=0):
     dv=t.betx**(abs(m)/2.)*t.bety**(abs(n)/2.)
-    dv=dv*_n.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
+    dv=dv*np.exp(+2j*pi*((m-2*p)*t.mux+(n-2*q)*t.muy))
     return dv
   def errors_kvector(self,i,maxorder=10):
     rng=list(range(maxorder))
@@ -670,7 +674,7 @@ class optics(dataobj):
       idx=self//'IP.$'
       sl=self.s[idx]
       ns=self.name[idx]
-      ax=_p.gca()
+      ax=pl.gca()
       ax.set_xticks(sl)
       ax.set_xticklabels(ns)
   def idx_from_namelist(self,namelist):
@@ -684,6 +688,19 @@ class optics(dataobj):
                 currname=namelist[iilist]
               out.append(ii)
       return out
+  def cox(self,elem):
+      el=np.where(self//elem)[0][0]
+      mu0=self.mux[el]
+      bet0=self.betx[el]
+      pq0=np.pi*self.param['q1']
+      return 0.5/sin(pq0)*np.sqrt(bet0*self.betx)*np.cos(2*np.pi*abs(mu0-self.mux)-pq0)
+  def coy(self,elem):
+      el=np.where(self//elem)[0][0]
+      mu0=self.muy[el]
+      bet0=self.bety[el]
+      pq0=np.pi*self.param['q2']
+      return 0.5/sin(pq0)*np.sqrt(bet0*self.bety)*np.cos(2*np.pi*abs(mu0-self.muy)-pq0)
+
 
 
 
@@ -774,9 +791,9 @@ class qdplot(object):
       self.color[i]=self.clist.pop(0)
       self.clist.append(self.color[i])
     if newfig is True:
-      self.figure=_p.figure()
+      self.figure=pl.figure()
     elif newfig is False:
-      self.figure=_p.gcf()
+      self.figure=pl.gcf()
       self.figure.clf()
     else:
       self.figure=newfig
@@ -833,12 +850,12 @@ class qdplot(object):
 #    wx.WakeUpIdle()
 #
 #  def autoupdate(self):
-#    if _p.rcParams['backend']=='WXAgg':
+#    if pl.rcParams['backend']=='WXAgg':
 #      wx.EVT_IDLE.Bind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._wx_callback)
 #    return self
 #
 #  def stop_update(self):
-#    if _p.rcParams['backend']=='WXAgg':
+#    if pl.rcParams['backend']=='WXAgg':
 #      wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,self._callback)
 #
 #  def __del__(self):
@@ -849,8 +866,8 @@ class qdplot(object):
 #    print 'optics run'
     self.ont=self.t
     self.xaxis=getattr(self.ont,self.x)
-    is_ion=_p.isinteractive()
-    _p.interactive(False)
+    is_ion=pl.isinteractive()
+    pl.interactive(False)
     self.lines=[]
     self.legends=[]
 #    self.figure.lines=[]
@@ -882,20 +899,20 @@ class qdplot(object):
     ca.grid(True)
 #    self.figure.canvas.mpl_connect('button_release_event',self.button_press)
     self.figure.canvas.mpl_connect('pick_event',self.pick)
-    _p.interactive(is_ion)
+    pl.interactive(is_ion)
     self.figure.canvas.draw()
     if hasattr(self,'on_run'):
       self.on_run(self)
 
   def pick(self,event):
-    pos=_n.array([event.mouseevent.x,event.mouseevent.y])
+    pos=np.array([event.mouseevent.x,event.mouseevent.y])
     name=event.artist.elemname
     prop=event.artist.elemprop
     value=event.artist.elemvalue
     print('\n %s.%s=%s' % (name, prop,value), end=' ')
 
 #  def button_press(self,mouseevent):
-#    rel=_n.array([mouseevent.x,mouseevent.y])
+#    rel=np.array([mouseevent.x,mouseevent.y])
 #    dx,dy=self.pickpos/rel
 #    print 'release'
 #    self.t[self.pickname][self.pickprop]*=dy
@@ -914,11 +931,11 @@ class qdplot(object):
         vdname=i
         vd=myvd[self.idx]+vd
     if vd is not 0:
-      m=_n.abs(vd).max()
+      m=np.abs(vd).max()
       if m>1E-10:
-        c=_n.where(abs(vd) > m*1E-4)[0]
+        c=np.where(abs(vd) > m*1E-4)[0]
         if len(c)>0:
-          if _n.all(l[c]>0):
+          if np.all(l[c]>0):
             vd[c]=vd[c]/l[c]
             m=abs(vd[c]).max()
           vd[c]/=m
@@ -926,7 +943,7 @@ class qdplot(object):
             plt=self.lattice.bar(s[c]+l[c]/2,vd[c],l[c],picker=True) #changed
           else:
             plt=self.lattice.bar(s[c]-l[c]/2,vd[c],l[c],picker=True) #changed
-          _p.setp(plt,facecolor=color,edgecolor=color)
+          pl.setp(plt,facecolor=color,edgecolor=color)
           if plt:
             self.lines.append(plt[0])
             self.legends.append(lbl)
