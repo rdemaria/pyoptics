@@ -6,8 +6,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as pl
 import scipy.optimize
-import pytimber
-import pjlsa
+try:
+  import pytimber
+  import pjlsa
+except ImportError:
+    print("Warning: pytimber and/or pjlsa not installed")
 from . import poly_fit
 
 from .cubic_prep import cubic_fit1, cubic_fit2, cubic_val

@@ -219,7 +219,7 @@ class BeamEnvelope(object):
       ap=self.ap
       sig=sqrt(ap.bety[n1:n2]*self.get_ey())
       idx=self.ap//pattern
-      if nsig==None:
+      if nsig is None:
          nsig=ap.param['n1min']*self.halo_v/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
       ss=ap.s[idx][n1:n2]
@@ -228,7 +228,7 @@ class BeamEnvelope(object):
       sig=sig[idx][n1:n2]
       if ref is not None:
             xxx,yyy,zzz=self.get_survey(ref=ref)
-            yy+=yyy
+            yy+=yyy[idx]
       pl.fill_between(ss,yy+env,yy-env,color=color,alpha=0.2)
       pl.fill_between(ss,yy+sig,yy-sig,color=color,alpha=0.5)
       pl.ylabel('y [m]')
