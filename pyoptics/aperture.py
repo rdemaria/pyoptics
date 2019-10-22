@@ -130,7 +130,7 @@ class BeamEnvelope(object):
       ex=dot(wm,array([1,0,0]))
       ey=dot(wm,array([0,1,0]))
       self.co[i]=vro+x * ex + y * ey
-  def plot_aper_sx(self,st='k',ref=None,lbl=None):
+  def plot_aper_sx(self,st='k',ref=None,lbl=None,pcut=(1,1),ncut=(1,1)):
       ap=self.twiss
       idx=(ap.aper_1>0)&(ap.aper_1<1)
       lim=ap.aper_1[idx]
@@ -145,10 +145,16 @@ class BeamEnvelope(object):
           lim2+=xx[idx]
           nlim+=xx[idx]
           nlim2+=xx[idx]
-      pl.plot(ap.s[idx],lim,st,label=lbl)
-      pl.plot(ap.s[idx],lim2,st)
-      pl.plot(ap.s[idx],nlim,st)
-      pl.plot(ap.s[idx],nlim2,st)
+      a1,a2=pcut
+      b1,b2=ncut
+      pl.plot(ap.s[idx][:a1],lim[:a1],st,label=lbl)
+      pl.plot(ap.s[idx][a2:],lim[a2:],st,label=lbl)
+      pl.plot(ap.s[idx][b1:],nlim[b1:],st)
+      pl.plot(ap.s[idx][:b2],nlim[:b2],st)
+      pl.plot(ap.s[idx][:a1],lim2[:a1],st)
+      pl.plot(ap.s[idx][a2:],lim2[a2:],st)
+      pl.plot(ap.s[idx][b1:],nlim2[b1:],st)
+      pl.plot(ap.s[idx][:b2],nlim2[:b2],st)
       pl.ylabel('x [m]')
       pl.xlabel('s [m]')
   def get_beam_sx(self,nsig=None,color='b',n1=None,n2=None,ref=None,
@@ -416,14 +422,38 @@ class BeamEnvelope(object):
     x,y=self.get_pos_tol(n,-1)
     pl.plot(x,y,color+'-',label=lbl)
     pl.title(self.ap.name[n])
-  def plot_halo_list(self,n):
-    self.plot_aperture(n)
-    self.plot_pos_tol(n)
-    self.plot_pos_btol(n)
-    for t1s,t1,x0,y0,xp,yp,alf,sig in self.get_halo_list(n):
-      p,=pl.plot([x0,xp],[y0,yp],'r-')
-    pl.title(self.ap.name[n])
-    return p
+  def plot_halo_list(self,nlist,n1=None,color='m',lbl='halo',lblap=None):
+    first=True
+    for n in nlist:
+      if first:
+          lbl=lbl
+          first=False
+          lblap=lblap
+      else:
+          lbl=None
+          lblap=None
+      if n1 is None:
+        halor=self.ap.n1[n]
+        halox=self.ap.n1[n]
+        haloy=self.ap.n1[n]
+      elif hasattr(n1,'__len__'):
+           halor,halox,haloy=n1
+      else:
+           halor,halox,haloy=n1,n1,n1
+      self.plot_halo(n,halor,halox,haloy,color=color,lbl=lbl)
+      self.plot_aperture(n,color='k',lbl=lblap)
+      self.plot_pos_tol(n,color=color,lbl=None)
+      self.plot_pos_btol(n,color=color,lbl=None)
+    pl.axes().set_aspect('equal', 'datalim')
+    tlt=r"$(h_r,h_x,h_y)=(%.1f,%.1f,%.1f)\sigma $"
+    pl.title(tlt%(halor,halox,haloy))
+    #tv,tt=pl.xticks()
+    #pl.xticks(tv,map(str,tv*1000))
+    #tv,tt=pl.yticks()
+    #pl.yticks(tv,map(str,tv*1000))
+    pl.xlabel('x [m]')
+    pl.ylabel('y [m]')
+    pl.grid(True)
   def get_halo_prim(self,n):
     hr=self.halo_r/self.halo_prim
     hy=self.halo_v/self.halo_prim
@@ -500,8 +530,8 @@ class BeamEnvelope(object):
     #pl.xticks(tv,map(str,tv*1000))
     #tv,tt=pl.yticks()
     #pl.yticks(tv,map(str,tv*1000))
-    pl.xlabel('x [mm]')
-    pl.ylabel('y [mm]')
+    pl.xlabel('x [m]')
+    pl.ylabel('y [m]')
     pl.grid(True)
 
 def arc_to_polygon(a,b,t1,t2,steps=9):

@@ -17,3 +17,5 @@ from .madbeam import MadBeam
 
 from . import lhccircuit
 from . import funcgen
+
+from .survey import Survey

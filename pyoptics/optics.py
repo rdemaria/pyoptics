@@ -552,6 +552,7 @@ class optics(dataobj):
           zzz=xx*s0+zz*c0;
           self.x=xxx
           self.z=zzz
+          self.s-=self.s[idx]
       return self
 
   def select(self,a,b,shift=True):
