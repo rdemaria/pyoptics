@@ -10,8 +10,11 @@ def pythonname(string):
   string=string.lower()
   return string
 
-def numtostr(n,np=3):
+def numtostr(n,ns=12):
   """Convert a number in a string where . has a fixed position
+  np minimum precision
+  ns string size
+
   >>> for i in range(-6,10):
   ...   print numtostr( .1234*10**i),numtostr( .1234567*10**i,np=6)
   ...   print numtostr(-.1234*10**i),numtostr(-.1234567*10**i,np=6)
@@ -49,27 +52,33 @@ def numtostr(n,np=3):
   -123.400e+06 -123.456700e+06
   """
   n=float(n)
-  if abs(n)>0:
-    l=log10(abs(n))
-    if l<0:
-      l=int(l)
-      o=(l-1)//3*3
-      fmt='%%%d.%dfe%+03d' % (np+5,np,o)
-      n=n/10**o
-#    fill space of digits
-#    elif -3<=l and l< 0: fmt='%%12.%df' % (np+4)
-#    elif  0<=l and l< 3: fmt='%%12.%df' % (np+4)
-#    elif -3<=l and l< 0: fmt='%%11.%df ' % (np+3)
-    elif  0<=l and l< 3: fmt='%%%d.%df    ' % (np+5,np)
-    elif  3<=l:
-      l=int(l)
-      o=(l)//3*3
-      fmt='%%%d.%dfe%+03d' % (np+5,np,o)
-      n=n/10**o
+#  if abs(n)>0:
+#    l=log10(abs(n))
+#    if l<0:
+#      l=int(l)
+#      o=(l-1)//3*3
+#      fmt='%%%d.%dfe%+03d' % (np+5,np,o)
+#      n=n/10**o
+##    fill space of digits
+##    elif -3<=l and l< 0: fmt='%%12.%df' % (np+4)
+##    elif  0<=l and l< 3: fmt='%%12.%df' % (np+4)
+##    elif -3<=l and l< 0: fmt='%%11.%df ' % (np+3)
+#    elif  0<=l and l< 3: fmt='%%%d.%df    ' % (np+5,np)
+#    elif  3<=l:
+#      l=int(l)
+#      o=(l)//3*3
+#      fmt='%%%d.%dfe%+03d' % (np+5,np,o)
+#      n=n/10**o
+#  else:
+#    fmt='%4.0f.'+' '*(np+4)
+  if abs(n)==0:
+      return ("%%%d.3f"%ns) % n
   else:
-    fmt='%4.0f.'+' '*(np+4)
-  fmt="%%%d.%dg"%(np+5,np)
-  return fmt % n
+      l=log10(abs(n))
+      if l >= -4 and l< 5:
+          return ("%%%d.%df"%(ns,ns-6) ) % n
+      else:
+          return ("%%%d.%dg"%(ns,ns-5) ) % n
 
 
 def gt(a,b):
@@ -107,8 +116,7 @@ def mystr(d,nd):
     -3.211e+06
   """
   if isreal(d):
-    d=numtostr(d,nd-9)
-    print
+    d=numtostr(d,nd)
   return ('%%-%d.%ds' % (nd,nd)) % d
 
 
