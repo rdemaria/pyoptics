@@ -10,7 +10,53 @@ def pythonname(string):
   string=string.lower()
   return string
 
-def numtostr(n,ns=12):
+
+def eng_string( x, format='%s', si=False):
+    import math
+    '''
+    Returns float/int value <x> formatted in a simplified engineering format -
+    using an exponent that is a multiple of 3.
+
+    format: printf-style string used to format the value before the exponent.
+
+    si: if true, use SI suffix for exponent, e.g. k instead of e3, n instead of
+    e-9 etc.
+
+    E.g. with format='%.2f':
+        1.23e-08 => 12.30e-9
+             123 => 123.00
+          1230.0 => 1.23e3
+      -1230000.0 => -1.23e6
+
+    and with si=True:
+          1230.0 => 1.23k
+      -1230000.0 => -1.23M
+    '''
+    x=float(x)
+    sign = ''
+    if x==0:
+        return format%x
+    if x < 0:
+        x = -x
+        sign = '-'
+    exp = int( math.floor( math.log10( x)))
+    exp3 = exp - ( exp % 3)
+    x3 = x / ( 10 ** exp3)
+
+    if si and exp3 >= -24 and exp3 <= 24 and exp3 != 0:
+        exp3_text = 'yzafpnum kMGTPEZY'[ ( exp3 - (-24)) // 3]
+    elif exp3 == 0:
+        exp3_text = ''
+    else:
+        exp3_text = 'e%03d' % exp3
+
+    print(exp3_text)
+    print( ( '%s'+format+'%s') % ( sign, x3, exp3_text) )
+    return ( '%s'+format+'%s') % ( sign, x3, exp3_text)
+
+
+
+def numtostr(n,ns=12,np=3):
   """Convert a number in a string where . has a fixed position
   np minimum precision
   ns string size
@@ -51,6 +97,7 @@ def numtostr(n,ns=12):
    123.400e+06  123.456700e+06
   -123.400e+06 -123.456700e+06
   """
+  return eng_string(n,'%%%d.%df'%(ns-5,np),si=True)
   n=float(n)
 #  if abs(n)>0:
 #    l=log10(abs(n))
@@ -71,14 +118,15 @@ def numtostr(n,ns=12):
 #      n=n/10**o
 #  else:
 #    fmt='%4.0f.'+' '*(np+4)
+  np=min(np,ns-6)
   if abs(n)==0:
-      return ("%%%d.3f"%ns) % n
+      return ("%%%d.%%df"%(ns,np)) % n
   else:
       l=log10(abs(n))
       if l >= -4 and l< 5:
-          return ("%%%d.%df"%(ns,ns-6) ) % n
+          return ("%%%d.%df"%(ns,np) ) % n
       else:
-          return ("%%%d.%dg"%(ns,ns-5) ) % n
+          return ("%%%d.%dg"%(ns,np) ) % n
 
 
 def gt(a,b):
@@ -107,7 +155,7 @@ def eq(a,b):
 def rng(a,b,c):
   return (a>b) & (a<c)
 
-def mystr(d,nd):
+def mystr(d,nd,np):
   """truncate a number or a string with a fix number of chars
   >>> for d in [ 0.443,'stre',1.321E-4,-3211233]: print mystr(d,12)
    443.000e-03
@@ -116,7 +164,7 @@ def mystr(d,nd):
     -3.211e+06
   """
   if isreal(d):
-    d=numtostr(d,nd)
+    d=numtostr(d,nd,np)
   return ('%%-%d.%ds' % (nd,nd)) % d
 
 

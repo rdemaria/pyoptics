@@ -386,7 +386,8 @@ class Reference:
         "transform local p in global coordinates (x,y,s)"
         return self.v+self.w@np.array(p)
 
-    def curve_ahead(self,length=0,angle=0,tilt=0,steps=25):
+    def curve_ahead(self,length=0,angle=0,tilt=0,ds=0.01):
+        steps=int(length/ds)
         vv=np.zeros((3,steps+1))
         ds=length/steps
         da=angle/steps

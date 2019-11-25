@@ -51,7 +51,7 @@ class StrTable(dataobj):
     out+=self.get_vars(r'mu[xy][1-8][1-8]b[12]$')
     return  sorted(out)
   def plot_arcs(self,n1=None,n2=None,x=None):
-    fig=pl.figure('squeeze',figsize=(16,12))
+    fig=pl.figure('squeeze',figsize=(16,10))
     fig.clf()
     pl.subplot(4,4,1); self.plot_mq('kqt?[fd].a81',n1=n1,n2=n2,x=x)
     pl.subplot(4,4,2); self.plot_mq('kqt?[fd].a12',n1=n1,n2=n2,x=x)
@@ -195,7 +195,7 @@ class StrTable(dataobj):
     a,b=pl.xticks()
     pl.xticks(a[::2])
   def plot_squeeze(self,n1=0,n2=None,x=None,plot_phase=True):
-    fig=pl.figure('squeeze',figsize=(16,12))
+    fig=pl.figure('squeeze',figsize=(16,10))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
     pl.clf()
     if len(self.get_vars('kqx'))>0:
@@ -220,9 +220,9 @@ class StrTable(dataobj):
   def plot_ir6(self,figname=None,x='scyir5'):
     xv=self[x]
     if figname is None:
-      fig=pl.figure(self.filename,figsize=(16,12))
+      fig=pl.figure(self.filename,figsize=(16,10))
     else:
-      fig=pl.figure(figname,figsize=(16,12))
+      fig=pl.figure(figname,figsize=(16,10))
     pl.clf()
     pl.subplot(3,4,1)
     w=360
@@ -295,7 +295,7 @@ class StrTable(dataobj):
     pl.axhline(3,color='k',label='limit 3 mm')
     pl.axhline(4,color='k',label='margin 1 mm')
     pl.xlabel(x)
-    pl.ylabel(r'gap [mm]')
+    pl.ylabel(r'gap [mm] at 10.1$\sigma$')
     pl.legend()
     pl.subplot(3,4,10)
     pl.plot(xv,self.refdxtcdqb1, label=r'$D_x$ TCDQ.4 B1')
@@ -306,20 +306,40 @@ class StrTable(dataobj):
     pl.ylabel(r'$D_x$ [m]')
     pl.legend()
     pl.subplot(3,4,11)
-    pl.plot(xv,self.ddtct1b1, color='C1',label=r'MKD-TCT1 B1')
-    pl.plot(xv,self.ddtct1b2, color='C2',label=r'MKD-TCT1 B2')
-    pl.plot(xv,self.ddtct5b1, color='C3',label=r'MKD-TCT5 B1')
-    pl.plot(xv,self.ddtct5b2, color='C4',label=r'MKD-TCT5 B2')
+    if not hasattr(self,'ddtct1b1o'):
+        self.ddtct1b1o=self.ddtct1b1
+        self.ddtct1b2o=self.ddtct1b2
+        self.ddtct5b1o=self.ddtct5b1
+        self.ddtct5b2o=self.ddtct5b2
+    pl.plot(xv,self.ddtct1b1o, color='C1',label=r'MKD-TCT1 B1')
+    pl.plot(xv,self.ddtct1b2o, color='C2',label=r'MKD-TCT1 B2')
+    pl.plot(xv,self.ddtct5b1o, color='C3',label=r'MKD-TCT5 B1')
+    pl.plot(xv,self.ddtct5b2o, color='C4',label=r'MKD-TCT5 B2')
     pl.plot(xv,self.ddtct1b1a, color='C1')
     pl.plot(xv,self.ddtct1b2a, color='C2')
     pl.plot(xv,self.ddtct5b1a, color='C3')
     pl.plot(xv,self.ddtct5b2a, color='C4')
-    pl.fill_between(xv,self.ddtct1b1,self.ddtct1b1a, color='C1',alpha=0.3)
-    pl.fill_between(xv,self.ddtct1b2,self.ddtct1b2a, color='C2',alpha=0.3)
-    pl.fill_between(xv,self.ddtct5b1,self.ddtct5b1a, color='C3',alpha=0.3)
-    pl.fill_between(xv,self.ddtct5b2,self.ddtct5b2a, color='C4',alpha=0.3)
+    pl.fill_between(xv,self.ddtct1b1o,self.ddtct1b1a, color='C1',alpha=0.3)
+    pl.fill_between(xv,self.ddtct1b2o,self.ddtct1b2a, color='C2',alpha=0.3)
+    pl.fill_between(xv,self.ddtct5b1o,self.ddtct5b1a, color='C3',alpha=0.3)
+    pl.fill_between(xv,self.ddtct5b2o,self.ddtct5b2a, color='C4',alpha=0.3)
     pl.xlabel(x)
     pl.ylabel(r'$\Delta \mu_x$ [degree]')
+    pl.legend()
+    pl.subplot(3,4,12)
+    self['kq5.l6b1']*=1.01
+    self['kq5.l6b2']*=1.01
+    self['kq5.r6b1']*=1.01
+    self['kq5.r6b2']*=1.01
+    self.plot_2in1(5,0,None,x='scxir5')
+    self['kq5.l6b1']/=1.01
+    self['kq5.l6b2']/=1.01
+    self['kq5.r6b1']/=1.01
+    self['kq5.r6b2']/=1.01
+    pl.axhline(173,color='k',label="3900 A")
+    pl.axhline(175,color='k',linestyle='--',label="3950 A")
+    pl.xlabel(x)
+    pl.ylabel(r'gradient at 7 TeV [T/m]')
     pl.legend()
     pl.tight_layout()
     return self
@@ -327,9 +347,9 @@ class StrTable(dataobj):
     x=self.get_vars('betxip')[0]
     xv=self[x]
     if figname is None:
-      fig=pl.figure(x,figsize=(16,12))
+      fig=pl.figure(x,figsize=(16,10))
     else:
-      fig=pl.figure(figname,figsize=(16,12))
+      fig=pl.figure(figname,figsize=(16,10))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
     pl.clf()
     pl.subplot(3,4,1)
@@ -362,9 +382,9 @@ class StrTable(dataobj):
   def plot_knobs(self,n1=0,n2=None,figname=None,scales=[1,1]):
     x=self.get_vars('betxip')[0]
     if figname is None:
-      fig=pl.figure('knobs',figsize=(16,12))
+      fig=pl.figure('knobs',figsize=(16,10))
     else:
-      fig=pl.figure(figname,figsize=(16,12))
+      fig=pl.figure(figname,figsize=(16,10))
     fig.canvas.mpl_connect('button_release_event',self.button_press)
     pl.clf()
     for ii,(knob,scale) in enumerate(zip(['on_x','on_sep'],scales)):

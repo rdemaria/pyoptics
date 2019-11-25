@@ -1,6 +1,7 @@
 import os
 
 import matplotlib.pyplot as pl
+import matplotlib
 
 
 from .optics import optics
@@ -20,7 +21,10 @@ class IRPlots(object):
     fn=os.path.join(self.basedir,"twiss_%s.tfs"%name)
     t=optics.open(fn).plotbeta(newfig=False)
     pl.title(name+lbl)
-    t._plot.wx_autoupdate()
+    if 'wx' in matplotlib.get_backend().lower():
+        t._plot.wx_autoupdate()
+    else:
+        t._plot.ani_autoupdate()
     return t
   def save(self,figname):
     f1='%sb1_%s.png'%(self.name,figname)

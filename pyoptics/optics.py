@@ -11,6 +11,8 @@ except:
   pass
 
 import matplotlib.pyplot as pl
+import matplotlib
+from matplotlib.animation import FuncAnimation
 import numpy as np
 import scipy
 from numpy import sqrt, sum, array, sin, cos, dot, pi,cosh,sinh,tan,arctan
@@ -153,7 +155,7 @@ class optics(dataobj):
     rowfmt=' '.join(rowfmt)
     out.append(rowfmt % tuple(['names'] + colsn  ) )
     for i in rows:
-      v=[ self.name[i] ]+ [ _mystr(c[i],self._entry_char) for c in cols ]
+      v=[ self.name[i] ]+ [ _mystr(c[i],self._entry_char,self._entry_prec) for c in cols ]
       out.append(rowfmt %  tuple(v))
     return out
   def dumpstr(self,rows=None,cols=None):
@@ -198,7 +200,10 @@ class optics(dataobj):
     if ip_label:
         self.set_xaxis_ip()
     if autoupdate:
-        self._plot.wx_autoupdate()
+        if 'wx' in matplotlib.get_backend().lower():
+            self._plot.wx_autoupdate()
+        else:
+            self._plot.ani_autoupdate()
 #    self._target.append(out)
     return self
 
@@ -760,6 +765,14 @@ class qdplot(object):
     cls.autoupdate.remove(self)
     if len(cls.autoupdate)==0:
       wx.EVT_IDLE.Unbind(wx.GetApp(),wx.ID_ANY,wx.ID_ANY,cls._wx_callback)
+
+  def ani_autoupdate(self):
+      from matplotlib.animation import FuncAnimation
+      self._ani = FuncAnimation( self.figure, self.update,  blit=False)
+
+  def ani_stopupdate(self):
+      del self._ani
+
   @classmethod
   def _wx_callback(cls,*args):
     out=[]
@@ -839,9 +852,10 @@ class qdplot(object):
     print('optics trig')
     self.run()
 
-  def update(self):
+  def update(self,*args):
     if hasattr(self.t,'reload'):
       if self.t.reload():
+        print("reload")
         self.run()
         return self
     return False
