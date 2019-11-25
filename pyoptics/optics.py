@@ -855,7 +855,6 @@ class qdplot(object):
   def update(self,*args):
     if hasattr(self.t,'reload'):
       if self.t.reload():
-        print("reload")
         self.run()
         return self
     return False
