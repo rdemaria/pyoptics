@@ -50,8 +50,8 @@ def eng_string( x, format='%s', si=False):
     else:
         exp3_text = 'e%03d' % exp3
 
-    print(exp3_text)
-    print( ( '%s'+format+'%s') % ( sign, x3, exp3_text) )
+    #print(exp3_text)
+    #print( ( '%s'+format+'%s') % ( sign, x3, exp3_text) )
     return ( '%s'+format+'%s') % ( sign, x3, exp3_text)
 
 
@@ -97,7 +97,7 @@ def numtostr(n,ns=12,np=3):
    123.400e+06  123.456700e+06
   -123.400e+06 -123.456700e+06
   """
-  return eng_string(n,'%%%d.%df'%(ns-5,np),si=True)
+  return eng_string(n,'%%%d.%df'%(ns-5,np),si=False)
   n=float(n)
 #  if abs(n)>0:
 #    l=log10(abs(n))
