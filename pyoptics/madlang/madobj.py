@@ -28,9 +28,10 @@ def get_attrs(obj):
     import types
     if not hasattr(obj, '__dict__'):
         return []  # slots only
-    if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
+    #if not isinstance(obj.__dict__, (dict, types.DictProxyType)):
+    if not isinstance(obj.__dict__, dict):
         raise TypeError("%s.__dict__ is not a dictionary"
-                        "" % obj.__name__)
+                        "" % type(obj.__name__))
     return list(obj.__dict__.keys())
 
 
@@ -144,7 +145,8 @@ class Elem(object):
             del self._data[k]
 
     def __dir__(self):
-        out = dir2(self)
+#        out = dir2(self)
+        out=list(self.__dict__.keys())
         out.extend(list(self._data.keys()))
         return out
 
