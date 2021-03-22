@@ -50,7 +50,7 @@ def _fit_maxharm_brent(v,fmax,t):
   try:
     fmax=brent(_maxfreq_ftomin,args=(v,t),brack=b,tol=1e-12)
   except ValueError:
-    print "maxharm brent error"
+    print("maxharm brent error")
     #print [(bb,_maxfreq_ftomin(bb,v,t)) for bb in b]
   coef=sum(v*exp(-2j*pi*fmax*t))/ns
   a,p=abs(coef)*2,angle(coef)
@@ -202,7 +202,7 @@ def harm_comp_rel(s,n=100,eps=1e-5,refit=False):
     sfit=c*cos(2*pi*ff*t+p)
     out.append([f,a,p])
     s-=sfit
-  return zip(*out)
+  return list(zip(*out))
 
 def mk_coupled_vec(t,co1,co2,f1,f2,a11,a12,a21,a22,p11,p12,p21,p22):
   t1=2*pi*f1*t
@@ -219,11 +219,11 @@ if __name__=='__main__':
   noise2=0.1*(random.rand(3000)-0.5)
   v1=mk_harmreal_vec(t,[0,0.31,0.28],[2,1  ,0.1],[0,0.3,0.4])+noise1
   v2=mk_harmreal_vec(t,[0,0.31,0.28],[3,0.1,1  ],[0,0.2,0.1])+noise2
-  print maxharm_fft(v1-mean(v1))
-  print maxharm_brent(v1-mean(v1))
-  print maxharm_lsq(v1-mean(v1))
-  print fit_single_lsq(v1)
-  print fit_coupled_lsq(v1,v2)
+  print(maxharm_fft(v1-mean(v1)))
+  print(maxharm_brent(v1-mean(v1)))
+  print(maxharm_lsq(v1-mean(v1)))
+  print(fit_single_lsq(v1))
+  print(fit_coupled_lsq(v1,v2))
 
 
 
