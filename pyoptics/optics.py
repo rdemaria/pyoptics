@@ -95,6 +95,8 @@ class optics(dataobj):
         self._mkidx()
       except KeyError:
         print('Warning: error in idx generation')
+    if hasattr(data,'col_names') and callable(data.col_names):
+        self.col_names=data.col_names()
   def copy(self):
     data={}
     for k,v in list(self._data.items()):
@@ -768,7 +770,7 @@ class qdplot(object):
 
   def ani_autoupdate(self):
       from matplotlib.animation import FuncAnimation
-      self._ani = FuncAnimation( self.figure, self.update,  blit=False)
+      self._ani = FuncAnimation( self.figure, self.update,  blit=False, interval=1000)
 
   def ani_stopupdate(self):
       del self._ani

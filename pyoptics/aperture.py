@@ -33,7 +33,7 @@ class BeamEnvelope(object):
       ap=twiss
       survey=optics.open(fn.replace('twiss_','survey_'))
       return cls(ap,twiss,survey)
-  def __init__(self,ap,twiss=None,survey=None,apfiles=None,offset=None):
+  def __init__(self,ap,twiss=None,survey=None,apfiles=None,offset=None,ref=None):
     if twiss is None:
         twiss=ap
     self.twiss=twiss
@@ -145,6 +145,7 @@ class BeamEnvelope(object):
           lim2+=xx[idx]
           nlim+=xx[idx]
           nlim2+=xx[idx]
+          idx0=where(self.survey//ref)[0][0]
       a1,a2=pcut
       b1,b2=ncut
       pl.plot(ap.s[idx][:a1],lim[:a1],st,label=lbl)
