@@ -85,8 +85,10 @@ class optics(dataobj):
     self.pi=pi
     self.sqrt=sqrt
     self.update(data)
-    if hasattr(data,'summary'):
+    try:
         self.param=data.summary
+    except (ValueError, AttributeError) as err:
+        pass
     if hasattr(data,'name'):
         self.name=np.array([a.split(':')[0].upper() for a in self.name])
     self._fdate=0
@@ -893,7 +895,7 @@ class qdplot(object):
     self.figure.legends = []
 
     if self.lattice:
-      self.lattice.patches=[]
+      self.lattice.patches.clear()
       self._lattice(['k0l','kn0l','angle'],"#a0ffa0",'Bend h')
       self._lattice(['ks0l'],"#ffa0a0",'Bend v')
       self._lattice(['kn1l','k1l'],"#a0a0ff",'Quad')
@@ -901,11 +903,11 @@ class qdplot(object):
       self._lattice(['vkick'],"#a0e0e0",'Kick v')
       self._lattice(['kn2l','k2l'],"#e0e0a0",'Sext')
     if self.left:
-      self.left.lines=[]
+      self.left.lines.clear()
       for i in self.yl:
         self._column(i,self.left,self.color[i])
     if self.right:
-      self.right.lines=[]
+      self.right.lines.clear()
       for i in self.yr:
         self._column(i,self.right,self.color[i])
     ca=self.figure.gca()
@@ -946,7 +948,7 @@ class qdplot(object):
       if myvd is not None:
         vdname=i
         vd=myvd[self.idx]+vd
-    if vd is not 0:
+    if np.any(vd !=0):
       m=np.abs(vd).max()
       if m>1E-10:
         c=np.where(abs(vd) > m*1E-4)[0]
