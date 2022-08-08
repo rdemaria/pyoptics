@@ -524,9 +524,8 @@ class BeamEnvelope(object):
       self.plot_aperture(n,color='k',lbl=lblap)
       self.plot_pos_tol(n,color=color,lbl=None)
       self.plot_pos_btol(n,color=color,lbl=None)
-    pl.axes().set_aspect('equal', 'datalim')
-    tlt=r"%s: $(h_r,h_x,h_y)=(%.1f,%.1f,%.1f)\sigma $"
-    pl.title(tlt%(name,halor,halox,haloy))
+    pl.gca().set_aspect('equal')
+    pl.title(f"{name}")
     #tv,tt=pl.xticks()
     #pl.xticks(tv,map(str,tv*1000))
     #tv,tt=pl.yticks()

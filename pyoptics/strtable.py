@@ -448,6 +448,7 @@ class StrTable(dataobj):
     for idx in slope0:
         xp0.append(x[idx])
         yp0.append(0)
+    print(x,y,x0,y0,xp0,yp0)
     pol=poly_fit(order,x,y,x0,y0,xp0,yp0)
     out="%s:=%s;"%(var, poly_print(pol,x=param,power='^'))
     if re.match('kt?qx[0-9]?[ab]?\.',var):
