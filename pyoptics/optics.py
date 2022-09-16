@@ -24,6 +24,7 @@ from .utils import pyname
 from collections import namedtuple
 from .pydataobj import dataobj
 from . import tfsdata
+from .survey import rot_mad,get_w_from_angles
 
 try:
     from objdebug import ObjDebug
@@ -86,7 +87,7 @@ class optics(dataobj):
     def open(cls, fn):
         return cls(tfsdata.open(fn))
 
-    def save(self, fn, floatfmt="%g"):
+    def save(self, fn, floatfmt="%20.9f"):
         tfsdata.save(self._data, fn, floatfmt)
 
     def __init__(self, data={}, idx=False):
@@ -668,6 +669,16 @@ class optics(dataobj):
                 data[k] = v
         return optics(data)
 
+    def resize(self,nn):
+        data = {}
+        for k, v in list(self._data.items()):
+            if k.upper() in self.col_names:
+                data[k] = np.zeros(nn,dtype=v.dtype)
+            else:
+                data[k] = v
+        return optics(data)
+
+
     def errors_add(self, error_table):
         """Add error columns"""
         klist = []
@@ -812,6 +823,12 @@ class optics(dataobj):
             * np.sqrt(bet0 * self.bety)
             * np.cos(2 * np.pi * abs(mu0 - self.muy) - pq0)
         )
+
+    def get_rotmat(self,i):
+        return rot_mad(self.theta[i],self.phi[i],self.psi[i])
+
+    def get_pos(self,i):
+        return np.array([self.x[i],self.y[i],self.z[i]])
 
 
 def _mylbl(d, x):
