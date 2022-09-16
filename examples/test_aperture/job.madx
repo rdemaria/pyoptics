@@ -1,0 +1,57 @@
+mrt:=0.002; mht:=0.005; mht:=0.0035;
+m: marker,apertype=q4_aperture,aper_tol:={mrt,mht,mvt};
+
+
+seq: sequence,l=1;
+m, at=0;
+endsequence;
+
+beam;
+
+mbx=1; mby=1;
+mdx=0; mdy=0;
+mx=0; my=0;
+mdp_err=0;
+mdp_rms=0;
+
+use,sequence=seq;
+twiss,betx=mbx,bety=mby,dx=mdx,dy=mdy,x=mx,y=my,deltap=mdp_err,file=tw.tfs;
+
+emittance_norm=3.5e-6;
+apbbeat=1.0;
+halor=6.00000001; halox=6; haloy=6;
+DParcx=0.00; DParcy=0.00;
+COmax=0.000; dPmax=0.0000; VMAXI=30; SPECIF=7;
+
+aperture,cor=COmax, dp=dPmax, spec=SPECIF,interval=1.0,
+         exn=emittance_norm,eyn=emittance_norm,
+         halo={6,halor,halox,haloy},bbeat=apbbeat,
+         dparx=DParcx,dpary=DParcy,
+         nco=3,
+         file=ap1.tfs;
+
+mbx=110; mby=60;
+mdx=0; mdy=0;
+mx=0; my=0;
+mdp_err=0;
+mdp_rms=0;
+
+use,sequence=seq;
+twiss,betx=mbx,bety=mby,dx=mdx,dy=mdy,x=mx,y=my,deltap=mdp_err,file=tw.tfs;
+
+emittance_norm=3.5e-6;
+apbbeat=1.0;
+halor=6.00000001; halox=6; haloy=6;
+DParcx=0.00; DParcy=0.00;
+COmax=0.000; dPmax=0.0000; VMAXI=30; SPECIF=7;
+
+aperture,cor=COmax, dp=dPmax, spec=SPECIF,interval=1.0,
+         exn=emittance_norm,eyn=emittance_norm,
+         halo={6,halor,halox,haloy},bbeat=apbbeat,
+         dparx=DParcx,dpary=DParcy,
+         nco=1,
+         file=ap2.tfs;
+
+
+
+
