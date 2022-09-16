@@ -444,7 +444,7 @@ elements = ['hkicker', 'vkicker', 'ecollimator', 'instrument',
             'kicker', 'marker', 'monitor', 'multipole', 'octupole',
             'quadrupole', 'rbend', 'sbend', 'rcollimator', 'rfcavity',
             'sextupole', 'solenoid', 'tkicker', 'placeholder', 'drift',
-            'hmonitor', 'vmonitor', 'sequence']
+            'hmonitor', 'vmonitor', 'sequence','collimator','dipedge']
 
 commands = ['beam',
             'endmatch',
