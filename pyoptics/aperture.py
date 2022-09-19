@@ -268,7 +268,7 @@ class BeamEnvelope(object):
     by=sqrt(ttt.bety[idxa:idxb]*emity)
     return zn,cox,coy,bx,by
   def get_pos(self,n):
-    if len(self.ap.x)==len(self.survey.x):
+    if self.survey is not None and len(self.ap.x)==len(self.survey.x):
       return self.ap.x[n]+self.survey.x[n],self.ap.y[n]+self.survey.y[n]
     else:
       return self.ap.x[n],self.ap.y[n]
@@ -301,7 +301,7 @@ class BeamEnvelope(object):
     return racetrack_to_polygon(x,y,0,0,co+dx,co+dy,9)
   def get_aperture(self,n):
     apertype=self.ap.apertype[n]
-    if len(self.survey.x)==len(self.ap.apoff_x):
+    if self.survey is not None and len(self.survey.x)==len(self.ap.apoff_x):
       x=self.survey.x[n]+self.ap.apoff_x[n]
       y=self.survey.y[n]+self.ap.apoff_y[n]
     else:
