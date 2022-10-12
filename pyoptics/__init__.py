@@ -19,3 +19,4 @@ from . import lhccircuit
 from . import funcgen
 
 from .survey import Survey
+from .madx import Madx
