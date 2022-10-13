@@ -4,13 +4,14 @@ import numpy as np
 from collections import ChainMap
 
 
-def _to_str(arr, digits):
+def _to_str(arr, digits, fixed="g"):
     """covert array to string repr"""
     if arr.dtype.kind in "SU":
         return arr
     else:
-        fmt = "%%.%dg" % digits
-        return np.array([fmt % nn for nn in arr])
+        fmt = "%%.%d%s" % (digits, fixed)
+        out = [fmt % nn for nn in arr]
+        return np.array(out)
 
 
 class Loc:
@@ -90,9 +91,11 @@ class Table(cpymad.madx.Table):
         except KeyError:
             return self.reload(column)
 
-    def __call__(self, expr):
+    def eval(self, expr):
         lcl = ChainMap(self, np.__dict__)
         return eval(expr, {}, lcl)
+
+    __call__ = eval
 
     def mask_name(self, regexp, column="name"):
         """Return a mask for row names matching the given regular expression."""
@@ -113,7 +116,14 @@ class Table(cpymad.madx.Table):
         return np.array([a <= nn <= b for nn in self.eval(column)], dtype=bool)
 
     def show(
-        self, rows=None, cols=None, maxrows=20, maxwidth=80, digits=6, output=None
+        self,
+        rows=None,
+        cols=None,
+        maxrows=20,
+        maxwidth=80,
+        output=None,
+        digits=6,
+        fixed="g",
     ):
         """Pretty print a twiss table
 
@@ -125,6 +135,19 @@ class Table(cpymad.madx.Table):
         maxrows: maximum number of rows show, None for all
         maxwidth: maximum number row length
         output: None-> stdout, str -> a string, "filename" a file, fh an open file
+
+        Examples:
+
+        tw.show()
+        tw.show('mb', 'betx dx/sqrt(betx)')
+        tw.show(tw.loc[mb, 10:20:'s'], 'betx dx/sqrt(betx)')
+        tw.show(cols='betx', maxwidth=150)
+        tw.show(cols='betx', maxrows=None)
+        tw.show(cols='betx', digits=12,fixed='e')
+        tw.show(output=dict)
+        tw.show(output=str)
+        tw.show(output=pandas.DataFrame)
+        tw.show(output='outfile.txt')
         """
         if rows is None:
             idx = slice(None)
@@ -142,13 +165,15 @@ class Table(cpymad.madx.Table):
                 idx = np.where(rows)[0]
             else:
                 idx = rows
+
         cut = -1
-        if rows is None and len(self) > maxrows:
-            cut = maxrows // 2
-            idx = np.r_[np.arange(cut), np.arange(len(self) - cut, len(self))]
-        elif hasattr(idx, "__len__") and len(idx) > maxrows:
-            cut = maxrows // 2
-            idx = np.r_[idx[:cut], idx[-cut:]]
+        if output is not dict or not hasattr(output, "from_dict"):
+            if rows is None and output is not dict and len(self) > maxrows:
+                cut = maxrows // 2
+                idx = np.r_[np.arange(cut), np.arange(len(self) - cut, len(self))]
+            elif hasattr(idx, "__len__") and len(idx) > maxrows:
+                cut = maxrows // 2
+                idx = np.r_[idx[:cut], idx[-cut:]]
 
         if cols is None:
             cols = self.col_names()
@@ -165,10 +190,19 @@ class Table(cpymad.madx.Table):
         width = 0
         fmt = []
         header = ""
+        if output == dict:
+            return {cc: self.eval(cc)[idx] for cc in cols}
+        if hasattr(output, "from_dict"):
+            dct = {cc: self.eval(cc)[idx] for cc in cols}
+            dct = output.from_dict(dct)
+            if "name" in self and hasattr(dct,'set_index'):
+                dct.set_index(self.name)
+            return dct
+
         for cc in cols:
             coldata = self.eval(cc)[idx]
             coltype = coldata.dtype.kind
-            col = _to_str(coldata, digits)
+            col = _to_str(coldata, digits, fixed)
             colwidth = int(col.dtype.str[2:])
             if len(cc) > colwidth:
                 colwidth = len(cc)
@@ -176,7 +210,7 @@ class Table(cpymad.madx.Table):
             width += colwidth + 1
             if width < maxwidth:
                 if coltype in "SU":
-                    fmt.append("%%-%ds" % colwidth)
+                    fmt.append("%%-%ds " % (colwidth - 1))
                 else:
                     fmt.append("%%%ds" % colwidth)
                 header += fmt[-1] % cc
