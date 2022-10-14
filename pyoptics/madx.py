@@ -149,6 +149,7 @@ class Table(cpymad.madx.Table):
         tw.show(output=pandas.DataFrame)
         tw.show(output='outfile.txt')
         """
+
         if rows is None:
             idx = slice(None)
         elif isinstance(rows, str):
@@ -167,7 +168,11 @@ class Table(cpymad.madx.Table):
                 idx = rows
 
         cut = -1
-        if output is not dict or not hasattr(output, "from_dict"):
+        if (
+            output is not dict
+            or not hasattr(output, "from_dict")
+            and maxrows is not None
+        ):
             if rows is None and output is not dict and len(self) > maxrows:
                 cut = maxrows // 2
                 idx = np.r_[np.arange(cut), np.arange(len(self) - cut, len(self))]
@@ -195,7 +200,7 @@ class Table(cpymad.madx.Table):
         if hasattr(output, "from_dict"):
             dct = {cc: self.eval(cc)[idx] for cc in cols}
             dct = output.from_dict(dct)
-            if "name" in self and hasattr(dct,'set_index'):
+            if "name" in self and hasattr(dct, "set_index"):
                 dct.set_index(self.name)
             return dct
 
