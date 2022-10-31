@@ -5,19 +5,13 @@ import os
 import gzip
 import time
 
-try:
-    import wx
-except:
-    pass
 
 import matplotlib.pyplot as pl
 import matplotlib
 from matplotlib.animation import FuncAnimation
 import numpy as np
 import scipy
-from numpy import sqrt, sum, array, sin, cos, dot, pi, cosh, sinh, tan, arctan
-from numpy import zeros_like, zeros
-from numpy.linalg import inv
+
 
 from .utils import mystr as _mystr
 from .utils import pyname
@@ -25,11 +19,7 @@ from collections import namedtuple
 from .pydataobj import dataobj
 from . import tfsdata
 from .survey import rot_mad,get_w_from_angles
-
-try:
-    from objdebug import ObjDebug
-except:
-    pass
+from .tablemixin import TableMixIn
 
 
 def rng(x, a, b):
@@ -74,10 +64,7 @@ def getmn(order, kind="b"):
     return list(set(out))
 
 
-infot = namedtuple("infot", "idx betx alfx mux bety alfy muy")
-
-
-class optics(dataobj):
+class optics(dataobj,TableMixIn):
     _is_s_begin = False
     _name_char = 16
     _entry_char = 12
@@ -91,10 +78,6 @@ class optics(dataobj):
         tfsdata.save(self._data, fn, floatfmt)
 
     def __init__(self, data={}, idx=False):
-        self.cos = cos
-        self.sin = sin
-        self.pi = pi
-        self.sqrt = sqrt
         self.update(data)
         try:
             self.param = data.summary
@@ -103,11 +86,6 @@ class optics(dataobj):
         if hasattr(data, "name"):
             self.name = np.array([a.split(":")[0].upper() for a in self.name])
         self._fdate = 0
-        if idx:
-            try:
-                self._mkidx()
-            except KeyError:
-                print("Warning: error in idx generation")
         if hasattr(data, "col_names") and callable(data.col_names):
             self.col_names = data.col_names()
 
@@ -128,65 +106,18 @@ class optics(dataobj):
             fdate = os.stat(self.filename).st_ctime
             if fdate > self._fdate:
                 self._data = tfsdata.open(self.filename)
-                self.cos = cos
-                self.sin = sin
-                self.pi = pi
-                self.sqrt = sqrt
                 self._fdate = fdate
                 return True
         return False
 
-    def _mkidx(self):
-        name = list(map(pyname, list(self.name)))
-        self.idx = dataobj()
-        fields = infot._fields[1:]
-        for i, name in enumerate(name):
-            data = [i] + [self[x][i] for x in fields]
-            setattr(self.idx, name, infot(*data))
-
     def get_idx(self, name=None, count=0):
         if type(name) is str:
-            return where(self.name == name.upper())[0][count]
+            return np.where(self.name == name.upper())[0][count]
         else:
             return count
 
-    def pattern(self, regexp):
-        c = re.compile(regexp, flags=re.IGNORECASE)
-        out = [c.search(n) is not None for i, n in enumerate(self.name)]
-        return np.array(out)
-
-    __floordiv__ = pattern
-
-    def dumplist(self, rows=None, cols=None):
-        if rows is None:
-            rows = np.ones(len(self.name), dtype=bool)
-        elif isinstance(rows, str):
-            rows = self.pattern(rows)
-        rows = np.where(rows)[0]
-
-        if cols is None:
-            cols = ""
-        if isinstance(cols, str):
-            colsn = cols.split()
-            cols = [self(n) for n in cols.split()]
-
-        out = []
-        rowfmt = ["%%-%d.%ds" % (self._name_char, self._name_char)]
-        rowfmt += ["%%-%d.%ds" % (self._entry_char, self._name_char)] * len(colsn)
-        rowfmt = " ".join(rowfmt)
-        out.append(rowfmt % tuple(["names"] + colsn))
-        for i in rows:
-            v = [self.name[i]] + [
-                _mystr(c[i], self._entry_char, self._entry_prec) for c in cols
-            ]
-            out.append(rowfmt % tuple(v))
-        return out
-
-    def dumpstr(self, rows=None, cols=None):
-        return "\n".join(self.dumplist(rows=rows, cols=cols))
-
-    def show(self, rows=None, cols=None):
-        print(self.dumpstr(rows=rows, cols=cols))
+    def row(self,index):
+        return {cc:self[cc][index] for cc in self.col_names()}
 
     def twissdata(self, location, data):
         idx = np.where(self.pattern(location))[0][-1]
@@ -257,8 +188,8 @@ class optics(dataobj):
         return self.plot("betx bety", "dx dy", **nargs)
 
     def plotsigma(self, emit=2.5e-6 / 7000 * 0.938, deltap=1.1e-4, **nargs):
-        self.sigx = sqrt(self.betx * emit) * 1000
-        self.sigy = sqrt(self.bety * emit) * 1000
+        self.sigx = np.sqrt(self.betx * emit) * 1000
+        self.sigy = np.sqrt(self.bety * emit) * 1000
         self.sigdx = self.dx * deltap * 1000
         self.plot("sigx sigy sigdx", **nargs)
         ya, yb = pl.ylim()
@@ -327,7 +258,7 @@ class optics(dataobj):
             ap = optics.open(apfn)
         if eref is not None:
             ap.s -= ap.s[ap // eref]
-            self.s -= self.s[t // eref]
+            self.s -= self.s[self // eref]
         self.ss = ap.s
         self.n1 = ap.n1
         self = self.plot(x="ss", yl="n1", newfig=newfig, **nargs)
@@ -340,8 +271,8 @@ class optics(dataobj):
         return self
 
     def mk_betamax(self):
-        self.betxmax = zeros_like(self.betx)
-        self.betymax = zeros_like(self.bety)
+        self.betxmax = np.zeros_like(self.betx)
+        self.betymax = np.zeros_like(self.bety)
         bufname = ""
         for i in range(len(self.k1l)):
             k1l = self.k1l[i]
@@ -397,20 +328,20 @@ class optics(dataobj):
     #    f.k1l=f.k1l
     #  return sum(f.k1l*f.bety)/4/pi
     def ndx(self):
-        return self.dx / sqrt(t.betx)
+        return self.dx / np.sqrt(self.betx)
 
     def ndpx(self):
-        return self.dpx * sqrt(t.betx) + t.dx / sqrt(t.betx) * t.alfx
+        return self.dpx * np.sqrt(self.betx) + self.dx / np.sqrt(self.betx) * self.alfx
 
     def alphac(self):
-        return sum(self("dx*kn0l")) / sum(t.l)
+        return sum(self("dx*kn0l")) / sum(self.l)
 
     def gammatr(self):
         af = self._alphac()
         if af > 0:
-            return sqrt(1 / af)
+            return np.sqrt(1 / af)
         else:
-            return -sqrt(-1 / af)
+            return -np.sqrt(-1 / af)
 
     def transferMatrix(self, i1=0, i2=-1, plane="x"):
         """Return the transfer matrix from position i1 to position i2
@@ -418,14 +349,14 @@ class optics(dataobj):
         """
         B2 = self.normMat(i2, plane=plane)
         B1 = self.normMat(i1, plane=plane)
-        psi = 2 * pi * (self["mu" + plane][i2] - self["mu" + plane][i1])
-        R = array([[cos(psi), sin(psi)], [-sin(psi), cos(psi)]])
-        return dot(dot(B2, R), inv(B1))
+        psi = 2 * np.pi * (self["mu" + plane][i2] - self["mu" + plane][i1])
+        R = np.array([[np.cos(psi), np.sin(psi)], [-np.sin(psi), np.cos(psi)]])
+        return np.dot(np.dot(B2, R), np.linang.inv(B1))
 
     def normMat(self, i, plane="x"):
         beta = self["bet" + plane][i]
         alpha = self["alf" + plane][i]
-        return array([[sqrt(beta), 0], [-alpha / sqrt(beta), 1 / sqrt(beta)]])
+        return np.array([[np.sqrt(beta), 0], [-alpha / np.sqrt(beta), 1 / np.sqrt(beta)]])
 
     def mk_intkbeta(self, on_sext=True):
         self.intkbetx = self.k1l * 0.0
@@ -447,13 +378,13 @@ class optics(dataobj):
                     gamx = (1 + alfx**2) / betx
                     gamy = (1 + alfy**2) / bety
                     k = kl / l
-                    ak = abs(k)
-                    rk = sqrt(ak)
+                    ak = np.abs(k)
+                    rk = np.sqrt(ak)
                     rkl = rk * l
-                    crkl = cos(rkl)
-                    srkl = -sin(rkl)
-                    chrkl = cosh(rkl)
-                    shrkl = -sinh(rkl)
+                    crkl = np.cos(rkl)
+                    srkl = -np.sin(rkl)
+                    chrkl = np.cosh(rkl)
+                    shrkl = -np.sinh(rkl)
                     if k > 0:  # backtrack
                         r11 = crkl
                         r12 = srkl / rk
@@ -485,19 +416,19 @@ class optics(dataobj):
                     gamx0 = (1.0 + alfx0**2) / betx0
                     gamy0 = (1.0 + alfy0**2) / bety0
                     if k > 0:
-                        ax = 0.5 * (l + 0.5 / rk * sin(2.0 * rkl))
-                        bx = 0.25 / ak * (1.0 - cos(2.0 * rkl))
-                        cx = 0.5 / ak * (l - 0.5 / rk * sin(2.0 * rkl))
-                        ay = 0.5 * (l + 0.5 / rk * sinh(2.0 * rkl))
-                        by = -0.25 / ak * (1.0 - cosh(2.0 * rkl))
-                        cy = -0.5 / ak * (l - 0.5 / rk * sinh(2.0 * rkl))
+                        ax = 0.5 * (l + 0.5 / rk * np.sin(2.0 * rkl))
+                        bx = 0.25 / ak * (1.0 - np.cos(2.0 * rkl))
+                        cx = 0.5 / ak * (l - 0.5 / rk * np.sin(2.0 * rkl))
+                        ay = 0.5 * (l + 0.5 / rk * np.sinh(2.0 * rkl))
+                        by = -0.25 / ak * (1.0 - np.cosh(2.0 * rkl))
+                        cy = -0.5 / ak * (l - 0.5 / rk * np.sinh(2.0 * rkl))
                     else:
-                        ay = 0.5 * (l + 0.5 / rk * sin(2.0 * rkl))
-                        by = 0.25 / ak * (1.0 - cos(2.0 * rkl))
-                        cy = 0.5 / ak * (l - 0.5 / rk * sin(2.0 * rkl))
-                        ax = 0.5 * (l + 0.5 / rk * sinh(2.0 * rkl))
-                        bx = -0.25 / ak * (1.0 - cosh(2.0 * rkl))
-                        cx = -0.5 / ak * (l - 0.5 / rk * sinh(2.0 * rkl))
+                        ay = 0.5 * (l + 0.5 / rk * np.sin(2.0 * rkl))
+                        by = 0.25 / ak * (1.0 - np.cos(2.0 * rkl))
+                        cy = 0.5 / ak * (l - 0.5 / rk * np.sin(2.0 * rkl))
+                        ax = 0.5 * (l + 0.5 / rk * np.sinh(2.0 * rkl))
+                        bx = -0.25 / ak * (1.0 - np.cosh(2.0 * rkl))
+                        cx = -0.5 / ak * (l - 0.5 / rk * np.sinh(2.0 * rkl))
                     # if (self//'MQX.*L5')[i]:
                     #  print kl,l,k,ak,rk,rkl
                     #  print betx ,bety ,alfx ,alfy ,gamx ,gamy
@@ -523,26 +454,26 @@ class optics(dataobj):
         qpp4: k2 D beta'
         """
         betx, bety, dx = self.betx, self.bety, self.dx
-        self.Bx = betx * self.wx * cos(2 * pi * self.phix)
-        self.Ax = betx * self.wx * sin(2 * pi * self.phix)
-        self.By = bety * self.wy * cos(2 * pi * self.phiy)
-        self.Ay = bety * self.wy * sin(2 * pi * self.phiy)
+        self.Bx = betx * self.wx * np.cos(2 * np.pi * self.phix)
+        self.Ax = betx * self.wx * np.sin(2 * np.pi * self.phix)
+        self.By = bety * self.wy * np.cos(2 * np.pi * self.phiy)
+        self.Ay = bety * self.wy * np.sin(2 * np.pi * self.phiy)
         k1l = self.k1l
         k2l = self.k2l
-        self.qp1x = 1.0 / 4 / pi * np.cumsum(-betx * k1l)
-        self.qp1y = 1.0 / 4 / pi * np.cumsum(bety * k1l)
-        self.qp2x = 1.0 / 4 / pi * np.cumsum(betx * k2l * dx)
-        self.qp2y = 1.0 / 4 / pi * np.cumsum(-bety * k2l * dx)
+        self.qp1x = 1.0 / 4 / np.pi * np.cumsum(-betx * k1l)
+        self.qp1y = 1.0 / 4 / np.pi * np.cumsum(bety * k1l)
+        self.qp2x = 1.0 / 4 / np.pi * np.cumsum(betx * k2l * dx)
+        self.qp2y = 1.0 / 4 / np.pi * np.cumsum(-bety * k2l * dx)
         self.qpx = self.qp1x + self.qp2x
         self.qpy = self.qp1y + self.qp2y
         self.qpp1x = -2 * self.qpx
         self.qpp1y = -2 * self.qpy
-        self.qpp2x = 1.0 / 2 / pi * np.cumsum(k2l * self.ddx * betx)
-        self.qpp2y = 1.0 / 2 / pi * np.cumsum(-k2l * self.ddx * bety)
-        self.qpp3x = 1.0 / 4 / pi * np.cumsum(-k1l * self.Bx)
-        self.qpp3y = 1.0 / 4 / pi * np.cumsum(k1l * self.By)
-        self.qpp4x = 1.0 / 4 / pi * np.cumsum(k2l * dx * self.Bx)
-        self.qpp4y = 1.0 / 4 / pi * np.cumsum(-k2l * dx * self.By)
+        self.qpp2x = 1.0 / 2 / np.pi * np.cumsum(k2l * self.ddx * betx)
+        self.qpp2y = 1.0 / 2 / np.pi * np.cumsum(-k2l * self.ddx * bety)
+        self.qpp3x = 1.0 / 4 / np.pi * np.cumsum(-k1l * self.Bx)
+        self.qpp3y = 1.0 / 4 / np.pi * np.cumsum(k1l * self.By)
+        self.qpp4x = 1.0 / 4 / np.pi * np.cumsum(k2l * dx * self.Bx)
+        self.qpp4y = 1.0 / 4 / np.pi * np.cumsum(-k2l * dx * self.By)
         self.qppx = self.qpp1x + self.qpp2x + self.qpp3x + self.qpp4x
         self.qppy = self.qpp1y + self.qpp2y + self.qpp3y + self.qpp4y
         qp1x = self.qp1x[-1]
@@ -624,8 +555,8 @@ class optics(dataobj):
                     v -= v[idx]
         elif self.param["type"] == "SURVEY":
             theta0 = self.theta[idx]
-            c0 = cos(theta0)
-            s0 = sin(theta0)
+            c0 = np.cos(theta0)
+            s0 = np.sin(theta0)
             x0 = self.x[idx]
             y0 = self.y[idx]
             z0 = self.z[idx]
@@ -685,7 +616,7 @@ class optics(dataobj):
         for k, val in list(error_table.items()):
             if k.startswith("k") and sum(abs(val)) > 0:
                 klist.append([k, val])
-                self[k] = self.get(k, zeros(len(self.name)))
+                self[k] = self.get(k, np.zeros(len(self.name)))
         for idxerror, name in enumerate(error_table["name"]):
             idxself = np.where(self.name == name)[0]
             for k, val in klist:
@@ -694,7 +625,7 @@ class optics(dataobj):
 
     def drvterm(t, m=0, n=0, p=0, q=0):
         dv = t.betx ** (abs(m) / 2.0) * t.bety ** (abs(n) / 2.0)
-        dv = dv * np.exp(+2j * pi * ((m - 2 * p) * t.mux + (n - 2 * q) * t.muy))
+        dv = dv * np.exp(+2j * np.pi * ((m - 2 * p) * t.mux + (n - 2 * q) * t.muy))
         return dv
 
     def errors_kvector(self, i, maxorder=10):
@@ -719,8 +650,8 @@ class optics(dataobj):
         xx = self.x
         yy = self.y
         for n in rng:
-            self["b%d" % (n + 1)] = zeros(nelem)
-            self["a%d" % (n + 1)] = zeros(nelem)
+            self["b%d" % (n + 1)] = np.zeros(nelem)
+            self["a%d" % (n + 1)] = np.zeros(nelem)
         for i in range(nelem):
             kn, ks = self.errors_kvector(i, maxorder)
             x = xx[i]
@@ -739,8 +670,8 @@ class optics(dataobj):
         betx = self.betx
         bety = self.bety
         bnn = self["b%d" % order]
-        dqxx = zeros(nelem)
-        dqyy = zeros(nelem)
+        dqxx = np.zeros(nelem)
+        dqyy = np.zeros(nelem)
         for i in range(nelem):
             Bx = betx[i]
             By = bety[i]
@@ -807,7 +738,7 @@ class optics(dataobj):
         pq0 = np.pi * self.param["q1"]
         return (
             0.5
-            / sin(pq0)
+            / np.sin(pq0)
             * np.sqrt(bet0 * self.betx)
             * np.cos(2 * np.pi * abs(mu0 - self.mux) - pq0)
         )
@@ -819,7 +750,7 @@ class optics(dataobj):
         pq0 = np.pi * self.param["q2"]
         return (
             0.5
-            / sin(pq0)
+            / np.sin(pq0)
             * np.sqrt(bet0 * self.bety)
             * np.cos(2 * np.pi * abs(mu0 - self.muy) - pq0)
         )
@@ -873,17 +804,6 @@ class qdplot(object):
     }
     autoupdate = []
 
-    def wx_autoupdate(self):
-        cls = self.__class__
-        cls.autoupdate.append(self)
-        if len(cls.autoupdate) == 1:
-            wx.EVT_IDLE(wx.GetApp(), cls._wx_callback)
-
-    def wx_stopupdate(self):
-        cls.autoupdate.remove(self)
-        if len(cls.autoupdate) == 0:
-            wx.EVT_IDLE.Unbind(wx.GetApp(), wx.ID_ANY, wx.ID_ANY, cls._wx_callback)
-
     def ani_autoupdate(self):
         from matplotlib.animation import FuncAnimation
 
@@ -891,21 +811,6 @@ class qdplot(object):
 
     def ani_stopupdate(self):
         del self._ani
-
-    @classmethod
-    def _wx_callback(cls, *args):
-        out = []
-        for ppp in cls.autoupdate:
-            if pl.fignum_exists(ppp.figure.number):
-                res = ppp.update()
-                if res:
-                    out.append(res)
-            else:
-                cls.autoupdate.remove(ppp)
-        if out and hasattr(cls, "on_update"):
-            for ppp in out:
-                cls.on_update(ppp)
-        wx.WakeUpIdle()
 
     @classmethod
     def on_updated(cls, fun):
@@ -1130,10 +1035,10 @@ class Footprint(object):
     def __init__(self, x, y, tunx, tuny, nsigma, nangles, label="detuning"):
         self.nsigma = nsigma
         self.nangles = nangles
-        self.x = array(x)
-        self.y = array(y)
-        self.tunx = array(tunx)
-        self.tuny = array(tuny)
+        self.x = np.array(x)
+        self.y = np.array(y)
+        self.tunx = np.array(tunx)
+        self.tuny = np.array(tuny)
         self.label = label.replace("_", " ")
 
     def plot_grid(self, nsigma=None, lw=1):
@@ -1188,7 +1093,7 @@ class Footprint(object):
     def triangulate(t):
         tr = matplotlib.delaunay.triangulate.Triangulation(t.tunx, t.tuny)
         for i in tr.triangle_nodes:
-            plot(t.tunx[i], t.tuny[i])
+            pl.plot(t.tunx[i], t.tuny[i])
 
     def reshape(self):
         """return tunes in [sigma,angles]"""
@@ -1212,14 +1117,14 @@ class FootTrack(Footprint):
 
 def mk_grid(nsigma, nangles):
     small = 0.05
-    big = sqrt(1.0 - small**2)
+    big = np.sqrt(1.0 - small**2)
     n = 1
     m = 0
     # sigma angle multiplier
     x = [small]
     y = [small]
     while n <= nsigma:
-        angle = 90.0 / (nangles - 1) * m * pi / 180
+        angle = 90.0 / (nangles - 1) * m * np.pi / 180
         if m == 0:
             xs = n * big
             ys = n * small
@@ -1227,28 +1132,28 @@ def mk_grid(nsigma, nangles):
             xs = n * small
             ys = n * big
         else:
-            xs = n * cos(angle)
-            ys = n * sin(angle)
+            xs = n * np.cos(angle)
+            ys = n * np.sin(angle)
         m = m + 1
         if m == nangles:
             m = 0
             n = n + 1
         x.append(xs)
         y.append(ys)
-    return array(x), array(y)
+    return np.array(x), np.array(y)
 
 
 def Dq2(b2, Bx, Jx, By, Jy):
     #  b2=k1l
-    Dqx = b2 * Bx / (4.0 * pi)
-    Dqy = -b2 * By / (4.0 * pi)
+    Dqx = b2 * Bx / (4.0 * np.pi)
+    Dqy = -b2 * By / (4.0 * np.pi)
     return Dqx, Dqy
 
 
 def Dq4(b4, Bx, Jx, By, Jy):
     #  b4=k3l/6.
-    Dqx = b4 * 3 * Bx * (Bx * Jx - 2 * By * Jy) / (8.0 * pi)
-    Dqy = b4 * 3 * By * (By * Jy - 2 * Bx * Jx) / (8.0 * pi)
+    Dqx = b4 * 3 * Bx * (Bx * Jx - 2 * By * Jy) / (8.0 * np.pi)
+    Dqy = b4 * 3 * By * (By * Jy - 2 * Bx * Jx) / (8.0 * np.pi)
     return Dqx, Dqy
 
 
@@ -1259,14 +1164,14 @@ def Dq6(b6, Bx, Jx, By, Jy):
         * 5
         * Bx
         * (Bx**2 * Jx**2 - 6 * Bx * By * Jx * Jy + 3 * By**2 * Jy**2)
-        / (8.0 * pi)
+        / (8.0 * np.pi)
     )
     Dqy = (
         -b6
         * 5
         * By
         * (3 * Bx**2 * Jx**2 - 6 * Bx * By * Jx * Jy + By**2 * Jy**2)
-        / (8.0 * pi)
+        / (8.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1283,7 +1188,7 @@ def Dq8(b8, Bx, Jx, By, Jy):
             + 18 * Bx * By**2 * Jx * Jy**2
             - 4 * By**3 * Jy**3
         )
-        / (32.0 * pi)
+        / (32.0 * np.pi)
     )
     Dqy = (
         b8
@@ -1295,7 +1200,7 @@ def Dq8(b8, Bx, Jx, By, Jy):
             - 12 * Bx * By**2 * Jx * Jy**2
             + By**3 * Jy**3
         )
-        / (32.0 * pi)
+        / (32.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1313,7 +1218,7 @@ def Dq10(b10, Bx, Jx, By, Jy):
             - 40 * Bx * By**3 * Jx * Jy**3
             + 5 * By**4 * Jy**4
         )
-        / (32.0 * pi)
+        / (32.0 * np.pi)
     )
     Dqy = (
         -b10
@@ -1326,7 +1231,7 @@ def Dq10(b10, Bx, Jx, By, Jy):
             - 20 * Bx * By**3 * Jx * Jy**3
             + By**4 * Jy**4
         )
-        / (32.0 * pi)
+        / (32.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1345,7 +1250,7 @@ def Dq12(b12, Bx, Jx, By, Jy):
             + 75 * Bx * By**4 * Jx * Jy**4
             - 6 * By**5 * Jy**5
         )
-        / (64.0 * pi)
+        / (64.0 * np.pi)
     )
     Dqy = (
         b12
@@ -1359,7 +1264,7 @@ def Dq12(b12, Bx, Jx, By, Jy):
             - 30 * Bx * By**4 * Jx * Jy**4
             + By**5 * Jy**5
         )
-        / (64.0 * pi)
+        / (64.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1379,7 +1284,7 @@ def Dq14(b14, Bx, Jx, By, Jy):
             - 126 * Bx * By**5 * Jx * Jy**5
             + 7 * By**6 * Jy**6
         )
-        / (64.0 * pi)
+        / (64.0 * np.pi)
     )
     Dqy = (
         -b14
@@ -1394,7 +1299,7 @@ def Dq14(b14, Bx, Jx, By, Jy):
             - 42 * Bx * By**5 * Jx * Jy**5
             + By**6 * Jy**6
         )
-        / (64.0 * Pi)
+        / (64.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1415,7 +1320,7 @@ def Dq16(b16, Bx, Jx, By, Jy):
             + 196 * Bx * By**6 * Jx * Jy**6
             - 8 * By**7 * Jy**7
         )
-        / (512.0 * pi)
+        / (512.0 * np.pi)
     )
     Dqy = (
         b16
@@ -1431,7 +1336,7 @@ def Dq16(b16, Bx, Jx, By, Jy):
             - 56 * Bx * By**6 * Jx * Jy**6
             + By**7 * Jy**7
         )
-        / (512.0 * pi)
+        / (512.0 * np.pi)
     )
     return Dqx, Dqy
 
@@ -1474,10 +1379,10 @@ def k2b(kn, ks, x=0, y=0):
 
 
 def twiss2map(bet1, alf1, bet2, alf2, mu):
-    b1b2 = sqrt(bet1 * bet2)
-    b1onb2 = sqrt(bet1 / bet2)
-    c = cos(2 * pi * mu)
-    s = sin(2 * pi * mu)
+    b1b2 = np.sqrt(bet1 * bet2)
+    b1onb2 = np.sqrt(bet1 / bet2)
+    c = np.cos(2 * np.pi * mu)
+    s = np.sin(2 * np.pi * mu)
     r11 = (c + alf1 * s) / b1onb2
     r12 = b1b2 * s
     r21 = ((alf1 - alf2) * c - (1 + alf1 * alf2) * s) / b1b2
