@@ -557,7 +557,7 @@ class StrTable(dataobj):
             data[key]=val.copy()
           else:
             data[key]=val
-      data['col_names']=self.col_names+other.col_names
+      data['col_names']=self._col_names+other._col_names
       return cls(data)
 
   def append(self,other):
@@ -574,7 +574,7 @@ class StrTable(dataobj):
       cls=self.__class__
       data={}
       for key,val in list(self._data.items()):
-          if key.upper() in self.col_names:
+          if key.upper() in self._col_names:
             if key in keys:
               data[key]=val.copy()
           else:
@@ -588,7 +588,7 @@ class StrTable(dataobj):
       cls=self.__class__
       data={}
       for key,val in list(self._data.items()):
-          if key.upper() in self.col_names:
+          if key.upper() in self._col_names:
             data[key]=val[n1:n2]
           else:
             if hasattr(val,'copy'):
@@ -613,7 +613,7 @@ class StrTable(dataobj):
           else:
              raise ValueError(f"variable {varname} not monotonus")
       for key,val in list(self._data.items()):
-          if key.upper() in self.col_names:
+          if key.upper() in self._col_names:
               if reverse:
                   data[key]=np.interp(newvalues,xvalues[::-1],val[::-1])
               else:
@@ -625,11 +625,11 @@ class StrTable(dataobj):
               data[key]=val
       return cls(data)
   def length(self):
-      return len(self[self.col_names[0].lower()])
+      return len(self[self._col_names[0].lower()])
   def dump_madx(self,val,param,fname):
       out=[]
       xx=self[param]
-      for k in self.col_names:
+      for k in self._col_names:
           vv=self[k.lower()]
           out.append(f"{k.lower()}={np.interp(val,xx,vv)};")
       out.append(f"{param}={val};")
@@ -640,8 +640,8 @@ class StrTable(dataobj):
           aa=self.length()
           bb=len(val)
           raise ValueError(f"Column does not have same table length {aa}!={bb}")
-      if not name.upper() in self.col_names:
-          self.col_names.append(name.upper())
+      if not name.upper() in self._col_names:
+          self._col_names.append(name.upper())
       self[name]=val
 
 

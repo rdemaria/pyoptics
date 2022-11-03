@@ -1,13 +1,14 @@
 import re
 
-import cernlogdb
-import rdmdate
-from sddsdata import sddsdata
+import pytimber
+from . import rdmdate
+from .sddsdata import sddsdata
 
 from numpy import *
+import numpy as np
 from matplotlib.pyplot import *
 
-from picker import Picker
+from .picker import Picker
 
 
 
@@ -44,7 +45,8 @@ def gen_imeas(s):
   return out
 
 def getdata(vs,t1='2011-05-04 14:38:00.000',t2='2011-05-04 14:45:00.000'):
-  data=cernlogdb.dbget(','.join(vs),t1,t2,conf='mdb.conf')
+  ldb=pytimber.LoggingDB()
+  data=ldb.get(','.join(vs),t1,t2,conf='mdb.conf')
   #print '\n'.join(data['log'])
   for k in data['datavars']:
     data[k][0]/=1000.
@@ -59,27 +61,27 @@ def repknobs(data,dateint,vs):
     if 'I_REF' in name:
       t,v=data[name]
       tn=rdmdate.parsedate(dateint[0])
-      print '%-24s'%name.split(':')[0],
+      print('%-24s'%name.split(':')[0], end=' ')
       try:
         tref=where(t>tn)[0][0]
-        print '%10.6f' %v[tref],
+        print('%10.6f' %v[tref], end=' ')
         for ti in dateint[1:]:
           tn=rdmdate.parsedate(ti)
           ti=where(t>tn)[0][0]
-          print '%11.6f' %(v[ti]-v[tref]),
-        print
+          print('%11.6f' %(v[ti]-v[tref]), end=' ')
+        print()
       except :
-        print 'missing'
+        print('missing')
 
 def allrepknobs(t1,t2,dateint,*vsl):
-  print '\n'.join(dateint)
+  print('\n'.join(dateint))
   for vs in vsl:
     data=getdata(vs,t1=t1,t2=t2)
     repknobs(data,dateint,vs)
 
 
 def depick(p):
-  print 'dateint=%s'%repr([rdmdate.dumpdate(ti,fmt='%Y-%m-%d %H:%M:%S') for ti,vi in p.data])
+  print('dateint=%s'%repr([rdmdate.dumpdate(ti,fmt='%Y-%m-%d %H:%M:%S') for ti,vi in p.data]))
 
 
 # arcs
@@ -176,8 +178,8 @@ import calendar
 
 def bpmdata_date(fn):
   p=fn.split('.')[0].split('@')
-  year,month,day=map(int,p[2].split('_'))
-  hour,minute,second,msecond=map(int,p[3].split('_'))
+  year,month,day=list(map(int,p[2].split('_')))
+  hour,minute,second,msecond=list(map(int,p[3].split('_')))
   timestamp=calendar.timegm((year,month,day, hour,minute,second,0,-1))
   timestamp+=msecond*1e-3
   return timestamp
@@ -193,8 +195,8 @@ def repdiff(ref,data):
       if rv!=dv:
         t1=rdmdate.dumpdate(rt[0])
         t2=rdmdate.dumpdate(dt[0])
-        print '%-30s %10g %10g %10s %10s' %(vs, rv,rv-dv,t1,t2)
-  print
+        print('%-30s %10g %10g %10s %10s' %(vs, rv,rv-dv,t1,t2))
+  print()
 
 
 b1h,b1v,b2h,b2v="LHC.BQBBQ.UA47.FFT1_B1:FFT_DATA_H LHC.BQBBQ.UA47.FFT1_B1:FFT_DATA_V LHC.BQBBQ.UA43.FFT1_B2:FFT_DATA_H LHC.BQBBQ.UA43.FFT1_B2:FFT_DATA_V".split()
@@ -211,8 +213,8 @@ from scipy import optimize
 from numpy.fft import *
 import matplotlib.pyplot as pl
 
-from pydspro import t2f
-import harmonic_fit
+from .pydspro import t2f
+from . import harmonic_fit
 
 
 
@@ -247,17 +249,17 @@ class betabeatBPM(object):
     return bad
   def find_bpm_with_null_values(self,n=200):
     cnd=array([len(where(v==0)[0])>n for v in self.data])
-    print "BPM:%d bpms have >%d values = 0" % (sum(cnd),n)
+    print("BPM:%d bpms have >%d values = 0" % (sum(cnd),n))
     return cnd
 
   def find_bpm_constant_values(self,n=200):
     cnd=array([len(where(diff(v)==0)[0])>200 for v in self.data])
-    print "BPM:%d bpms have >%d with same values" % (sum(cnd),n)
+    print("BPM:%d bpms have >%d with same values" % (sum(cnd),n))
     return cnd
 
   def find_bpm_huge_values(self,n=1000):
     cnd=any(abs(self.data)>10,axis=1)
-    print "BPM:%d bpms have >%g values" % (sum(cnd),n)
+    print("BPM:%d bpms have >%g values" % (sum(cnd),n))
     return cnd
 
   def plot_bad_bpms(m):
@@ -289,7 +291,7 @@ class betabeatBPM(object):
         co,ff,a,p,res=lsqmax(self.data[i],t)
         s=self.spos[i]
         out.append([s,ff,a,p,co,res,i,self.bpms[i]])
-    self.fit_tbl=betabeatFit(*zip(*sorted(out)))
+    self.fit_tbl=betabeatFit(*list(zip(*sorted(out))))
   def refine_fit(self,qx=0.27,qy=0.32,qtol=0.02):
     self.fitx=self.fit_tbl.filter_tune(qx-qtol/2,qx+qtol/2)
     self.fity=self.fit_tbl.filter_tune(qy-qtol/2,qy+qtol/2)
@@ -339,9 +341,9 @@ class betabeatFit(object):
      tuneavg=self.tune[idx].mean()
      qmin=self.tune[idx].min()
      qmax=self.tune[idx].max()
-     print "Found %d bpm with tune %9.6f in (%9.6f,%9.6f)"%(sum(idx),tuneavg,qmin,qmax)
+     print("Found %d bpm with tune %9.6f in (%9.6f,%9.6f)"%(sum(idx),tuneavg,qmin,qmax))
      res=betabeatFit.__new__(betabeatFit)
-     for k,v in self.__dict__.items():
+     for k,v in list(self.__dict__.items()):
        setattr(res,k,v[idx])
      return res
 
@@ -450,15 +452,15 @@ class LHCBPM(object):
     return self.badxy
   def find_bpm_with_null_values(self,n=200):
     cnd=array([len(where(v==0)[0])>n for v in self.data])
-    print "BPM:%d bpms have >%d values = 0" % (sum(cnd),n)
+    print("BPM:%d bpms have >%d values = 0" % (sum(cnd),n))
     return cnd
   def find_bpm_constant_values(self,n=200):
     cnd=array([len(where(diff(v)==0)[0])>200 for v in self.data])
-    print "BPM:%d bpms have >%d with same values" % (sum(cnd),n)
+    print("BPM:%d bpms have >%d with same values" % (sum(cnd),n))
     return cnd
   def find_bpm_huge_values(self,n=30):
     cnd=any(abs(self.data)>10,axis=1)
-    print "BPM:%d bpms have >%g values" % (sum(cnd),n)
+    print("BPM:%d bpms have >%g values" % (sum(cnd),n))
     return cnd
   def plot_bad_bpms(m):
     out=[]
@@ -482,7 +484,7 @@ class LHCBPM(object):
     """
     self._mkfloatvec('spos betx bety mux muy dx')
     sign=1
-    if twisstable.param['sequence']=='LHCB2':
+    if twisstable.header['sequence']=='LHCB2':
       sign=-1
     for i,n in enumerate(self.bpms):
       try:
@@ -493,12 +495,12 @@ class LHCBPM(object):
         self.mux[i]=sign*twisstable.mux[twisstable.name==n]
         self.muy[i]=sign*twisstable.muy[twisstable.name==n]
       except ValueError:
-        print 'Error on %s in line %d' % (n,i)
+        print('Error on %s in line %d' % (n,i))
     idx=where(self.xidx&~self.badxy)[0]
-    svec,sidx=zip(*sorted([(self.spos[i],i) for i in idx]))
+    svec,sidx=list(zip(*sorted([(self.spos[i],i) for i in idx])))
     self.xidxs=array(sidx)
     idx=where(self.yidx&~self.badxy)[0]
-    svec,sidx=zip(*sorted([(self.spos[i],i) for i in idx]))
+    svec,sidx=list(zip(*sorted([(self.spos[i],i) for i in idx])))
     self.yidxs=array(sidx)
   def _mkfloatvec(self,namelst):
     for n in namelst.split():
@@ -514,7 +516,7 @@ class LHCBPM(object):
     self._mkfloatvec('tune amp phase co res')
     for i in range(len(self.data)):
       if not self.bad[i]:
-        print self.bpms[i]
+        print(self.bpms[i])
         co,ff,a,p,res=fit_single_lsq(self.data[i])
         self._setrow('co tune amp phase res',i,co,ff,a,p,res)
   def mk_coupled_coeff(self):
@@ -543,7 +545,7 @@ class LHCBPM(object):
     xybpms=len(self.data)/2
     for i in range(xybpms):
       if not self.badxy[i]:
-        print "fitting %s" % self.bpms[i]
+        print("fitting %s" % self.bpms[i])
         v1=self.data[i]
         v2=self.data[i+xybpms]
         x=fit_coupled_lsq(v1,v2)
@@ -675,8 +677,8 @@ class LHCBPM(object):
 
 
 
-import rdmdate
-import h5obj
+from . import rdmdate
+from . import h5obj
 
 
 class LHCBBQData(object):
@@ -688,18 +690,19 @@ class LHCBBQData(object):
     timestamp=index['timestamp']
     idx=where(timestamp>=rdmdate.parsedate(date))[0][0]-1
     ts=rdmdate.dumpdate(timestamp[idx])
-    print "Found dataset %s"% ts
+    print("Found dataset %s"% ts)
     return index[idx]
 
 
 
-from harmonic_fit import *
+from .harmonic_fit import *
 
 
 def check_relrefmeas(vname,t1,t2):
-  data=cernlogdb.dbget(vname,t1,t2,scale='1 SECOND REPEAT',conf='mdb.conf')
+  ldb=pytimber.LoggingDB()
+  data=ldb.get(vname,t1,t2,scale='1 SECOND REPEAT',conf='mdb.conf')
   for i in range(0,len(vname),2):
-    print vname[i]
+    print(vname[i])
     tm,vm=data[i]
     tr,vr=data[i+1]
     vnorm=max(abs(vr))
@@ -709,9 +712,10 @@ def check_relrefmeas(vname,t1,t2):
   return data
 
 def check_refmeas(vname,t1,t2):
-  data=cernlogdb.dbget(vname,t1,t2,conf='mdb.conf')
+  ldb=pytimber.LoggingDB()
+  data=ldb.get(vname,t1,t2,conf='mdb.conf')
   for i in range(0,len(vname),2):
-    print vname[i]
+    print(vname[i])
     tm,vm=data[i]
     tr,vr=data[i+1]
     pl.plot(tm-tm[0],vm,'.',label=vname[i])
@@ -720,15 +724,15 @@ def check_refmeas(vname,t1,t2):
   return data
 
 def check_reflocal(vname,t1,t2,mask='data_ats_md3/power_conv2/%s.tsv.gz'):
+  ldb=pytimber.LoggingDB()
   fnames=[mask%v for v in vname]
-  data=cernlogdb.openfnames(fnames,t1=t1,t2=t2)
+  data=ldb.get(fnames,t1=t1,t2=t2)
   for i in range(0,len(vname),2):
-    print vname[i]
+    print(vname[i])
     tm,vm=data[i]
     tr,vr=data[i+1]
     pl.plot(tm,vm,'.',label=vname[i])
     pl.plot(tr,vr,'-',label=vname[i+1])
-    cernlogdb.set_xaxis_date()
   pl.legend()
   return data
 

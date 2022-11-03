@@ -33,7 +33,7 @@ class Loc:
             mask[key] = True
         elif isinstance(key, str):
             col = self.table.name
-            r = re.compile(key)
+            r = re.compile(key, re.IGNORECASE)
             mask[:] = [r.match(nn) for nn in col]
         elif isinstance(key, slice):
             ia = key.start
@@ -46,10 +46,10 @@ class Loc:
                 if col is None:
                     col = self.table.name
                 if ia is not None:
-                    r1 = re.compile(ia)
+                    r1 = re.compile(ia, re.IGNORECASE)
                     ia = np.where([r1.match(nn) for nn in col])[0][0]
                 if ib is not None:
-                    r2 = re.compile(ib)
+                    r2 = re.compile(ib, re.IGNORECASE)
                     ib = np.where([r2.match(nn) for nn in col])[0][0] + 1
                 mask[ia:ib] = True
             elif col is None:
@@ -102,32 +102,17 @@ class TableMixIn:
 
     __call__ = eval
 
-    def mask_name(self, regexp, column="name"):
-        """Return a mask for row names matching the given regular expression."""
-        regexp = re.compile(regexp)
-        idx = np.array([regexp.match(nn) for nn in self[column]], dtype=bool)
-        return idx
-
-    def mask_name_range(self, a, b, column="name"):
-        r1 = re.compile(a)
-        r2 = re.compile(b)
-        mask = np.zeros(len(self.name), dtype=bool)
-        ia = np.where([r1.match(nn) for nn in self.name])[0][0]
-        ib = np.where([r2.match(nn) for nn in self.name])[0][0]
-        mask[ia : ib + 1] = True
-        return mask
-
-    def mask_value_range(self, a, b, column="s"):
-        return np.array([a <= nn <= b for nn in self.eval(column)], dtype=bool)
-
     def _filter_rows(self,regex):
             if "name" in self:
-                regex = re.compile(regex)
+                regex = re.compile(regex, re.IGNORECASE)
                 return np.where([regex.match(nn) for nn in self.name])[0]
             else:
                 raise ValueError(f"Table does not have 'name' column to search")
 
     __floordiv__ = _filter_rows
+
+    def __len__(self):
+        return self._nrows
 
     def show(
         self,
@@ -168,10 +153,8 @@ class TableMixIn:
         if rows is None:
             idx = slice(None)
         elif isinstance(rows, str):
-            idx = self._filter_rows(rows)
             if "name" in self:
-                regex = re.compile(rows)
-                idx = np.where([regex.match(nn) for nn in self.name])[0]
+                idx = self._filter_rows(rows)
             else:
                 raise (f"Table does not have 'name' column to search")
         elif isinstance(rows, tuple):

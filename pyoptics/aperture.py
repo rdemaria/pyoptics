@@ -48,8 +48,8 @@ class BeamEnvelope(object):
                 apfiles[fn.upper()]=np.loadtxt(fn).T
     self.apfiles=apfiles
     self.offset=offset
-    self.energy=ap.param['energy']
-    self.gamma=ap.param['gamma']
+    self.energy=ap.header['energy']
+    self.gamma=ap.header['gamma']
     if 'aptol_1' in self.ap:
         self.ap.rtol=self.ap.aptol_1
         self.ap.xtol=self.ap.aptol_2
@@ -58,23 +58,23 @@ class BeamEnvelope(object):
         self.ap.apoff_x=0*self.ap.s
     if 'apoff_y' not in self.ap:
         self.ap.apoff_y=0*self.ap.s
-    if 'exn' in ap.param:
-      self.exn=ap.param['exn']
-      self.eyn=ap.param['eyn']
+    if 'exn' in ap.header:
+      self.exn=ap.header['exn']
+      self.eyn=ap.header['eyn']
     else:
-      self.exn= ap.param['ex']*self.gamma
-      self.eyn= ap.param['ey']*self.gamma
-    self.bbeat=ap.param.get('beta_beating',1.1)
-    self.deltap=ap.param.get('dp_bucket_size',2e-4)
-    self.co=ap.param.get('co_radius',2e-3)
-    self.d_arc=ap.param.get('dqf',2.086)*ap.param.get('paras_dx',0.1)
-    self.b_arc=ap.param.get('betaqfx',170.25)
-    self.halo_prim=ap.param.get('halo_prim',6)
-    self.halo_r=ap.param.get('halo_r',6)
-    self.halo_v=ap.param.get('halo_v',6)
-    self.halo_h=ap.param.get('halo_h',6)
+      self.exn= ap.header['ex']*self.gamma
+      self.eyn= ap.header['ey']*self.gamma
+    self.bbeat=ap.header.get('beta_beating',1.1)
+    self.deltap=ap.header.get('dp_bucket_size',2e-4)
+    self.co=ap.header.get('co_radius',2e-3)
+    self.d_arc=ap.header.get('dqf',2.086)*ap.header.get('paras_dx',0.1)
+    self.b_arc=ap.header.get('betaqfx',170.25)
+    self.halo_prim=ap.header.get('halo_prim',6)
+    self.halo_r=ap.header.get('halo_r',6)
+    self.halo_v=ap.header.get('halo_v',6)
+    self.halo_h=ap.header.get('halo_h',6)
     # dependent quantities
-    self.beta=self.energy/ap.param['pc']
+    self.beta=self.energy/ap.header['pc']
     #for k in self.apfiles:
     #    idx=self.twiss.apertype==k
     #    for name in self.twiss.name[idx]:
@@ -112,11 +112,11 @@ class BeamEnvelope(object):
       xxx=xx*c0-zz*s0;
       zzz=xx*s0+zz*c0;
       return xxx,yy,zzz
-  def get_co_survey(self,ref):
+  def get_co_survey(self,idx):
       s=self.survey
-      vro = array([s.x[i],s.y[i],s.z[i]])
-      theta,phi,psi = s.theta[i],s.phi[i],s.psi[i]
-      x,y= t.x[i],t.y[i]
+      vro = array([s.x[idx],s.y[idx],s.z[idx]])
+      theta,phi,psi = s.theta[idx],s.phi[idx],s.psi[idx]
+      x,y= self.x[idx],self.y[idx]
       thetam=array([[cos(theta) ,           0,sin(theta)],
            [          0,           1,         0],
            [-sin(theta),           0,cos(theta)]])
@@ -129,7 +129,7 @@ class BeamEnvelope(object):
       wm=dot(thetam,dot(phim,psim))
       ex=dot(wm,array([1,0,0]))
       ey=dot(wm,array([0,1,0]))
-      self.co[i]=vro+x * ex + y * ey
+      self.co[idx]=vro+x * ex + y * ey
   def plot_aper_sx(self,st='k',ref=None,lbl=None,pcut=(1,1),ncut=(1,1)):
       ap=self.twiss
       idx=(ap.aper_1>0)&(ap.aper_1<1)
@@ -208,7 +208,7 @@ class BeamEnvelope(object):
       sig=sqrt(ap.betx[n1:n2]*self.get_ex())
       idx=self.ap//pattern
       if nsig is None:
-          nsig=ap.param['n1min']*self.halo_h/self.halo_prim
+          nsig=ap.header['n1min']*self.halo_h/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dx*self.deltap*self.bbeat
       ss=ap.s[idx][n1:n2]
       xx=ap.x[idx][n1:n2]
@@ -227,7 +227,7 @@ class BeamEnvelope(object):
       sig=sqrt(ap.bety[n1:n2]*self.get_ey())
       idx=self.ap//pattern
       if nsig is None:
-         nsig=ap.param['n1min']*self.halo_v/self.halo_prim
+         nsig=ap.header['n1min']*self.halo_v/self.halo_prim
       env=sig*nsig*self.bbeat+self.co+ap.dy*self.deltap*self.bbeat
       ss=ap.s[idx][n1:n2]
       yy=ap.y[idx][n1:n2]
@@ -788,34 +788,34 @@ def plotenvelopex(ip,t1,ap1,sele,eele,t2,ap2,sele2,eele2):
   idxs2=t2._row_ref[sele2]
   idxe2=t2._row_ref[eele2]
   # start plot
-  _p.hold(True)
-  _p.title("Horizontal beam envelope")
-  _p.xlabel(r"$z [\rm{m}]$")
-  _p.ylabel(r"$x [\rm{m}]$")
-  _p.grid(True)
+  pl.hold(True)
+  pl.title("Horizontal beam envelope")
+  pl.xlabel(r"$z [\rm{m}]$")
+  pl.ylabel(r"$x [\rm{m}]$")
+  pl.grid(True)
   # closed orbit
   x1=ap1.co[idxs1:idxe1,2]-xip5
   y1=ap1.co[idxs1:idxe1,0]-yip5
-  _p.plot(y1,x1,color=[0,0,1])
+  pl.plot(y1,x1,color=[0,0,1])
   x2=ap2.co[idxs2:idxe2,2]-xip5
   y2=ap2.co[idxs2:idxe2,0]-yip5
-  _p.plot(y2,x2,color=[1,0,0])
+  pl.plot(y2,x2,color=[1,0,0])
   # beam1
   x1=ap1.xp[idxs1:idxe1,2]-xip5
   y1=ap1.xp[idxs1:idxe1,0]-yip5
   x2=ap1.xm[idxs1:idxe1,2]-xip5
   y2=ap1.xm[idxs1:idxe1,0]-yip5
-  x = _p.concatenate( (x1,x2[::-1]) )
-  y = _p.concatenate( (y1,y2[::-1]) )
-  _p.fill(y, x, facecolor='b',alpha=0.2)
+  x = np.concatenate( (x1,x2[::-1]) )
+  y = np.concatenate( (y1,y2[::-1]) )
+  pl.fill(y, x, facecolor='b',alpha=0.2)
   # beam2
   x1=ap2.xp[idxs2:idxe2,2]-xip5
   y1=ap2.xp[idxs2:idxe2,0]-yip5
   x2=ap2.xm[idxs2:idxe2,2]-xip5
   y2=ap2.xm[idxs2:idxe2,0]-yip5
-  x = _p.concatenate( (x1,x2[::-1]) )
-  y = _p.concatenate( (y1,y2[::-1]) )
-  _p.fill(y, x, facecolor='r',alpha=0.2)
+  x = np.concatenate( (x1,x2[::-1]) )
+  y = np.concatenate( (y1,y2[::-1]) )
+  pl.fill(y, x, facecolor='r',alpha=0.2)
 
 
 def plotenvelopey(ip,t1,ap1,sele,eele,t2,ap2,sele2,eele2):
@@ -830,34 +830,34 @@ def plotenvelopey(ip,t1,ap1,sele,eele,t2,ap2,sele2,eele2):
   idxs2=t2._row_ref[sele2]
   idxe2=t2._row_ref[eele2]
   # start plot
-  _p.hold(True)
-  _p.title("Vertical beam envelope")
-  _p.xlabel(r"$z [\rm{m}]$")
-  _p.ylabel(r"$y [\rm{m}]$")
-  _p.grid(True)
+  pl.hold(True)
+  pl.title("Vertical beam envelope")
+  pl.xlabel(r"$z [\rm{m}]$")
+  pl.ylabel(r"$y [\rm{m}]$")
+  pl.grid(True)
   # closed orbit
   x1=ap1.co[idxs1:idxe1,1]-xip5
   y1=ap1.co[idxs1:idxe1,0]-yip5
-  _p.plot(y1,x1,color=[0,0,1])
+  pl.plot(y1,x1,color=[0,0,1])
   x2=ap2.co[idxs2:idxe2,1]
   y2=ap2.co[idxs2:idxe2,0]-yip5
-  _p.plot(y2,x2,color=[1,0,0])
+  pl.plot(y2,x2,color=[1,0,0])
   # beam1
   x1=ap1.yp[idxs1:idxe1,1]-xip5
   y1=ap1.yp[idxs1:idxe1,0]-yip5
   x2=ap1.ym[idxs1:idxe1,1]-xip5
   y2=ap1.ym[idxs1:idxe1,0]-yip5
-  x = _p.concatenate( (x1,x2[::-1]) )
-  y = _p.concatenate( (y1,y2[::-1]) )
-  _p.fill(y, x, facecolor='b',alpha=0.2)
+  x = np.concatenate( (x1,x2[::-1]) )
+  y = np.concatenate( (y1,y2[::-1]) )
+  pl.fill(y, x, facecolor='b',alpha=0.2)
   # beam2
   x1=ap2.yp[idxs2:idxe2,1]-xip5
   y1=ap2.yp[idxs2:idxe2,0]-yip5
   x2=ap2.ym[idxs2:idxe2,1]-xip5
   y2=ap2.ym[idxs2:idxe2,0]-yip5
-  x = _p.concatenate( (x1,x2[::-1]) )
-  y = _p.concatenate( (y1,y2[::-1]) )
-  _p.fill(y, x, facecolor='r',alpha=0.2)
+  x = np.concatenate( (x1,x2[::-1]) )
+  y = np.concatenate( (y1,y2[::-1]) )
+  pl.fill(y, x, facecolor='r',alpha=0.2)
 
 
 def plotbeamsep(s1,t1,s2,t2,ap1,ap2,eps=5E-10):
@@ -886,12 +886,12 @@ def plotbeamsep(s1,t1,s2,t2,ap1,ap2,eps=5E-10):
   s=sqrt(by*eps)
   sep5=ds5/s
   sb=t1.s[idx1]-average(t1.s[idx1])
-  _p.plot(sb,sep1,label='ip1')
-  _p.plot(sb,sep5,label='ip5')
-  _p.title('Beam beam separation')
-  _p.xlabel('s [m]')
-  _p.ylabel(r'$\sigma$')
-  _p.ylim(0,20)
-  _p.legend()
-  _p.grid()
+  pl.plot(sb,sep1,label='ip1')
+  pl.plot(sb,sep5,label='ip5')
+  pl.title('Beam beam separation')
+  pl.xlabel('s [m]')
+  pl.ylabel(r'$\sigma$')
+  pl.ylim(0,20)
+  pl.legend()
+  pl.grid()
 

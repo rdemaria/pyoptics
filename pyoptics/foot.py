@@ -307,8 +307,8 @@ class FootComp(Footprint):
     self.x,self.y=self.mk_grid()
     self.tunx=self.x*0+wp[0]
     self.tuny=self.y*0+wp[1]
-    self.ex=self.tw.param['ex']
-    self.ey=self.tw.param['ex']
+    self.ex=self.tw.header['ex']
+    self.ey=self.tw.header['ex']
     self.mk_detuning()
   def change_emit(self,emit_n=3.75e-6,energy=450,pmass=0.938):
     self.ex=emit_n/energy*pmass

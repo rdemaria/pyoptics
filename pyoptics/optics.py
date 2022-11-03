@@ -79,15 +79,17 @@ class optics(dataobj,TableMixIn):
 
     def __init__(self, data={}, idx=False):
         self.update(data)
-        try:
-            self.param = data.summary
-        except (ValueError, AttributeError) as err:
-            pass
+        if hasattr(data,'summary'):
+            self.header=data.summary
         if hasattr(data, "name"):
             self.name = np.array([a.split(":")[0].upper() for a in self.name])
         self._fdate = 0
-        if hasattr(data, "col_names") and callable(data.col_names):
-            self.col_names = data.col_names()
+
+    def col_names(self):
+        if '_col_names' in self._data:
+            return self._data['_col_names']
+        else:
+            return self._data.col_names()
 
     def copy(self):
         data = {}
@@ -117,7 +119,7 @@ class optics(dataobj,TableMixIn):
             return count
 
     def row(self,index):
-        return {cc:self[cc][index] for cc in self.col_names()}
+        return {cc:self[cc][index] for cc in self._col_names()}
 
     def twissdata(self, location, data):
         idx = np.where(self.pattern(location))[0][-1]
@@ -128,7 +130,7 @@ class optics(dataobj,TableMixIn):
                 out[name] = 0
             else:
                 out[name] = vec[idx]
-        out["sequence"] = self.param.get("sequence")
+        out["sequence"] = self.header.get("sequence")
         return out
 
     def range(self, pat1, pat2):
@@ -516,7 +518,7 @@ class optics(dataobj,TableMixIn):
 
     def interp(self, snew, namenew=None, sname="s"):
         "Interpolate with piecewise linear all columns using a new s coordinate"
-        for cname in self.col_names:
+        for cname in self._col_names:
             cname = cname.lower()
             if cname != sname and np.isreal(self[cname][0]):
                 self[cname] = np.interp(snew, self[sname], self[cname])
@@ -538,7 +540,7 @@ class optics(dataobj,TableMixIn):
                 if reorder:
                     v[:name] += vm
         if reorder:
-            for vn in self.col_names:
+            for vn in self._col_names:
                 vn = vn.lower()
                 v = self[vn]
                 self[vn] = np.concatenate([v[name:], v[:name]])
@@ -548,12 +550,12 @@ class optics(dataobj,TableMixIn):
 
     def center(self, ref):
         idx = np.where(self // ref)[0][0]
-        if self.param["type"] in ["TWISS", "APERTURE"]:
+        if self.header["type"] in ["TWISS", "APERTURE"]:
             for vn in ["s", "mux", "muy", "phix", "phiy"]:
                 if vn in self:
                     v = self[vn]
                     v -= v[idx]
-        elif self.param["type"] == "SURVEY":
+        elif self.header["type"] == "SURVEY":
             theta0 = self.theta[idx]
             c0 = np.cos(theta0)
             s0 = np.sin(theta0)
@@ -594,7 +596,7 @@ class optics(dataobj,TableMixIn):
     def append(self, t):
         data = {}
         for k, v in list(self._data.items()):
-            if k.upper() in self.col_names:
+            if k.upper() in self._col_names:
                 data[k] = np.concatenate([v, t[k]])
             else:
                 data[k] = v
@@ -603,7 +605,7 @@ class optics(dataobj,TableMixIn):
     def resize(self,nn):
         data = {}
         for k, v in list(self._data.items()):
-            if k.upper() in self.col_names:
+            if k.upper() in self._col_names:
                 data[k] = np.zeros(nn,dtype=v.dtype)
             else:
                 data[k] = v
@@ -735,7 +737,7 @@ class optics(dataobj,TableMixIn):
         el = np.where(self // elem)[0][0]
         mu0 = self.mux[el]
         bet0 = self.betx[el]
-        pq0 = np.pi * self.param["q1"]
+        pq0 = np.pi * self.header["q1"]
         return (
             0.5
             / np.sin(pq0)
@@ -747,7 +749,7 @@ class optics(dataobj,TableMixIn):
         el = np.where(self // elem)[0][0]
         mu0 = self.muy[el]
         bet0 = self.bety[el]
-        pq0 = np.pi * self.param["q2"]
+        pq0 = np.pi * self.header["q2"]
         return (
             0.5
             / np.sin(pq0)

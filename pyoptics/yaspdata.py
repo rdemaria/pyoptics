@@ -9,7 +9,8 @@ def _myopen(fn):
     else:
       return open(fn)
   except IOError:
-    return StringIO.StringIO(fn)
+    import io
+    return io.StringIO(fn)
 
 
 yasptypes={'%s': str, '%d': int, '%f': float}
@@ -42,7 +43,7 @@ class YASPData(object):
     self.filename=filename
     o=_myopen(filename)
     c=''
-    param={}
+    header={}
     dataset={}
     l=o.readline()
     while l:
@@ -56,18 +57,16 @@ class YASPData(object):
           name=l[1]
           type='%d'
           data=1
-        param[name]=yasptypes[type](data)
+        header[name]=yasptypes[type](data)
       elif c=='#':
         name,name,type,data=l.strip().split(None,4)
         cols=o.readline().strip().split();cols.pop(0)
         if name=='MONITOR':
-          dataset['monitor-h']=readdata(o,cols,param['MONITOR-H-NUM'])
-          dataset['monitor-v']=readdata(o,cols,param['MONITOR-V-NUM'])
+          dataset['monitor-h']=readdata(o,cols,header['MONITOR-H-NUM'])
+          dataset['monitor-v']=readdata(o,cols,header['MONITOR-V-NUM'])
         elif name=='CORRECTOR':
-          dataset['corrector-h']=readdata(o,cols,param['CORRECTOR-H-NUM'])
-          dataset['corrector-v']=readdata(o,cols,param['CORRECTOR-V-NUM'])
+          dataset['corrector-h']=readdata(o,cols,header['CORRECTOR-H-NUM'])
+          dataset['corrector-v']=readdata(o,cols,header['CORRECTOR-V-NUM'])
       l=o.readline()
     self.dataset=dataset
-    self.param=param
-
-
+    self.header=header

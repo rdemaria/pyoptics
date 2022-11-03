@@ -2,6 +2,8 @@ from numpy import *
 from matplotlib.pyplot import *
 from glob import glob
 import os
+import numpy as np
+
 
 def dict_to_array(data,names=['id','data'],formats=[object,object]):
   ftype = dict(names = names, formats=formats)

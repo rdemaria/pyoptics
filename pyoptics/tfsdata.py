@@ -24,14 +24,14 @@ def _fromtfs(t, i):
 
 def _topythonname(n):
     n = n.lower()
-    if n in ("param", "param_names", "col_names"):
+    if n in ("header", "_header_names", "col_names"):
         n += "__"
     return n
 
 
 def _frompythonname(n):
     n = n.upper()
-    if n in ("param__", "param_names__", "col_names__"):
+    if n in ("header__", "_header_names__", "col_names__"):
         n = n[:-2]
     return n
 
@@ -41,23 +41,23 @@ def load(fh):
     Usage:
       data=load(fh)
     """
-    param = {}
+    header = {}
     datalines = 0
-    param_names = []
+    header_names = []
     data = {}
     col_names = []
     plabels = []
     for line in fh:
-        line = line.strip()
+        line = line.strip().lower()
         if line:
             lead = line[0]
             if lead == "@":  # descriptor lines
                 f = line.split(None, 3)
                 try:
-                    param[_topythonname(f[1])] = _fromtfs(f[2], f[3])
+                    header[_topythonname(f[1])] = _fromtfs(f[2], f[3])
                 except:
                     print(("bad descriptor", " ".join(f)))
-                param_names.append(f[1])
+                header_names.append(f[1])
             elif lead == "*":  # labels lines
                 f = line.split()
                 f.pop(0)
@@ -79,7 +79,7 @@ def load(fh):
                     d = f.pop(0)
                     data[l].append(d)
     len = datalines
-    data.update(param=param, col_names=col_names, param_names=param_names)
+    data.update(header=header, _col_names=col_names, _header_names=header_names)
     for l in plabels:
         data[l] = array(data[l])
     return data
@@ -99,9 +99,9 @@ def dump(data, fh, floatfmt="%g", intfmt="%12d"):
     Usage:
       dump(data,fh)
     """
-    param = data["param"]
-    param_names = data.get("param_names", list(param.keys()))
-    col_names = data["col_names"]
+    param = data["header"]
+    param_names = data.get("_header_names", list(param.keys()))
+    col_names = data["_col_names"]
     for k in param_names:
         v = param[_topythonname(k)]
         if isinstance(v, float):
@@ -173,11 +173,11 @@ def dump_csv(data, fh):
     def myrepr(v):
         return repr(v).replace("'", '"')
 
-    param = data["param"]
-    param_names = data.get("param_names", list(param.keys()))
+    header = data["header"]
+    param_names = data.get("_header_names", list(header.keys()))
     col_names = data["col_names"]
     for k in param_names:
-        v = param[_topythonname(k)]
+        v = header[_topythonname(k)]
         fh.write("%s,%s\n" % (myrepr(k), myrepr(v)))
     fh.write(",".join(myrepr(l) for l in col_names) + "\n")
     firstlabel = _topythonname(col_names[0])
@@ -210,7 +210,7 @@ def open(fn):
     else:
         raise IOError("%s or %s.gz not found" % (fn, fn))
     t = load(fh)
-    t["filename"] = fn
+    t["_filename"] = fn
     return t
 
 

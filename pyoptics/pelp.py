@@ -1,8 +1,10 @@
 from numpy import *
 
 def pelp(time,Ii,If,A,D,R,Te,Ti):
+  iaTe=A / 2 * (Te-Ti)**2 + Ii
+  iapTe=A*(Te-Ti)
   b=iapTe/iaTe
-  a=iaTe * exp(-b*Te)
+  a=iaTe * exp(-b*Te) 
   tl = log( R/(a*b) ) / b if Te!=0 else R/A + Ti
   il = a * exp(b*tl) if Te!=0 else  A / 2 * (tl-Ti)**2 + Ii
   td=(If - il)/ R + tl - R/(2*D)
@@ -14,10 +16,10 @@ def pelp(time,Ii,If,A,D,R,Te,Ti):
      0
   return I
 
-pelp=vectorize(pelp,excluded=[1,2,3,4,5,6,7,8])
-
-t=arange(0,2000)
-p=pelp(t,750,11800,0.009,0.02,10.,325,0)
+if __name__=="__main__":
+   pelp=vectorize(pelp,excluded=[1,2,3,4,5,6,7,8])
+   t=arange(0,2000)
+   p=pelp(t,750,11800,0.009,0.02,10.,325,0)
 
 
 

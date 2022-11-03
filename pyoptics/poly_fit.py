@@ -1,4 +1,5 @@
 from numpy import *
+import numpy as np
 
 def solveconst(A,b,C,d):
   """Solve constrained least square problem using Lagrange multipliers
@@ -65,7 +66,7 @@ if __name__=='__main__':
  plot(x,y+n)
  plot(x,poly_val(poly_fit(4,x,y+n,[0,1],[2,2]),x))
  A=makeA(x,N)
- lstsq(A,y+n)
+ np.linalg.lstsq(A,y+n)
  xx=array([0,1])
  yy=2+3*xx-8*xx**2+5*xx**3
  C=makeA(xx,N)
