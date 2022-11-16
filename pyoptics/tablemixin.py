@@ -150,6 +150,8 @@ class TableMixIn:
         tw.show(output='outfile.txt')
         """
 
+        tlen=self._nrows
+
         if rows is None:
             idx = slice(None)
         elif isinstance(rows, str):
@@ -172,9 +174,9 @@ class TableMixIn:
             and output is not dict
             and not hasattr(output, "from_dict")
         ):
-            if rows is None and output is not dict and len(self) > maxrows:
+            if rows is None and output is not dict and tlen > maxrows:
                 cut = maxrows // 2
-                idx = np.r_[np.arange(cut), np.arange(len(self) - cut, len(self))]
+                idx = np.r_[np.arange(cut), np.arange(tlen - cut, tlen)]
             elif hasattr(idx, "__len__") and len(idx) > maxrows:
                 cut = maxrows // 2
                 idx = np.r_[idx[:cut], idx[-cut:]]

@@ -158,3 +158,25 @@ if __name__=='__main__':
 #
 
 
+import numba
+import numpy as np
+import scipy
+import matplotlib.pyplot as plt
+
+
+def pdf_normal_2d(mux,muy,sigxx,sigyy,sigxy):
+  return numba.njit(lambda x,y: 1/(2*np.pi*sigxx*sigyy*sqrt(1-sigxy**2))*np.exp(-1/(2*(1-sigxy**2))*((x-mux)**2/sigxx**2+(y-muy)**2/sigyy**2-2*sigxy*(x-mux)*(y-muy)/(sigxx*sigyy))))
+
+def int_rho1_rho2(rho1,rho2):
+  ftoint= numba.njit(lambda x,y: rho1(x,y)*rho2(x,y))
+  return scipy.integrate.dblquad(ftoint,-np.inf,np.inf,-np.inf,np.inf)[0]
+
+rho1=pdf_normal_2d(0,0,1,1,0.5)
+rho2=pdf_normal_2d(0,0,1,1,0.5)
+
+def f1(x):
+  rho1=pdf_normal_2d(x,0,1,1,0)
+  rho2=pdf_normal_2d(0,0,1,1,0)
+  return int_rho1_rho2(rho1,rho2)
+
+
