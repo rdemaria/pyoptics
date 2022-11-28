@@ -1,7 +1,7 @@
 from __future__ import division
 
 from numpy import *
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 
 try:
   from objdebug import ObjDebug
@@ -37,7 +37,7 @@ class Beam(ObjDebug):
         lbl=getattr(cls,nnn).pprint(val,length=length)
       except AttributeError:
         lbl=("%%-%ds%%s"%length)%("%s:"%nnn,val)
-      print lbl
+      print(lbl)
   t_turnaround=3
   cross_total=110 #[mb]
   n_ip=2
@@ -50,7 +50,7 @@ class Beam(ObjDebug):
   lumi_int_opt=Quantity(0,"Optimal Integrated Luminosity [fb-1/year]")
   t_leveling  =Quantity(10,"Leveling time [h]")
   t_decay     =Quantity(3 ,"Luminosity decay time [h]")
-  t_fill_max  =Quantity(22,"Maximu fill time [h]")
+  t_fill_max  =Quantity(22,"Maximum fill time [h]")
   def mk_lumi_int_opt(self):
     """
     F. Zimmermann
@@ -102,20 +102,20 @@ class Beam(ObjDebug):
     b=b.mk_lumi_int_lev()
     zz=b.lumi_int_lev
     v=arange(0,450,50)
-    p=pl.contourf(xx,yy,b.t_leveling,v,alpha=0.5)
-    #pl.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
+    p=plt.contourf(xx,yy,b.t_leveling,v,alpha=0.5)
+    #plt.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
     if cb:
-      cbar=pl.colorbar()
+      cbar=plt.colorbar()
       cbar.set_label(r"Integrated luminosity [$\rm fb^-1/year$]")
-    pl.xlabel('Levelling duration [h]')
-    pl.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
-    pl.title("no peak performance limits")
-    pl.plot([0,16],[5,5],'k',lw=2)
-    pl.plot([6,6],[0,11],'k',lw=2)
-    xa,xb=pl.xlim(0,11)
-    ya,yb=pl.ylim(0,11)
-    pl.plot([xa,xb],[5,5],'k',lw=2)
-    pl.plot([6,6],[ya,yb],'k',lw=2)
+    plt.xlabel('Levelling duration [h]')
+    plt.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
+    plt.title("no peak performance limits")
+    plt.plot([0,16],[5,5],'k',lw=2)
+    plt.plot([6,6],[0,11],'k',lw=2)
+    xa,xb=plt.xlim(0,11)
+    ya,yb=plt.ylim(0,11)
+    plt.plot([xa,xb],[5,5],'k',lw=2)
+    plt.plot([6,6],[ya,yb],'k',lw=2)
     return b
   def plot_lumi_int_opt(self,cb=True):
     b=self.copy()
@@ -126,52 +126,54 @@ class Beam(ObjDebug):
     b=b.mk_lumi_int_opt()
     zz=b.lumi_int_opt
     v=arange(0,450,50)
-    p=pl.contourf(b.t_fill_opt,yy,zz,v,alpha=0.5)
-    #pl.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
+    p=plt.contourf(b.t_fill_opt,yy,zz,v,alpha=0.5)
+    #plt.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
     if cb:
-      cbar=pl.colorbar()
+      cbar=plt.colorbar()
       cbar.set_label(r"Integrated luminosity [$\rm fb^-1/year$]")
-    pl.xlabel('Fill duration [h]')
-    pl.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
+    plt.xlabel('Fill duration [h]')
+    plt.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
     tlt ="Optimal luminosity: "
     tlt+=r"$t_{\rm physics}$=%d d, "%b.t_phys
     tlt+=r"$t_{\rm turnaround}$=%d h, "%b.t_turnaround
     tlt+=r"$N_{\rm ppb}= %3.1f \cdot 10^{11}$"%(b.n_ppb/1e11)
-    pl.title(tlt)
-    pl.xlim(1,12)
-    pl.ylim(1,14)
+    plt.title(tlt)
+    plt.xlim(1,12)
+    plt.ylim(1,14)
     return b
   def plot_mlumi_int_opt(self,virt=[3,5,10,15,20,22]):
     for vv in virt:
       self.plot_lumi_int_opt(vv,cb=False)
-  def plot_lumi_int_virt(self,virt=20,n_ppb=2.2e11,cb=True):
+  def plot_lumi_int_virt(self,virt=20,n_ppb=2.2e11,n_bunches=2736,hl=5,cb=True):
     maxvirt=11
     maxfill=11
     b=self.copy()
     lumi_lev=linspace(0.001,min(maxvirt,virt),30)
     b.lumi_virt=virt
     b.n_ppb=n_ppb
+    b.n_bunches=n_bunches
     t_fill_max=linspace(0,maxfill,30)
     xx,yy=meshgrid(t_fill_max,lumi_lev)
     b.t_fill_max,b.lumi_lev=xx,yy
     b=b.mk_lumi_int_opt()
     zz=b.lumi_int_opt
     v=arange(0,450,50)
-    p=pl.contourf(b.t_fill_opt,yy,zz,v,alpha=0.5)
-    #pl.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
+    p=plt.contourf(b.t_fill_opt,yy,zz,v,alpha=0.5)
+    #plt.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
     if cb:
-      cbar=pl.colorbar()
+      cbar=plt.colorbar()
       cbar.set_label(r"Integrated luminosity [$\rm fb^{-1}/year$]")
-    pl.xlabel('Fill duration [h]')
-    pl.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
+    plt.xlabel('Fill duration [h]')
+    plt.ylabel(r'Levelling Luminosity [$10^{34} \rm cm^{-2} s^{-1}$]')
     tlt =""
     tlt+=r"$L_{\rm virt}=%d  \cdot 10^{34}$, "%b.lumi_virt
     tlt+=r"$N_{\rm ppb}= %3.1f \cdot 10^{11}$"%(b.n_ppb/1e11)
-    pl.title(tlt)
-    xa,xb=pl.xlim(0,maxfill)
-    ya,yb=pl.ylim(0,maxvirt)
-    pl.plot([xa,xb],[5,5],'k',lw=2)
-    pl.plot([6,6],[ya,yb],'k',lw=2)
+    plt.title(tlt)
+    xa,xb=plt.xlim(0,maxfill)
+    ya,yb=plt.ylim(0,maxvirt)
+    plt.plot([xa,xb],[hl,hl],'k',lw=2)
+    plt.plot([6,6],[ya,yb],'k',lw=2)
+    plt.tight_layout()
     return b
   def plot_mlumi_int_opt(self,virt=[3,5,10,15,20,22]):
     for vv in virt:
@@ -189,24 +191,24 @@ class Beam(ObjDebug):
     b.n_ppb=xx*1e11
     b=b.mk_lumi_int_opt()
     zz=b.lumi_int_opt
-    #p=pl.contourf(xx,yy,b.t_lifetime,alpha=0.5)
+    #p=plt.contourf(xx,yy,b.t_lifetime,alpha=0.5)
     v=arange(0,325,25)
-    p=pl.contourf(xx,yy,zz,v,alpha=0.5)
-    #pl.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
+    p=plt.contourf(xx,yy,zz,v,alpha=0.5)
+    #plt.clabel(p,p.levels,inline=True,fmt="%d",fontsize=12)
     if cb:
-      cbar=pl.colorbar()
+      cbar=plt.colorbar()
       cbar.set_label(r"Integrated luminosity [$\rm fb^{-1}/year$]")
-    pl.xlabel('Injected bunch polulation [$10^{11}$ppb]')
-    pl.ylabel(r'Injected emittance [$\mu$rad]')
+    plt.xlabel('Injected bunch polulation [$10^{11}$ppb]')
+    plt.ylabel(r'Injected emittance [$\mu$rad]')
     tlt =""
     tlt+=r"$L_{\rm level}=%3.2f  \cdot 10^{34}$, "%b.lumi_lev
     tlt+=r"$k_{\rm IP1/5}= %4d$, "%b.n_bunches
     tlt+=r"$t_{\rm ta}= %3.0f h$"%b.t_turnaround
-    pl.title(tlt)
-    #xa,xb=pl.xlim(0,3)
-    #ya,yb=pl.ylim(0.5,3)
-    #pl.plot([xa,xb],[5,5],'k',lw=2)
-    #pl.plot([6,6],[ya,yb],'k',lw=2)
+    plt.title(tlt)
+    #xa,xb=plt.xlim(0,3)
+    #ya,yb=plt.ylim(0.5,3)
+    #plt.plot([xa,xb],[5,5],'k',lw=2)
+    #plt.plot([6,6],[ya,yb],'k',lw=2)
     return b
   def update_emit(self,x):
     pass
