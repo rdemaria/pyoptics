@@ -8,6 +8,9 @@ def _to_str(arr, digits, fixed="g"):
     """covert array to string repr"""
     if arr.dtype.kind in "SU":
         return arr
+    elif arr.dtype.kind == "O":
+        return arr.astype('U')
+
     else:
         fmt = "%%.%d%s" % (digits, fixed)
         out = [fmt % nn for nn in arr]
@@ -32,7 +35,7 @@ class Loc:
         if isinstance(key, int):
             mask[key] = True
         elif isinstance(key, str):
-            col = self.table.name
+            col = self.table['name']
             r = re.compile(key, re.IGNORECASE)
             mask[:] = [r.match(nn) for nn in col]
         elif isinstance(key, slice):
@@ -44,7 +47,7 @@ class Loc:
                 col = self.table[ic]
             if isinstance(ia, str) or isinstance(ib, str):
                 if col is None:
-                    col = self.table.name
+                    col = self.table['name']
                 if ia is not None:
                     r1 = re.compile(ia, re.IGNORECASE)
                     ia = np.where([r1.match(nn) for nn in col])[0][0]
@@ -73,6 +76,8 @@ class Loc:
 class TableMixIn:
     """
     Assumptions:
+    - __getitems__[cname]: return a column
+    - __contains__[cname]: return if column exists
     - col_names(): return list of column names
     - row: return a dictionary at row
     - _cached: dictionary cointaining data
@@ -102,14 +107,16 @@ class TableMixIn:
 
     __call__ = eval
 
-    def _filter_rows(self,regex):
-            if "name" in self:
-                regex = re.compile(regex, re.IGNORECASE)
-                return np.where([regex.match(nn) for nn in self.name])[0]
-            else:
-                raise ValueError(f"Table does not have 'name' column to search")
+    def _idx_from_regex(self,regex,index='name'):
+            return np.where(self.mask(regex,index))[0]
 
-    __floordiv__ = _filter_rows
+    def mask(self,regex,index='name'):
+            col= self[index]
+            regex = re.compile(regex, re.IGNORECASE)
+            return np.fromiter((regex.match(nn) for nn in col),dtype='bool')
+
+    __floordiv__ = mask
+
 
     def __len__(self):
         return self._nrows
@@ -140,7 +147,7 @@ class TableMixIn:
 
         tw.show()
         tw.show('mb', 'betx dx/sqrt(betx)')
-        tw.show(tw.loc[mb, 10:20:'s'], 'betx dx/sqrt(betx)')
+        tw.show(tw.loc['mb', 10:20:'s'], 'betx dx/sqrt(betx)')
         tw.show(cols='betx', maxwidth=150)
         tw.show(cols='betx', maxrows=None)
         tw.show(cols='betx', digits=12,fixed='e')
@@ -155,8 +162,8 @@ class TableMixIn:
         if rows is None:
             idx = slice(None)
         elif isinstance(rows, str):
-            if "name" in self:
-                idx = self._filter_rows(rows)
+            if "name" in self.col_names():
+                idx = self._idx_from_regex(rows)
             else:
                 raise (f"Table does not have 'name' column to search")
         elif isinstance(rows, tuple):
@@ -186,6 +193,7 @@ class TableMixIn:
         elif hasattr(cols, "split"):
             cols = cols.split()
 
+
         if "name" not in cols and "name" in self.col_names():
             cols.insert(0, "name")
 
@@ -202,7 +210,7 @@ class TableMixIn:
             dct = {cc: self.eval(cc)[idx] for cc in cols}
             dct = output.from_dict(dct)
             if "name" in self and hasattr(dct, "set_index"):
-                dct.set_index(self.name)
+                dct.set_index('name')
             return dct
 
         for cc in cols:
