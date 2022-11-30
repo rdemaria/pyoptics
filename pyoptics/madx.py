@@ -5,15 +5,16 @@ from collections import ChainMap
 
 from .tablemixin import TableMixIn
 
-class Table(cpymad.madx.Table,TableMixIn):
+
+class Table(cpymad.madx.Table, TableMixIn):
     pass
 
 
 class TableMap(cpymad.madx.TableMap):
     def __getitem__(self, name):
         try:
-            t=Table(name, self._libmadx)
-            t.set_index('name')
+            t = Table(name, self._libmadx)
+            t.set_index("name")
             return t
         except ValueError:
             raise KeyError("Table not found {!r}".format(name)) from None

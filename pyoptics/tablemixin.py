@@ -9,12 +9,12 @@ def _to_str(arr, digits, fixed="g"):
     if arr.dtype.kind in "SU":
         return arr
     elif arr.dtype.kind == "O":
-        return arr.astype('U')
-    elif arr.dtype.kind in 'iu':
-        return np.char.mod("%d",arr)
+        return arr.astype("U")
+    elif arr.dtype.kind in "iu":
+        return np.char.mod("%d", arr)
     else:
         fmt = "%%.%d%s" % (digits, fixed)
-        return np.char.mod(fmt,arr)
+        return np.char.mod(fmt, arr)
 
 
 class Loc:
@@ -76,7 +76,7 @@ class Loc:
 class TableMixIn:
     """
     Assumptions:
-    - __getitems__[cname]: return a column
+    - __getitem__[cname]: return a column
     - __contains__[cname]: return if column exists
     - col_names(): return list of column names
     - row: return a dictionary at row
@@ -94,16 +94,16 @@ class TableMixIn:
 
     @property
     def _index(self):
-        if not hasattr(self,'_index_name'):
-            if 'name' in self:
-                return self['name']
+        if not hasattr(self, "_index_name"):
+            if "name" in self:
+                return self["name"]
             else:
                 return self[self.col_names[0]]
         else:
             return self[self._index_name]
 
-    def set_index(self,name):
-        self._index_name=name
+    def set_index(self, name):
+        self._index_name = name
 
     def __getitem__(self, column):
         """Get the column data."""
@@ -112,7 +112,10 @@ class TableMixIn:
         try:
             return self._cache[column.lower()]
         except KeyError:
-            return self.reload(column)
+            if hasattr(self, column):
+                return getattr(self, column)
+            else:
+                return self.reload(column)
 
     def eval(self, expr):
         lcl = ChainMap(self, np.__dict__)
@@ -120,19 +123,18 @@ class TableMixIn:
 
     __call__ = eval
 
-    def _idx_from_regex(self,regex,index=None):
-            return np.where(self.mask(regex,index))[0]
+    def _idx_from_regex(self, regex, index=None):
+        return np.where(self.mask(regex, index))[0]
 
-    def mask(self,regex,index=None):
-            if index is None:
-                col=self._index
-            else:
-                col= self[index]
-            regex = re.compile(regex, re.IGNORECASE)
-            return np.fromiter((regex.match(nn) for nn in col),dtype='bool')
+    def mask(self, regex, index=None):
+        if index is None:
+            col = self._index
+        else:
+            col = self[index]
+        regex = re.compile(regex, re.IGNORECASE)
+        return np.fromiter((regex.match(nn) for nn in col), dtype="bool")
 
     __floordiv__ = mask
-
 
     def __len__(self):
         return self._nrows
@@ -173,12 +175,12 @@ class TableMixIn:
         tw.show(output='outfile.txt')
         """
 
-        tlen=self._nrows
+        tlen = self._nrows
 
-        index_name=self._index_name if hasattr(self,'_index_name') else 'name'
+        index_name = self._index_name if hasattr(self, "_index_name") else "name"
 
         if cols is None and maxwidth is None:
-            maxwidth=80
+            maxwidth = 80
 
         if rows is None:
             idx = slice(None)
@@ -211,7 +213,6 @@ class TableMixIn:
         elif hasattr(cols, "split"):
             cols = cols.split()
 
-
         if index_name not in cols and index_name in self.col_names():
             cols.insert(0, "name")
 
@@ -228,7 +229,7 @@ class TableMixIn:
             dct = {cc: self.eval(cc)[idx] for cc in cols}
             dct = output.from_dict(dct)
             if index_name in self and hasattr(dct, "set_index"):
-                dct.set_index(index_name) #dataframe
+                dct.set_index(index_name)  # dataframe
             return dct
 
         for cc in cols:
@@ -244,10 +245,10 @@ class TableMixIn:
                     fmt.append("%%-%ds" % (colwidth))
                 else:
                     fmt.append("%%%ds" % colwidth)
-                header.append( fmt[-1] % cc)
+                header.append(fmt[-1] % cc)
                 data.append(col)
 
-        result = [' '.join(header)]
+        result = [" ".join(header)]
         for ii in range(len(col)):
             row = " ".join([ff % col[ii] for ff, col in zip(fmt, data)])
             result.append(row)
@@ -264,4 +265,3 @@ class TableMixIn:
             output = pathlib.Path(output)
             with open(output, "w") as fh:
                 fh.write(result)
-

@@ -4,7 +4,7 @@ from .irplots import IRPlots
 from .squeeze_result import SqueezeRes
 from . import tfsdata
 from .yaspdata import YASPData
-from .aperture import BeamEnvelope,plot_ap
+from .aperture import BeamEnvelope, plot_ap
 from . import madlang
 
 from .lhcopt import LHCopt

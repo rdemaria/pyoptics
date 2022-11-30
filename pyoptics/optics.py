@@ -18,7 +18,7 @@ from .utils import pyname
 from collections import namedtuple
 from .pydataobj import dataobj
 from . import tfsdata
-from .survey import rot_mad,get_w_from_angles
+from .survey import rot_mad, get_w_from_angles
 from .tablemixin import TableMixIn
 
 
@@ -64,7 +64,7 @@ def getmn(order, kind="b"):
     return list(set(out))
 
 
-class optics(dataobj,TableMixIn):
+class optics(dataobj, TableMixIn):
     _is_s_begin = False
     _name_char = 16
     _entry_char = 12
@@ -79,15 +79,15 @@ class optics(dataobj,TableMixIn):
 
     def __init__(self, data={}, idx=False):
         self.update(data)
-        if hasattr(data,'summary'):
-            self.header=data.summary
+        if hasattr(data, "summary"):
+            self.header = data.summary
         if hasattr(data, "name"):
             self.name = np.array([a.split(":")[0].upper() for a in self.name])
         self._fdate = 0
 
     def col_names(self):
-        if '_col_names' in self._data:
-            return self._data['_col_names']
+        if "_col_names" in self._data:
+            return self._data["_col_names"]
         else:
             return self._data.col_names()
 
@@ -118,8 +118,8 @@ class optics(dataobj,TableMixIn):
         else:
             return count
 
-    def row(self,index):
-        return {cc:self[cc][index] for cc in self._col_names()}
+    def row(self, index):
+        return {cc: self[cc][index] for cc in self._col_names()}
 
     def twissdata(self, location, data):
         idx = np.where(self.pattern(location))[0][-1]
@@ -358,7 +358,9 @@ class optics(dataobj,TableMixIn):
     def normMat(self, i, plane="x"):
         beta = self["bet" + plane][i]
         alpha = self["alf" + plane][i]
-        return np.array([[np.sqrt(beta), 0], [-alpha / np.sqrt(beta), 1 / np.sqrt(beta)]])
+        return np.array(
+            [[np.sqrt(beta), 0], [-alpha / np.sqrt(beta), 1 / np.sqrt(beta)]]
+        )
 
     def mk_intkbeta(self, on_sext=True):
         self.intkbetx = self.k1l * 0.0
@@ -602,15 +604,14 @@ class optics(dataobj,TableMixIn):
                 data[k] = v
         return optics(data)
 
-    def resize(self,nn):
+    def resize(self, nn):
         data = {}
         for k, v in list(self._data.items()):
             if k.upper() in self._col_names:
-                data[k] = np.zeros(nn,dtype=v.dtype)
+                data[k] = np.zeros(nn, dtype=v.dtype)
             else:
                 data[k] = v
         return optics(data)
-
 
     def errors_add(self, error_table):
         """Add error columns"""
@@ -757,11 +758,11 @@ class optics(dataobj,TableMixIn):
             * np.cos(2 * np.pi * abs(mu0 - self.muy) - pq0)
         )
 
-    def get_rotmat(self,i):
-        return rot_mad(self.theta[i],self.phi[i],self.psi[i])
+    def get_rotmat(self, i):
+        return rot_mad(self.theta[i], self.phi[i], self.psi[i])
 
-    def get_pos(self,i):
-        return np.array([self.x[i],self.y[i],self.z[i]])
+    def get_pos(self, i):
+        return np.array([self.x[i], self.y[i], self.z[i]])
 
 
 def _mylbl(d, x):

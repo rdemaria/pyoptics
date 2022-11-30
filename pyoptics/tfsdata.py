@@ -144,15 +144,15 @@ def dump(data, fh, floatfmt="%g", intfmt="%12d"):
             lprint.append("%%%ds" % (cur.dtype.itemsize // 4))
             types.append(lprint[-1] % "%d")
         vec.append(cur)
-        if len(lprint)==1:
+        if len(lprint) == 1:
             fh.write((lprint[-1] % l)[:-1])
         else:
             fh.write(lprint[-1] % l)
 
     fh.write("\n")
     fh.write("$ ")
-    for ii,tt in enumerate(types):
-        if ii==0:
+    for ii, tt in enumerate(types):
+        if ii == 0:
             fh.write(tt[:-1])
         else:
             fh.write(tt)
