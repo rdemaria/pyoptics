@@ -82,7 +82,7 @@ class optics(dataobj, TableMixIn):
         if hasattr(data, "summary"):
             self.header = data.summary
         if hasattr(data, "name"):
-            self.name = np.array([a.split(":")[0].upper() for a in self.name])
+            self.name = np.array([a.split(":")[0] for a in self.name])
         self._fdate = 0
 
     def col_names(self):
@@ -114,12 +114,12 @@ class optics(dataobj, TableMixIn):
 
     def get_idx(self, name=None, count=0):
         if type(name) is str:
-            return np.where(self.name == name.upper())[0][count]
+            return np.where(self.name == name)[0][count]
         else:
             return count
 
     def row(self, index):
-        return {cc: self[cc][index] for cc in self._col_names()}
+        return {cc: self[cc][index] for cc in self.col_names()()}
 
     def twissdata(self, location, data):
         idx = np.where(self.pattern(location))[0][-1]
@@ -520,8 +520,7 @@ class optics(dataobj, TableMixIn):
 
     def interp(self, snew, namenew=None, sname="s"):
         "Interpolate with piecewise linear all columns using a new s coordinate"
-        for cname in self._col_names:
-            cname = cname.lower()
+        for cname in self.col_names():
             if cname != sname and np.isreal(self[cname][0]):
                 self[cname] = np.interp(snew, self[sname], self[cname])
         self[sname] = snew
@@ -529,7 +528,7 @@ class optics(dataobj, TableMixIn):
 
     def _first_idx(self, name):
         if type(name) is str:
-            name = np.where(self.name == name.upper())[0][0]
+            name = np.where(self.name == name)[0][0]
         return name
 
     def cycle(self, name, reorder=True):
@@ -542,8 +541,7 @@ class optics(dataobj, TableMixIn):
                 if reorder:
                     v[:name] += vm
         if reorder:
-            for vn in self._col_names:
-                vn = vn.lower()
+            for vn in self.col_names():
                 v = self[vn]
                 self[vn] = np.concatenate([v[name:], v[:name]])
         if hasattr(self, "ap"):
@@ -598,7 +596,7 @@ class optics(dataobj, TableMixIn):
     def append(self, t):
         data = {}
         for k, v in list(self._data.items()):
-            if k.upper() in self._col_names:
+            if k in self.col_names():
                 data[k] = np.concatenate([v, t[k]])
             else:
                 data[k] = v
@@ -607,7 +605,7 @@ class optics(dataobj, TableMixIn):
     def resize(self, nn):
         data = {}
         for k, v in list(self._data.items()):
-            if k.upper() in self._col_names:
+            if k in self.col_names():
                 data[k] = np.zeros(nn, dtype=v.dtype)
             else:
                 data[k] = v
