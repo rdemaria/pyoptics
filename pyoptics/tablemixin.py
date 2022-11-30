@@ -10,11 +10,11 @@ def _to_str(arr, digits, fixed="g"):
         return arr
     elif arr.dtype.kind == "O":
         return arr.astype('U')
-
+    elif arr.dtype.kind in 'iu':
+        return np.char.mod("%d",arr)
     else:
         fmt = "%%.%d%s" % (digits, fixed)
-        out = [fmt % nn for nn in arr]
-        return np.array(out)
+        return np.char.mod(fmt,arr)
 
 
 class Loc:
@@ -126,7 +126,7 @@ class TableMixIn:
         rows=None,
         cols=None,
         maxrows=20,
-        maxwidth=80,
+        maxwidth=None,
         output=None,
         digits=6,
         fixed="g",
@@ -158,6 +158,9 @@ class TableMixIn:
         """
 
         tlen=self._nrows
+
+        if cols is None and maxwidth is None:
+            maxwidth=80
 
         if rows is None:
             idx = slice(None)
