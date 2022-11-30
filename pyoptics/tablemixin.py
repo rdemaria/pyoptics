@@ -35,7 +35,7 @@ class Loc:
         if isinstance(key, int):
             mask[key] = True
         elif isinstance(key, str):
-            col = self.table['name']
+            col = self._index
             r = re.compile(key, re.IGNORECASE)
             mask[:] = [r.match(nn) for nn in col]
         elif isinstance(key, slice):
@@ -47,7 +47,7 @@ class Loc:
                 col = self.table[ic]
             if isinstance(ia, str) or isinstance(ib, str):
                 if col is None:
-                    col = self.table['name']
+                    col = self._index
                 if ia is not None:
                     r1 = re.compile(ia, re.IGNORECASE)
                     ia = np.where([r1.match(nn) for nn in col])[0][0]
@@ -92,6 +92,19 @@ class TableMixIn:
     def _nrows(self):
         return len(self[self.col_names()[0]])
 
+    @property
+    def _index(self):
+        if not hasattr(self,'_index_name'):
+            if 'name' in self:
+                return self['name']
+            else:
+                return self[self.col_names[0]]
+        else:
+            return self[self._index_name]
+
+    def set_index(self,name):
+        self._index_name=name
+
     def __getitem__(self, column):
         """Get the column data."""
         if isinstance(column, int):
@@ -107,11 +120,14 @@ class TableMixIn:
 
     __call__ = eval
 
-    def _idx_from_regex(self,regex,index='name'):
+    def _idx_from_regex(self,regex,index=None):
             return np.where(self.mask(regex,index))[0]
 
-    def mask(self,regex,index='name'):
-            col= self[index]
+    def mask(self,regex,index=None):
+            if index is None:
+                col=self._index
+            else:
+                col= self[index]
             regex = re.compile(regex, re.IGNORECASE)
             return np.fromiter((regex.match(nn) for nn in col),dtype='bool')
 
@@ -134,7 +150,7 @@ class TableMixIn:
         """Pretty print a twiss table
 
         rows:  `None` all columns,
-               a regexp to matching t["name"]-
+               a regexp to matching t["name"]
                a boolean index
         cols:  a list of spaced columns names or expressions
         digits: the number of significant digit to show
@@ -159,16 +175,15 @@ class TableMixIn:
 
         tlen=self._nrows
 
+        index_name=self._index_name if hasattr(self,'_index_name') else 'name'
+
         if cols is None and maxwidth is None:
             maxwidth=80
 
         if rows is None:
             idx = slice(None)
         elif isinstance(rows, str):
-            if "name" in self.col_names():
-                idx = self._idx_from_regex(rows)
-            else:
-                raise (f"Table does not have 'name' column to search")
+            idx = self._idx_from_regex(rows)
         elif isinstance(rows, tuple):
             idx = np.where(self.loc[rows[0] : rows[1]])[0]
         else:
@@ -197,7 +212,7 @@ class TableMixIn:
             cols = cols.split()
 
 
-        if "name" not in cols and "name" in self.col_names():
+        if index_name not in cols and index_name in self.col_names():
             cols.insert(0, "name")
 
         if maxwidth is None:
@@ -212,8 +227,8 @@ class TableMixIn:
         if hasattr(output, "from_dict"):
             dct = {cc: self.eval(cc)[idx] for cc in cols}
             dct = output.from_dict(dct)
-            if "name" in self and hasattr(dct, "set_index"):
-                dct.set_index('name')
+            if index_name in self and hasattr(dct, "set_index"):
+                dct.set_index(index_name) #dataframe
             return dct
 
         for cc in cols:

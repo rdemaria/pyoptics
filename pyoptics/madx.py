@@ -12,7 +12,9 @@ class Table(cpymad.madx.Table,TableMixIn):
 class TableMap(cpymad.madx.TableMap):
     def __getitem__(self, name):
         try:
-            return Table(name, self._libmadx)
+            t=Table(name, self._libmadx)
+            t.set_index('name')
+            return t
         except ValueError:
             raise KeyError("Table not found {!r}".format(name)) from None
 
