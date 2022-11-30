@@ -172,7 +172,7 @@ class Beam(ObjDebug):
     xa,xb=plt.xlim(0,maxfill)
     ya,yb=plt.ylim(0,maxvirt)
     plt.plot([xa,xb],[hl,hl],'k',lw=2)
-    plt.plot([6,6],[ya,yb],'k',lw=2)
+    #plt.plot([6,6],[ya,yb],'k',lw=2)
     plt.tight_layout()
     return b
   def plot_mlumi_int_opt(self,virt=[3,5,10,15,20,22]):

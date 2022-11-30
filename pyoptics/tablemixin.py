@@ -203,7 +203,7 @@ class TableMixIn:
         data = []
         width = 0
         fmt = []
-        header = ""
+        header = []
         if output == dict:
             return {cc: self.eval(cc)[idx] for cc in cols}
         if hasattr(output, "from_dict"):
@@ -220,19 +220,18 @@ class TableMixIn:
             colwidth = int(col.dtype.str[2:])
             if len(cc) > colwidth:
                 colwidth = len(cc)
-            colwidth += 1
             width += colwidth + 1
             if width < maxwidth:
                 if coltype in "SU":
-                    fmt.append("%%-%ds " % (colwidth - 1))
+                    fmt.append("%%-%ds" % (colwidth))
                 else:
                     fmt.append("%%%ds" % colwidth)
-                header += fmt[-1] % cc
+                header.append( fmt[-1] % cc)
                 data.append(col)
 
-        result = [header]
+        result = [' '.join(header)]
         for ii in range(len(col)):
-            row = "".join([ff % col[ii] for ff, col in zip(fmt, data)])
+            row = " ".join([ff % col[ii] for ff, col in zip(fmt, data)])
             result.append(row)
             if ii == cut:
                 result.append("...")
