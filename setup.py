@@ -8,5 +8,6 @@ setup(
         author_email='riccardo.de.maria@cern.ch',
         url='https://github.com/rdemaria/pyoptics',
         packages=find_packages(),
-        install_requires=['numpy','matplotlib','cpymad'],
+        install_requires=['numpy','matplotlib','cpymad',
+                          'scipy', 'h5py', 'numba', 'pandas'],
 )
