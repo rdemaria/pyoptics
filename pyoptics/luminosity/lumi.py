@@ -70,6 +70,47 @@ def luminosity(
     return LL
 
 
+def luminosity2(
+    nb=2736,
+    N=2.2e11,
+    betx=0.15,
+    bety=0.15,
+    emit_n=2.5e-6,
+    sigma_z=0.0755,
+    pc=7e12,
+    thetac=500e-6,
+    acrab=380e-6,
+    debug=True,
+    frev=clight / 26658.8832,
+):
+    brho = pc / clight
+    gamma = pc / pmass
+    emit = emit_n / gamma
+    sigma_x = sqrt(betx * emit)
+    sigma_y = sqrt(bety * emit)
+    dsep=thetac/sqrt(emit / betx)
+    alpha = (thetac - acrab) / (2 * sqrt(emit / betx))
+    L = (nb * N**2 * frev) / (4 * pi * sigma_x * sigma_y)
+    Ax = sigma_z / betx
+    Ay = sigma_z / bety
+    betw = alpha * sigma_z
+    factor = mkint(alpha, Ax, Ay, debug=debug)
+    LL = L * factor
+    Fgeo = 1 / sqrt(1 + ((sigma_z * dsep) / (2 * betx) ** 2))
+    if debug:
+        print("Head-on Luminosity [cm^-2 s^-1]: %e" % (L / 1e4))
+        print("Ext crossing  [signa]: %g" % (dsep))
+        print("beta_w: %g" % (alpha * sigma_z))
+        print("Piwinski angle: %g" % (betw / betx))
+        print("Loss factor : %g" % factor)
+        print("Fgeo        : %g" % Fgeo)
+        print("Luminosity  [cm^-2 s^-1] : %e" % (LL * 1e-4))
+    return LL
+
+
+
+
+
 def piwibeta(sigma_z=0.0755, bety=0.075, dsep=10):
     def ftomin(x):
         return -luminosity(
