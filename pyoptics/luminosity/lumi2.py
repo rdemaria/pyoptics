@@ -117,17 +117,15 @@ class InteractionPoint:
 
     def lumi(self, bunch):
         """Luminosity at the IP"""
-        sigx = np.sqrt(self.betx * bunch.emitx)
-        sigy = np.sqrt(self.bety * bunch.emity)
-        L0 = (bunch.ppb**2 * bunch.nb * bunch.frev) / (4 * np.pi * sigx * sigy)
+        L0 = self.lumi_headon(bunch)
         effx = self.thetax - self.ccx
         effy = self.thetay - self.ccy
-        theta=np.sqrt(effx**2+effy**2)
-        xp=np.arctan2(effx,effy)
-        assert xp>=0
-        beta_cross=self.betx*np.cos(xp)+self.bety*np.sin(xp)
-        beta_sep=self.betx*np.sin(xp)+self.bety*np.cos(xp)
-        emit=bunch.emitx*np.cos(xp)+bunch.emity*np.sin(xp)
+        theta = np.sqrt(effx**2+effy**2)
+        xp = np.arctan2(effx, effy)
+        assert xp >= 0
+        beta_cross = self.betx*np.cos(xp)+self.bety*np.sin(xp)
+        beta_sep = self.betx*np.sin(xp)+self.bety*np.cos(xp)
+        emit = bunch.emitx*np.cos(xp)+bunch.emity*np.sin(xp)
         alpha = theta / (2 * np.sqrt(emit / beta_cross))
         Ax = bunch.sigz / beta_cross
         Ay = bunch.sigz / beta_sep
@@ -135,39 +133,54 @@ class InteractionPoint:
         LL = L0 * factor
         return LL
 
-
-    def L0(self):
-        return self.frev*self.Nb*self.Np*self.Np/(4*np.pi*self.sigx*self.sigy)*1e-4
-
-
-    def Fxy(self, s, ct, ctx_p, ctx_m, cty_p, cty_m, kx, rfc=True):
-        sigmax2 = self.sigx**2
-        sigmay2 = self.sigy**2
+    def Fxy(self, s, ct, bunch, ctx_p, ctx_m, cty_p, cty_m, kx, rfc=True):
+        sigx = np.sqrt(self.betx * bunch.emitx)
+        sigy = np.sqrt(self.bety * bunch.emity)
+        sigmax2 = sigx**2
+        sigmay2 = sigy**2
         bsx = (1+(s/self.betx)**2)
         bsy = (1+(s/self.bety)**2)
         bsx_sq = np.sqrt(bsx)
         bsy_sq = np.sqrt(bsy)
 
+        effx = self.thetax - self.ccx
+        effy = self.thetay - self.ccy
+        theta = np.sqrt(effx**2+effy**2)
+        ccxy = np.sqrt(self.ccx**2+self.ccy**2)
+        xp = np.arctan2(effx, effy)
+        assert xp >= 0
+        beta_cross = self.betx*np.cos(xp)+self.bety*np.sin(xp)
+        beta_sep = self.betx*np.sin(xp)+self.bety*np.cos(xp)
+
+        # TODO: use the correct angles not just thetax,ccx
         if rfc is True:
-            res = np.exp( -(np.sin(kx*(s+ctx_m*0.5))*np.cos(kx*(ct+ctx_p*0.5))*np.sin(self.crab_angle*0.5)/kx -s*np.sin(self.crossing_angle*0.5))**2 / (sigmax2 * bsx) ) / bsx_sq / bsy_sq
-        elif rfc is False:        
-            res = np.exp( -(s*np.sin(self.crab_angle*0.5) - s*np.sin(self.crossing_angle*0.5))**2 / (sigmax2 * bsx) ) / bsx_sq / bsy_sq   
+            # res = np.exp( -(np.sin(kx*(s+ctx_m*0.5))*np.cos(kx*(ct+ctx_p*0.5))*np.sin(self.ccx*0.5)/kx -s*np.sin(self.thetax*0.5))**2 / (sigmax2 * bsx) ) / bsx_sq / bsy_sq
+            res = np.exp( -(np.sin(kx*(s+ctx_m*0.5))*np.cos(kx*(ct+ctx_p*0.5))*np.sin(ccxy*0.5)/kx -s*np.sin(theta*0.5))**2 / (sigmax2 * bsx) ) / bsx_sq / bsy_sq
+        elif rfc is False:
+            res = np.exp( -(s*np.sin(ccxy*0.5) - s*np.sin(theta*0.5))**2 / (sigmax2 * bsx) ) / bsx_sq / bsy_sq
         return res
 
+    def long_profile(self, s, ct, bunch, ct01, ct02):
+        # TODO: fix angle
+        costh = np.cos(self.thetax*0.5)
+        return np.exp(-((s*costh - (ct + ct01))**2 + (s*costh + (ct + ct02))**2) / (2*bunch.sigz**2))
 
-    def long_profile(self, s, ct, ct01, ct02):
-        costh = np.cos(self.crossing_angle*0.5)
-        return np.exp( -((s*costh - (ct + ct01))**2 + (s*costh + (ct + ct02))**2) / (2*self.sig_s**2) )
- 
-    def luminosity_density(self, s, ct, ctx=(0,0), cty=(0,0), rfc=True):
+    def luminosity_density(self, s, ct, bunch, ctx=(0, 0), cty=(0, 0), rfc=True):
         """
         s : longitudinal coordinate
         ct : integration variable
         ctx : time lag of the crab cavity in the x plane
         cty : time lag of the crab cavity in the y plane
         """
+        effx = self.thetax - self.ccx
+        effy = self.thetay - self.ccy
+        theta = np.sqrt(effx**2+effy**2)
+        xp = np.arctan2(effx, effy)
+        assert xp >= 0
+        beta_cross = self.betx*np.cos(xp)+self.bety*np.sin(xp)
+        beta_sep = self.betx*np.sin(xp)+self.bety*np.cos(xp)
 
-        kx = self.wcc/clight*2*np.pi
+        kx = self.ccrf/clight*2*np.pi
 
         ctx_p = ctx[1] + ctx[0]
         ctx_m = ctx[1] - ctx[0]
@@ -175,11 +188,24 @@ class InteractionPoint:
         cty_p = cty[1] + cty[0]
         cty_m = cty[1] - cty[0]
 
-        fxy = self.Fxy(s, ct, ctx_p, ctx_m, cty_p, cty_m, kx, rfc)
+        fxy = self.Fxy(s, ct, bunch, ctx_p, ctx_m, cty_p, cty_m, kx, rfc)
 
-        integrand = fxy*self.long_profile(s, ct, 30e-12*clight, 30e-12*clight)
+        integrand = fxy*self.long_profile(s, ct, bunch, 30e-12*clight, 30e-12*clight)
+        L0 = self.lumi_headon(bunch)
+        # TODO: fix angle
+        return integrand * (L0*np.cos(theta*0.5)) / (np.pi*bunch.sigz**2)
 
-        return integrand * (self.L0()*np.cos(self.crossing_angle*0.5))/ (np.pi*self.sig_s**2)
+    def instantaneous_lumi(self, bunch, debug=False):
+        rfc = True
+        if self.ccrf == 0:
+            rfc = False
+        #     print("No CC RF frequency was given")
+        #     return -1
+        res = scipy.integrate.dblquad(lambda s, ct: self.luminosity_density(s, ct, bunch, rfc=rfc),
+                                      -np.inf, np.inf, -np.inf, np.inf)
+        if debug:
+            print("Integral tolerance: %e" % res[1])
+        return res[0]
 
 class Bunch:
     """Bunch class
@@ -265,16 +291,10 @@ class LumiCalculator:
         self.Np = nparticles
         self.gamma = energy/self.proton_mass
         self.geom_emitt = self.emitt/self.gamma
-        
+
         self.betx = betx
         self.bety = bety
-        
+
         self.sigx = np.sqrt(self.geom_emitt*self.betx)
         self.sigy = np.sqrt(self.geom_emitt*self.bety)
         self.sig_s = sig_s
-
-
-
-    
-
-
