@@ -2,7 +2,7 @@ from numpy import *
 import scipy
 from matplotlib.pyplot import *
 
-from lumi import *
+from pyoptics.luminosity.archive.lumi import *
 
 
 def piwibeta(sigma_z=0.0755, bety=0.075, dsep=10):
