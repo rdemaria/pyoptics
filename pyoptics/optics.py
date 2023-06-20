@@ -89,7 +89,7 @@ class optics(dataobj, TableMixIn):
         if "_col_names" in self._data:
             return self._data["_col_names"]
         else:
-            return self._data.col_names()
+            return self._data.col_names
 
     def copy(self):
         data = {}
@@ -531,21 +531,27 @@ class optics(dataobj, TableMixIn):
             name = np.where(self.name == name)[0][0]
         return name
 
+    def _iter_columns(self):
+        ln = len(self.name)
+        for k, v in list(self._data.items()):
+            if hasattr(v, "__len__") and len(v) == ln:
+                yield k,v
+
     def cycle(self, name, reorder=True):
-        name = self._first_idx(name)
+        idx = self._first_idx(name)
         for vn in ["s", "mux", "muy", "phix", "phiy"]:
             if vn in self:
                 v = self[vn]
                 vm = v[-1]
-                v -= v[name]
+                v -= v[idx]
                 if reorder:
-                    v[:name] += vm
+                    v[:idx] += vm
         if reorder:
-            for vn in self.col_names():
+            for vn,v in self._iter_columns():
                 v = self[vn]
-                self[vn] = np.concatenate([v[name:], v[:name]])
+                self[vn] = np.concatenate([v[idx:], v[:idx]])
         if hasattr(self, "ap"):
-            self.ap.cycle(name, reorder=reorder)
+            self.ap.cycle(idx, reorder=reorder)
         return self
 
     def center(self, ref):
