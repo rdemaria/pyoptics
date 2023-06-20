@@ -1,286 +1,357 @@
-from matplotlib.pyplot import *
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.constants import c as clight
 
-from numpy import sum, arange, exp, sqrt, pi, inf
-
-import scipy.integrate
 import scipy.optimize
 
-clight = 299792458
-pmass = 0.938272013e9
+from . import lumi_guido
+
+twopi = 2 * np.pi
+fourpi = 4 * np.pi
 
 
-def ftoint(u, alpha=1.0, Ax=1.0, Ay=1.0):
-    """alpha=theta_c/2 * sqrt(emit/betxstar)
-    Ax=sigma_z/betxstar
-    Ay=sigma_z/betystar
+class IP:
+    """Interaction Point class
+    name: name of the IP
+    betx [m]: beta function at the IP in the horizontal plane
+    bety [m]: beta function at the IP in the vertical plane
+    sepx [m]: half horizontal separation at the IP
+    sepy [m]: half vertical separation at the IP
+    px [rad]: half horizontal crossing angle at the IP
+    py [rad]: half vertical crossing angle at the IP
+    dx[m]: half horizontal dispersion at the IP
+    dy[m]: half vertical dispersion at the IP
+    ccvx[rad]: half horizontal crab cavity voltage at the IP
+    ccvy[rad]: half vertical crab cavity voltage at the IP
+    ccrf[rad]: crab cavity RF frequency at the IP
+    cclag[rad]: crab cavity RF phase lag at the IP
+    visible_cross_section[mb]: visible cross section at the IP
+    total_cross_section[mb]: total cross section at the IP
     """
-    dx = 1 + (Ax * u) ** 2
-    dy = 1 + (Ay * u) ** 2
-    n = exp(-(u**2) * (1 + (alpha * Ax) ** 2 / dx))
-    d = sqrt(dx * dy)
-    return n / d
 
+    def __init__(
+        self,
+        name="ip5",
+        betx=1,
+        bety=1,
+        alfx=0,
+        alfy=0,
+        sepx=0,
+        sepy=0,
+        px=0,
+        py=0,
+        dx=0,
+        dy=0,
+        ccx=0,
+        ccy=0,
+        #ccr12=23.3305,
+        #ccr34=23.3305,
+        ccrf=400e6,
+        cclag=0,
+        visible_cross_section=81,
+        total_cross_section=81,
+    ):
+        self.name = name
+        self.betx = betx
+        self.bety = bety
+        self.alfx = alfx
+        self.alfy = alfy
+        self.sepx = sepx
+        self.sepy = sepy
+        self.px = px
+        self.py = py
+        self.dx = dx
+        self.dy = dy
+        self.dpx = 0
+        self.dpy = 0
+        self.ccx = ccx
+        self.ccy = ccy
+        #self.ccr12 = ccr12
+        #self.ccr34 = ccr34
+        self.ccrf = ccrf
+        self.cclag = cclag
+        self.visible_cross_section = visible_cross_section
+        self.total_cross_section = total_cross_section
 
-def mkint(alpha=290e-6, Ax=1.0, Ay=1.0, debug=True):
-    i = scipy.integrate.quad(ftoint, 0, inf, args=(alpha, Ax, Ay))
-    if debug:
-        print("Integral tolerance: %e" % i[1])
-    return 2 / sqrt(pi) * i[0]
-
-
-def luminosity(
-    nb=2808,
-    N=1.7e11,
-    frev=clight / 26658.8832,
-    betx=0.55,
-    bety=0.55,
-    emit_n=3.75e-6,
-    sigma_z=0.0755,
-    pc=7e12,
-    dsep=10,
-    vcrab=0e6,
-    r12=24,
-    fcrab=400e6,
-    debug=True,
-):
-    brho = pc / clight
-    gamma = pc / pmass
-    emit = emit_n / gamma
-    sigma_x = sqrt(betx * emit)
-    sigma_y = sqrt(bety * emit)
-    thetac = dsep * sqrt(emit / betx)
-    acrab = vcrab / (3e8 * pc) * (4 * pi * r12 * fcrab)
-    alpha = (thetac - acrab) / (2 * sqrt(emit / betx))
-    L = (nb * N**2 * frev) / (4 * pi * sigma_x * sigma_y)
-    Ax = sigma_z / betx
-    Ay = sigma_z / bety
-    betw = alpha * sigma_z
-    factor = mkint(alpha, Ax, Ay, debug=debug)
-    LL = L * factor
-    Fgeo = 1 / sqrt(1 + ((sigma_z * dsep) / (2 * betx) ** 2))
-    if debug:
-        print("Head-on Luminosity [cm^-2 s^-1]: %e" % (L / 1e4))
-        print("Ext Crossing angle [urad]: %g" % (thetac * 1e6))
-        print("Crab Crossing angle [urad]: %g" % (acrab * 1e6))
-        print("beta_w: %g" % (alpha * sigma_z))
-        print("Piwinski angle: %g" % (betw / betx))
-        print("Loss factor : %g" % factor)
-        print("Fgeo        : %g" % Fgeo)
-        print("Luminosity  [cm^-2 s^-1] : %e" % (LL * 1e-4))
-    return LL
-
-
-def piwibeta(sigma_z=0.0755, bety=0.075, dsep=10):
-    def ftomin(x):
-        return -luminosity(
-            betx=x[0], bety=bety, sigma_z=sigma_z, dsep=dsep, debug=False
+    def clone(self, **kwargs):
+        ip = IP(
+            name=self.name,
+            betx=self.betx,
+            bety=self.bety,
+            alfx=self.alfx,
+            alfy=self.alfy,
+            sepx=self.sepx,
+            sepy=self.sepy,
+            px=self.px,
+            py=self.py,
+            dx=self.dx,
+            dy=self.dy,
+            ccx=self.ccx,
+            ccy=self.ccy,
+            #ccr12=self.ccr12,
+            #ccr34=self.ccr34,
+            ccrf=self.ccrf,
+            cclag=self.cclag,
+            visible_cross_section=self.visible_cross_section,
+            total_cross_section=self.total_cross_section,
         )
+        for k, v in kwargs.items():
+            setattr(ip, k, v)
+        return ip
+    
+    def pileup(self, bunch):
+        """Pile-up"""
+        l=self.luminosity(bunch)
+        return  l*self.visible_cross_section*1e-31/(bunch.nb * bunch.frev)
 
-    (betx,) = scipy.optimize.fmin(ftomin, [3])
-    return betx
+    def normalized_crossing_angle(self, bunch):
+        """Normalized crossing angle"""
+        phix = (self.px) / (np.sqrt(bunch.emitx / self.betx))
+        phiy = (self.py) / (np.sqrt(bunch.emity / self.bety))
+        return phix, phiy
+
+    def normalized_separation(self, bunch):
+        """Normalized separation"""
+        nsepx = self.sepx / (np.sqrt(bunch.emitx * self.betx))
+        nsepy = self.sepy / (np.sqrt(bunch.emity * self.bety))
+        return nsepx, nsepy
+
+    # def crabing_angles(self, bunch):
+    #     """Crabbing angles"""
+    #     phix = self.ccr12 * self.ccvx / bunch.energy * twopi * self.ccrf / clight
+    #     phiy = self.ccr34 * self.ccvy / bunch.energy * twopi * self.ccrf / clight
+    #     return phix, phiy
+
+    def geometric_factor(self, bunch):
+        """Geometric factor"""
+        sigx = np.sqrt(self.betx * bunch.emitx)
+        sigy = np.sqrt(self.bety * bunch.emity)
+        effx = self.px + self.ccx
+        effy = self.py + self.ccy
+        geox = 1 / np.sqrt(1 + ((bunch.sigz * effx) / sigx) ** 2)
+        geoy = 1 / np.sqrt(1 + ((bunch.sigz * effy) / sigy) ** 2)
+        return geox, geoy
+
+    def separation_factor(self, bunch):
+        """Separation factor"""
+        sigx = np.sqrt(self.betx * bunch.emitx)
+        sigy = np.sqrt(self.bety * bunch.emity)
+        fx = np.exp(-self.sepx**2 / sigx**2)
+        fy = np.exp(-self.sepy**2 / sigy**2)
+        return fx, fy
+
+    def lumi_headon(self, bunch):
+        sigx = np.sqrt(self.betx * bunch.emitx)
+        sigy = np.sqrt(self.bety * bunch.emity)
+        L0 = (bunch.ppb**2 * bunch.nb * bunch.frev) / (fourpi * sigx * sigy)
+        return L0
+
+    def lumi_simple(self, bunch):
+        L0 = self.lumi_headon(bunch)
+        geox, geoy = self.geometric_factor(bunch)
+        fx, fy = self.separation_factor(bunch)
+        L = L0 * geox * geoy * fx * fy
+        return L
+
+    def luminosity(self, bunch, verbose=False):
+        ccr12 = 1
+        ccr34 = 1
+        ccvx= self.ccx/ccr12*bunch.energy/twopi/self.ccrf*clight
+        ccvy= self.ccy/ccr34*bunch.energy/twopi/self.ccrf*clight
+
+        return lumi_guido.luminosity(
+            f=bunch.frev,
+            nb=bunch.nb,
+            N1=bunch.ppb,
+            N2=bunch.ppb,
+            x_1=self.sepx,
+            x_2=-self.sepx,
+            y_1=self.sepy,
+            y_2=-self.sepy,
+            px_1=self.px,
+            px_2=-self.px,
+            py_1=self.py,
+            py_2=-self.py,
+            energy_tot1=bunch.energy,
+            energy_tot2=bunch.energy,
+            deltap_p0_1=bunch.delta,
+            deltap_p0_2=bunch.delta,
+            epsilon_x1=bunch.emitnx,
+            epsilon_x2=bunch.emitnx,
+            epsilon_y1=bunch.emitny,
+            epsilon_y2=bunch.emitny,
+            sigma_z1=bunch.sigz,
+            sigma_z2=bunch.sigz,
+            beta_x1=self.betx,
+            beta_x2=self.betx,
+            beta_y1=self.bety,
+            beta_y2=self.bety,
+            alpha_x1=self.alfx,
+            alpha_x2=-self.alfx,
+            alpha_y1=self.alfy,
+            alpha_y2=-self.alfy,
+            dx_1=self.dx,
+            dx_2=self.dx,
+            dy_1=self.dy,
+            dy_2=self.dy,
+            dpx_1=self.dpx,
+            dpx_2=self.dpx,
+            dpy_1=self.dpy,
+            dpy_2=self.dpy,
+            CC_V_x_1=ccvx,
+            CC_f_x_1=self.ccrf,
+            CC_phase_x_1=0,
+            CC_V_x_2=-ccvx,
+            CC_f_x_2=self.ccrf,
+            CC_phase_x_2=0,
+            CC_V_y_1=ccvy,
+            CC_f_y_1=self.ccrf,
+            CC_phase_y_1=0,
+            CC_V_y_2=-ccvy,
+            CC_f_y_2=self.ccrf,
+            CC_phase_y_2=0,
+            R12_1=ccr12,
+            R22_1=0,
+            R34_1=ccr34,
+            R44_1=0,
+            R12_2=ccr12,
+            R22_2=0,
+            R34_2=ccr34,
+            R44_2=0,
+            verbose=verbose,
+            sigma_integration=3,
+        )
+    
+    def solve_luminosity_betastar(self, bunch, target, betaratio=1):
+        """Solve for the betastar that give a target luminosity"""
+        ip=self.clone()
+        def ftosolve(beta):
+            ip.betx = beta
+            ip.bety = beta*betaratio
+            return ip.luminosity(bunch) - target
+
+        res = scipy.optimize.root(ftosolve, ip.betx)
+        if res.success:
+            ftosolve(res.x[0])
+            return ip
+        else:
+            print(res)
+            raise ValueError("Could not find betastar")
+
+    def solve_pileup_betastar(self, bunch, target, betaratio=1):
+        """Solve for the betastar that give a target pileup"""
+        ip=self.clone()
+        def ftosolve(beta):
+            ip.betx = beta
+            ip.bety = beta*betaratio
+            return ip.pileup(bunch) - target
+
+        res = scipy.optimize.root(ftosolve, ip.betx)
+        if res.success:
+            ftosolve(res.x[0])
+            return ip
+        else:
+            print(res)
+            raise ValueError("Could not find betastar")
 
 
-def integrated_lumi(
-    nb=2808,
-    N=1.7e11,
-    frev=clight / 26658.8832,
-    betx=0.55,
-    bety=0.55,
-    emit_n=3.75e-6,
-    sigma_z=0.0755,
-    pc=7e12,
-    dsep=10,
-    sigma_cross=0.110 * 1e-28,
-    vcrab=0e6,
-    debug=False,
-):
-    """cross section
-    http://lhc-machine-outreach.web.cern.ch/lhc-machine-outreach/collisions.htm
-    * inelastic (sin = 60 mbarn)
-    * single diffractive (ssd = 12 mbarn)
-    * elastic (sel  = 40 mbarn)
+
+    def info(self, bunch):
+        print(f"sigma_x                  : {np.sqrt(self.betx * bunch.emitx)}")
+        print(f"sigma_y                  : {np.sqrt(self.bety * bunch.emity)}")
+        print(f"Normalized crosing angles: {self.normalized_crossing_angle(bunch)}")
+        print(f"Normalized separations   : {self.normalized_separation(bunch)}")
+
+
+class Bunch:
+    """Bunch class
+
+    nb: number of particles per bunch
+    ppb: number of protons per bunch
+    emitx [m.rad]: horizontal emittance
+    emity [m.rad]: vertical emittance
+    sigz [m]: RMS bunch length
+    sigdpp: RMS energy spread
+    energy [eV]: beam energy
+    ips: list of InteractionPoint objects
+    longdist: longitudinal distribution
+    pmass [eV]: proton mass
+    frev [Hz]: revolution frequency
     """
-    dt = 1
-    level_lumi = 5e38
-    lumi = luminosity(
-        nb=nb, N=N, betx=betx, bety=bety, emit_n=emit_n, sigma_z=sigma_z, dsep=dsep
-    )
-    intlumi = 0
-    tt = 0
-    while N > 0:
-        while lumi >= level_lumi and alpha > 5:
-            alpha += 0.1
-            lumi = luminosity(
-                nb=nb,
-                N=N,
-                betx=betx,
-                bety=bety,
-                emit_n=emit_n,
-                sigma_z=sigma_z,
-                alpha=alpha,
-                debug=False,
-            )
-            print(lumi)
-        intlumi += lumi * dt
-        tt += dt
-        burnout = lumi * sigma_cross * dt
-        N -= burnout
-        print(tt, lumi, N, burnout)
 
+    def __init__(
+        self,
+        nb=1960,
+        ppb=2.2e11,
+        emitnx=2.5e-6,
+        emitny=2.5e-6,
+        sigz=7.61e-2,
+        sigdpp=1.2e-4,
+        energy=7e12,
+        ips=(),
+        long_dist="gaussian",
+        frev=11245.5,
+        pmass=0.9382720813e9,
+        delta=1,
+    ):
+        self.nb = nb
+        self.ppb = ppb
+        self.emitnx = emitnx
+        self.emitny = emitny
+        self.sigz = sigz
+        self.sigdpp = sigdpp
+        self.energy = energy
+        self.ips = ips
+        self.longdist = long_dist
+        self.frev = frev
+        self.pmass = pmass
+        self.delta = delta
 
-def kfactor(
-    betx, bety, dsepA, dsepB, vcrabA, vcrabB, emit_n=3.75e-6, sigma_z=0.0755, pc=7e12
-):
-    La = luminosity(
-        betx=betx,
-        bety=bety,
-        dsep=dsepA,
-        vcrab=vcrabA,
-        emit_n=emit_n,
-        sigma_z=sigma_z,
-        pc=pc,
-    )
-    Lb = luminosity(
-        betx=betx,
-        bety=bety,
-        dsep=dsepB,
-        vcrab=vcrabB,
-        emit_n=emit_n,
-        sigma_z=sigma_z,
-        pc=pc,
-    )
-    print(La / Lb)
+    @property
+    def gamma(self):
+        return self.energy / self.pmass
 
+    @property
+    def emitx(self):
+        return self.emitnx / self.gamma
 
-if __name__ == "__main__":
-    luminosity()
-    luminosity(betx=0.15, bety=0.15)
-    luminosity(betx=0.30, bety=0.075)
-    luminosity(sigma_z=0.06, betx=0.30, bety=0.075, dsep=13)
-    luminosity(sigma_z=0.06, betx=0.36, bety=0.10, dsep=13)
-    luminosity(N=1.8e11, sigma_z=0.05, betx=0.25, bety=0.15, dsep=13, emit_n=2.5e-6)
-    kfactor(betx=0.15, bety=0.15, dsepA=10, dsepB=10, vcrabA=6e6, vcrabB=-6e6)
-    kfactor(betx=0.15, bety=0.15, dsepA=10, dsepB=10, vcrabA=6e6, vcrabB=0e6)
-    kfactor(betx=0.15, bety=0.15, dsepA=10, dsepB=10, vcrabA=10e6, vcrabB=-10e6)
-    luminosity(N=2.2e11, betx=0.15, bety=0.15, dsep=12.5, emit_n=2.5e-6)
-    luminosity(N=3.5e11, nb=1404, betx=0.15, bety=0.15, dsep=11.4, emit_n=3.0e-6)
-    luminosity(pc=4e12, N=1.7e11, nb=11390, betx=0.6, bety=0.6, dsep=13, emit_n=2.2e-6)
-    luminosity(pc=4e12, N=1.6e11, nb=1390, betx=0.6, bety=0.6, dsep=8, emit_n=2.8e-6)
-    luminosity(N=2.2e11, betx=0.15 * 2, bety=0.15 / 2, dsep=12.5 * 1.2, emit_n=2.5e-6)
-    luminosity(
-        N=3.5e11, nb=1404, betx=0.15 * 2, bety=0.15 / 2, dsep=11.4 * 1.2, emit_n=3.0e-6
-    )
-    luminosity(
-        betx=0.30,
-        bety=0.30,
-        emit_n=1.54e-6,
-        sigma_z=1e-9 * clight / 4,
-        dsep=12,
-        nb=2592,
-        pc=6.5e12,
-        N=1.24,
-    )
+    @property
+    def emity(self):
+        return self.emitny / self.gamma
 
-    def plot10():
-        clf()
-        i = 121
-        emit = 2.5
-        for dsep in [10, 15]:
-            subplot(i)
-            for sigma_z, cl in zip([5, 7.5, 10], "rgb"):
-                title(r"$N=1.2 \cdot 10^{11}\, d_{\rm sep}=%d \sigma$" % (dsep))
-                # for by,ls in zip([0.075,0.10,0.15],['-','--','-.']):
-                for by, ls in zip([0.075, 0.10], ["-", "--"]):
-                    bx = arange(0.05, 1, 0.01)
-                    lumi = [
-                        luminosity(
-                            betx=bbx,
-                            bety=by,
-                            emit_n=emit * 1e-6,
-                            sigma_z=sigma_z * 1e-2,
-                            dsep=dsep,
-                            nb=2592,
-                            pc=7e12,
-                            N=1.2e11,
-                        )
-                        / 1e38
-                        for bbx in bx
-                    ]
-                    lbl = r"$\sigma_z=%g$ cm, $\beta_{\rm sep}=%g cm$" % (
-                        sigma_z,
-                        by * 100,
-                    )
-                    plot(bx * 100, lumi, ls + cl, label=lbl)
-                    ylim(0, 8)
-                    grid(True)
-                legend()
-                xlabel(r"$\beta_{\rm cross}$ [cm]")
-                ylabel(r"peak luminosity $[10^{34}]$")
-            i += 1
-        savefig("flat12.png")
+    def luminosity(self, verbose=False):
+        return np.array([ip.luminosity(self, verbose=verbose) for ip in self.ips])
 
-    plot10()
+    def ip_info(self):
+        for ip in self.ips:
+            ip.info(self)
 
-    def ftomin(x, by=0.15, emit=1.8, sep=12, bl=1):
-        bx = x[0]
-        return -luminosity(
-            betx=bx,
-            bety=by,
-            emit_n=emit * 1e-6,
-            sigma_z=bl * 1e-9 * clight / 4,
-            dsep=sep,
-            nb=2592,
-            pc=6.5e12,
-            N=1.24e11,
+    def clone(self, **kwargs):
+        bb = Bunch(
+            nb=self.nb,
+            ppb=self.ppb,
+            emitnx=self.emitnx,
+            emitny=self.emitny,
+            sigz=self.sigz,
+            sigdpp=self.sigdpp,
+            energy=self.energy,
+            ips=self.ips,
+            long_dist=self.longdist,
+            frev=self.frev,
+            pmass=self.pmass,
+            delta=self.delta,
         )
+        for k, v in kwargs.items():
+            setattr(bb, k, v)
+        return bb
+    
 
 
-# emit=1.54
-# out=[]
-# for sep in [10,12,13]:
-#  for bl in [0.9,1,1.1,1.2]:
-#    for by in [0.05,0.10,0.15,0.20,0.25,0.30,0.40]:
-#      bx=scipy.optimize.fmin(ftomin,[0.25],args=(by,emit,sep,bl))[0]
-#      out.append((bx,by,emit,sep,bl))
-#
-# for bx,by,emit,sep,bl in out:
-#  if by in [0.10,0.20,0.30,0.40] and sep in [10,12]:
-#    print ("%5.3g "*4)%(bx,by,bl,sep)
-#
 
-
-import numba
-import numpy as np
-import scipy
-import matplotlib.pyplot as plt
-
-
-def pdf_normal_2d(mux, muy, sigxx, sigyy, sigxy):
-    return numba.njit(
-        lambda x, y: 1
-        / (2 * np.pi * sigxx * sigyy * sqrt(1 - sigxy**2))
-        * np.exp(
-            -1
-            / (2 * (1 - sigxy**2))
-            * (
-                (x - mux) ** 2 / sigxx**2
-                + (y - muy) ** 2 / sigyy**2
-                - 2 * sigxy * (x - mux) * (y - muy) / (sigxx * sigyy)
-            )
-        )
-    )
-
-
-def int_rho1_rho2(rho1, rho2):
-    ftoint = numba.njit(lambda x, y: rho1(x, y) * rho2(x, y))
-    return scipy.integrate.dblquad(ftoint, -np.inf, np.inf, -np.inf, np.inf)[0]
-
-
-rho1 = pdf_normal_2d(0, 0, 1, 1, 0.5)
-rho2 = pdf_normal_2d(0, 0, 1, 1, 0.5)
-
-
-def f1(x):
-    rho1 = pdf_normal_2d(x, 0, 1, 1, 0)
-    rho2 = pdf_normal_2d(0, 0, 1, 1, 0)
-    return int_rho1_rho2(rho1, rho2)
+class LevellingProcess:
+    def __init__(self, bunches, interactions, lumi_start, lumi_lev, lumi_ramp_time):
+        self.bunches = bunches
+        self.interactions = interactions
+        self.lumi_start = lumi_start
+        self.lumi_lev = lumi_lev
+        self.lumi_ramp_time = lumi_ramp_time

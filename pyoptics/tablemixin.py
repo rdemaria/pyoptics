@@ -34,8 +34,10 @@ class Loc:
         mask = np.zeros(self.table._nrows, dtype=bool)
         if isinstance(key, int):
             mask[key] = True
+        elif hasattr(key,'dtype'):
+            mask=key
         elif isinstance(key, str):
-            col = self._index
+            col = self.table._index
             r = re.compile(key, re.IGNORECASE)
             mask[:] = [r.match(nn) for nn in col]
         elif isinstance(key, slice):
@@ -47,7 +49,7 @@ class Loc:
                 col = self.table[ic]
             if isinstance(ia, str) or isinstance(ib, str):
                 if col is None:
-                    col = self._index
+                    col = self.table._index
                 if ia is not None:
                     r1 = re.compile(ia, re.IGNORECASE)
                     ia = np.where([r1.match(nn) for nn in col])[0][0]

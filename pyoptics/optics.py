@@ -940,7 +940,7 @@ class qdplot(object):
         self.figure.legends = []
 
         if self.lattice:
-            self.lattice.patches.clear()
+            self.lattice.clear()
             self._lattice(["k0l", "kn0l", "angle"], "#a0ffa0", "Bend h")
             self._lattice(["ks0l"], "#ffa0a0", "Bend v")
             self._lattice(["kn1l", "k1l"], "#a0a0ff", "Quad")
@@ -948,11 +948,11 @@ class qdplot(object):
             self._lattice(["vkick"], "#a0e0e0", "Kick v")
             self._lattice(["kn2l", "k2l"], "#e0e0a0", "Sext")
         if self.left:
-            self.left.lines.clear()
+            self.left.clear()
             for i in self.yl:
                 self._column(i, self.left, self.color[i])
         if self.right:
-            self.right.lines.clear()
+            self.right.clear()
             for i in self.yr:
                 self._column(i, self.right, self.color[i])
         ca = self.figure.gca()
