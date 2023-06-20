@@ -10,6 +10,49 @@ twopi = 2 * np.pi
 fourpi = 4 * np.pi
 
 
+def crossing_spec(x1=0, x2=0, y1=0, y2=0, px1=0, px2=0, py1=0, py2=0, degree=False):
+    xingh = px1 - px2
+    xingv = py1 - py2
+    seph = x1 - x2
+    sepv = y1 - y2
+    angh = px1 + px2
+    angv = py1 + py2
+    offh = x1 + x2
+    offv = y1 + y2
+    phi = np.arctan2(xingv, xingh)
+    xing = np.sqrt(xingh**2 + xingv**2)
+    sep = np.sqrt(seph**2 + sepv**2)
+    ang = np.sqrt(angh**2 + angv**2)
+    off = np.sqrt(offh**2 + offv**2)
+    if degree:
+        phi *= 180 / np.pi
+    return xing / 2, sep / 2, ang / 2, off / 2, phi
+
+
+def orbit_spec(xing=0, sep=0, ang=0, off=0, phi=0, degree=False):
+    if degree:
+        phi *= np.pi / 180
+    cc = np.cos(phi)
+    ss = np.sin(phi)
+    xingh = cc * xing
+    xingv = ss * xing
+    offh = -ss * off
+    offv = cc * off
+    seph = -ss * sep
+    sepv = cc * sep
+    angh = -ss * ang
+    angv = cc * ang
+    x1 = seph + offh
+    x2 = -seph + offh
+    y1 = sepv + offv
+    y2 = -sepv + offv
+    px1 = xingh + angh
+    px2 = -xingh + angh
+    py1 = xingv + angv
+    py2 = -xingv + angv
+    return x1, x2, y1, y2, px1, px2, py1, py2
+
+
 class IP:
     """Interaction Point class
     name: name of the IP
@@ -29,6 +72,64 @@ class IP:
     total_cross_section[mb]: total cross section at the IP
     """
 
+    def set_crossing(self, xing, sep, ang, off, phi, degree=True):
+        (
+            self.x1,
+            self.x2,
+            self.y1,
+            self.y2,
+            self.px1,
+            self.px2,
+            self.py1,
+            self.py2,
+        ) = orbit_spec(xing, sep, ang, off, phi, degree=degree)
+
+    def get_crossing(self, degree=True):
+        return crossing_spec(
+            self.x1,
+            self.x2,
+            self.y1,
+            self.y2,
+            self.px1,
+            self.px2,
+            self.py1,
+            self.py2,
+            degree=degree,
+        )
+
+    def get_phi(self, degree=True):
+        phi = np.arctan2(self.py, self.px)
+        if degree:
+            phi *= 180 / np.pi
+        return phi
+
+    @property
+    def phi(self):
+        return self.get_phi()
+
+    @phi.setter
+    def phi(self, phi):
+        self.set_crossing(*self.get_crossing(degree=True), phi=phi, degree=True)
+
+    @property
+    def sep(self):
+        return np.sqrt(self.sepx**2 + self.sepy**2)
+
+    @property
+    def sigx(self):
+        return np.sqrt(self.betx * self.emitx + self.dx**2)
+
+    @property
+    def sigy(self):
+        return np.sqrt(self.bety * self.emity + self.dy**2)
+
+    def sep_(self, sep):
+        cc = np.cos(self.phi)
+        ss = np.sin(self.phi)
+        self.sepx = -ss * sep
+        self.sepy = cc * sep
+        return self
+
     def __init__(
         self,
         name="ip5",
@@ -44,8 +145,8 @@ class IP:
         dy=0,
         ccx=0,
         ccy=0,
-        #ccr12=23.3305,
-        #ccr34=23.3305,
+        # ccr12=23.3305,
+        # ccr34=23.3305,
         ccrf=400e6,
         cclag=0,
         visible_cross_section=81,
@@ -66,12 +167,20 @@ class IP:
         self.dpy = 0
         self.ccx = ccx
         self.ccy = ccy
-        #self.ccr12 = ccr12
-        #self.ccr34 = ccr34
+        # self.ccr12 = ccr12
+        # self.ccr34 = ccr34
         self.ccrf = ccrf
         self.cclag = cclag
         self.visible_cross_section = visible_cross_section
         self.total_cross_section = total_cross_section
+
+    def __repr__(self) -> str:
+        out = []
+        for kk in ["name", "betx", "bety", "sepx", "sepy", "px", "py", "ccx", "ccy"]:
+            vv = getattr(self, kk)
+            if vv != 0:
+                out.append(f"{kk}={vv!r}")
+        return f"IP({', '.join(out)})"
 
     def clone(self, **kwargs):
         ip = IP(
@@ -88,8 +197,8 @@ class IP:
             dy=self.dy,
             ccx=self.ccx,
             ccy=self.ccy,
-            #ccr12=self.ccr12,
-            #ccr34=self.ccr34,
+            # ccr12=self.ccr12,
+            # ccr34=self.ccr34,
             ccrf=self.ccrf,
             cclag=self.cclag,
             visible_cross_section=self.visible_cross_section,
@@ -98,11 +207,11 @@ class IP:
         for k, v in kwargs.items():
             setattr(ip, k, v)
         return ip
-    
+
     def pileup(self, bunch):
         """Pile-up"""
-        l=self.luminosity(bunch)
-        return  l*self.visible_cross_section*1e-31/(bunch.nb * bunch.frev)
+        l = self.luminosity(bunch)
+        return l * self.visible_cross_section * 1e-31 / (bunch.nb * bunch.frev)
 
     def normalized_crossing_angle(self, bunch):
         """Normalized crossing angle"""
@@ -156,8 +265,8 @@ class IP:
     def luminosity(self, bunch, verbose=False):
         ccr12 = 1
         ccr34 = 1
-        ccvx= self.ccx/ccr12*bunch.energy/twopi/self.ccrf*clight
-        ccvy= self.ccy/ccr34*bunch.energy/twopi/self.ccrf*clight
+        ccvx = self.ccx / ccr12 * bunch.energy / twopi / self.ccrf * clight
+        ccvy = self.ccy / ccr34 * bunch.energy / twopi / self.ccrf * clight
 
         return lumi_guido.luminosity(
             f=bunch.frev,
@@ -221,13 +330,14 @@ class IP:
             verbose=verbose,
             sigma_integration=3,
         )
-    
-    def solve_luminosity_betastar(self, bunch, target, betaratio=1):
+
+    def betastar_from_lumi(self, bunch, target, betaratio=1):
         """Solve for the betastar that give a target luminosity"""
-        ip=self.clone()
+        ip = self.clone()
+
         def ftosolve(beta):
             ip.betx = beta
-            ip.bety = beta*betaratio
+            ip.bety = beta * betaratio
             return ip.luminosity(bunch) - target
 
         res = scipy.optimize.root(ftosolve, ip.betx)
@@ -238,23 +348,54 @@ class IP:
             print(res)
             raise ValueError("Could not find betastar")
 
-    def solve_pileup_betastar(self, bunch, target, betaratio=1):
+    def betastar_from_pileup(self, bunch, target, betaratio=1):
         """Solve for the betastar that give a target pileup"""
-        ip=self.clone()
+        ip = self.clone()
+
         def ftosolve(beta):
             ip.betx = beta
-            ip.bety = beta*betaratio
+            ip.bety = beta * betaratio
             return ip.pileup(bunch) - target
 
         res = scipy.optimize.root(ftosolve, ip.betx)
         if res.success:
-            ftosolve(res.x[0])
+            beta = res.x[0]
+            ip.betx = beta
+            ip.bety = beta * betaratio
             return ip
         else:
             print(res)
             raise ValueError("Could not find betastar")
 
+    def sep_from_lumi(self, bunch, target):
+        ip = self.clone()
 
+        def ftosolve(sep):
+            ip.sep_(sep)
+            return ip.luminosity(bunch) - target
+
+        res = scipy.optimize.root(ftosolve, ip.sep)
+        if res.success:
+            ip.sep_(res.x[0])
+            return ip
+        else:
+            print(res)
+            raise ValueError("Could not find separation")
+
+    def sep_from_lumi_simple(self, bunch, target):
+        l_nosep = self.clone().sep_(0).lumi_simple(bunch)
+        factor = target / l_nosep
+        sigx = np.sqrt(self.betx * bunch.emitx)
+        sigy = np.sqrt(self.bety * bunch.emity)
+        if factor > 1:
+            sep = 0  # no levelling possible
+        else:
+            sep = np.sqrt(-np.log(factor) * sigx * sigy)  # small error
+        return self.clone().sep_(sep)
+
+    def burnoff(self, bunch):
+        """Burnoff time in seconds"""
+        return self.luminosity(bunch) * self.total_cross_section * 1e-31
 
     def info(self, bunch):
         print(f"sigma_x                  : {np.sqrt(self.betx * bunch.emitx)}")
@@ -307,6 +448,14 @@ class Bunch:
         self.pmass = pmass
         self.delta = delta
 
+    def __repr__(self) -> str:
+        out = []
+        for kk in ["energy", "nb", "ppb", "emitnx", "emitny", "sigz"]:
+            vv = getattr(self, kk)
+            if vv != 0:
+                out.append(f"{kk}={vv!r}")
+        return f"IP({', '.join(out)})"
+
     @property
     def gamma(self):
         return self.energy / self.pmass
@@ -344,14 +493,111 @@ class Bunch:
         for k, v in kwargs.items():
             setattr(bb, k, v)
         return bb
-    
 
 
-
-class LevellingProcess:
-    def __init__(self, bunches, interactions, lumi_start, lumi_lev, lumi_ramp_time):
+class BetaStarLeveling:
+    def __init__(
+        self,
+        bunches,
+        ips,
+        lumi_start,
+        lumi_lev,
+        lumi_ramp_time,
+        betastar_end=0.15,
+        lumi2=1.4e35,
+        lumi8=2e37,
+    ):
         self.bunches = bunches
-        self.interactions = interactions
+        self.ips = ips
         self.lumi_start = lumi_start
         self.lumi_lev = lumi_lev
         self.lumi_ramp_time = lumi_ramp_time
+        self.betastar_end = betastar_end
+        self.lumi2 = lumi2
+        self.lumi8 = lumi8
+
+    def betastar_leveling(self, fillduration=15 * 3600, dt=60, verbose=False):
+        """Integrate the luminosity over time"""
+        out = []
+        ip1 = self.ips[1].betastar_from_lumi(self.bunch, self.lumi_start)
+        ip5 = self.ips[5].betastar_from_lumi(self.bunch, self.lumi_start)
+        ip2 = self.ips[2].sep_from_lumi_simple(self.bunch, self.lumi2)
+        ip8 = self.ips[8].sep_from_lumi_simple(self.bunch, self.lumi8)
+        nc={1:0,2:0,5:0,8:0} # number of colliding bunches for each IP
+        for ip in (1,2,5,8):
+            for bb in self.bunches:
+                if ip in bb.ips:
+                    nc[ip]+=bb.nb
+        if verbose:
+            print(nc)
+        # first step
+        bunches=[b.clone() for b in self.bunches]
+        tt = 0  # luminosity time
+        ips={1:ip1,2:ip2,5:ip5,8:ip8}
+        out.append((tt, bunches, ips))
+        # lumi ramp
+        lumi15 = self.lumi_start
+        dlumi = (self.lumi_lev - self.lumi_start) / self.lumi_ramp_time * dt
+        while lumi15 < self.lumi_lev:
+            # clone and burnoff
+            bunches=[b.clone() for b in bunches]
+            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            for bb in bunches:
+                for ip in bb.ips:
+                   bb.ppb -= ips[ip].burnoff(bb) * dt
+            # levelling
+            lumi15 += dlumi
+            ip1.betastar_from_lumi(bunches[0].clone(nb=nc[1]), lumi15)
+            ip5.betastar_from_lumi(bunches[0].clone(nb=nc[5]), lumi15)
+            ip2.sep_from_lumi_simple(bunches[0].clone(nb=nc[2]), self.lumi2)
+            ip8.sep_from_lumi_simple(bunches[0].clone(nb=nc[8]), self.lumi8)
+            # update
+            out.append((tt, bunches, ip1, ip5, ip2, ip8))
+            tt += dt
+            if tt > fillduration:
+                break
+        # lumi leveling
+        lumi15 = self.lumi_lev  # small error here
+        while ip1.betx > self.betastar_end:
+            # clone and burnoff
+            bunches=[b.clone() for b in bunches]
+            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            for bb in bunches:
+                for ip in bb.ips:
+                   bb.ppb -= ips[ip].burnoff(bb) * dt
+            # levelling
+            ip1.betastar_from_lumi(bunches[0].clone(nb=nc[1]), lumi15)
+            ip5.betastar_from_lumi(bunches[0].clone(nb=nc[5]), lumi15)
+            ip2.sep_from_lumi_simple(bunches[0].clone(nb=nc[2]), self.lumi2)
+            ip8.sep_from_lumi_simple(bunches[0].clone(nb=nc[8]), self.lumi8)
+            # update
+            out.append((tt, bunches, ip1, ip5, ip2, ip8))
+            tt += dt
+            if tt > fillduration:
+                break
+        # lumi decay
+        while tt < fillduration:
+            # clone and burnoff
+            bunches=[b.clone() for b in bunches]
+            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            for bb in bunches:
+                for ip in bb.ips:
+                   bb.ppb -= ips[ip].burnoff(bb) * dt
+            # levelling
+            ip2.sep_from_lumi_simple(bunches[0].clone(nb=nc[2]), self.lumi2)
+            ip8.sep_from_lumi_simple(bunches[0].clone(nb=nc[8]), self.lumi8)
+            # update
+            out.append((tt, bunches, ip1, ip5, ip2, ip8))
+            tt += dt
+        return StableBeam(*zip(*out))
+
+
+class StableBeam:
+    def __init__(self,tt,bunches,ip1,ip5,ip2,ip8):
+        self.tt = tt
+        self.bunches = bunches
+        self.ip1 = ip1
+        self.ip5 = ip5
+        self.ip2 = ip2
+        self.ip8 = ip8
+
