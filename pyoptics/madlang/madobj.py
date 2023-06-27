@@ -1,4 +1,5 @@
 from collections import namedtuple
+import numpy as np
 
 import ast
 
@@ -185,6 +186,13 @@ class Elem(object):
 
     def __call__(self, expr):
         return eval(expr, {}, self)
+
+    def vars_to_dict(self):
+        out={}
+        for k,v in self._data.items():
+            if np.isscalar(v):
+                out[self._rorig[k]]=v
+        return out
 
 
 class Expr(object):
