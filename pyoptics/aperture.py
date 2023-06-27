@@ -337,22 +337,22 @@ class BeamEnvelope(object):
         else:
             x = 0
             y = 0
-        if apertype == "RECTELLIPSE":
+        if apertype.upper() == "RECTELLIPSE":
             h = self.ap.aper_1[n]
             v = self.ap.aper_2[n]
             a = self.ap.aper_3[n]
             b = self.ap.aper_4[n]
             return rectellipse_to_polygon(x, y, h, v, a, b)
-        elif apertype == "CIRCLE":
+        elif apertype.upper() == "CIRCLE":
             a = self.ap.aper_1[n]
             return rectellipse_to_polygon(x, y, a, a, a, a)
-        elif apertype == "RACETRACK":
+        elif apertype.upper() == "RACETRACK":
             h = self.ap.aper_1[n]
             v = self.ap.aper_2[n]
             a = self.ap.aper_3[n]
             b = self.ap.aper_4[n]
             return racetrack_to_polygon(x, y, h, v, a, b)
-        elif apertype == "OCTAGON":
+        elif apertype.upper() == "OCTAGON":
             h = self.ap.aper_1[n]
             v = self.ap.aper_2[n]
             a = self.ap.aper_3[n]
