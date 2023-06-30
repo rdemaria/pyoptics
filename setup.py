@@ -9,5 +9,5 @@ setup(
         url='https://github.com/rdemaria/pyoptics',
         packages=find_packages(),
         install_requires=['numpy','matplotlib','cpymad',
-                          'scipy', 'h5py', 'numba', 'pandas'],
+                          'scipy', 'h5py', 'numba', 'pandas','xdeps'],
 )

@@ -100,7 +100,7 @@ class TableMixIn:
             if "name" in self:
                 return self["name"]
             else:
-                return self[self.col_names[0]]
+                return self[self.col_names()[0]]
         else:
             return self[self._index_name]
 
@@ -235,7 +235,10 @@ class TableMixIn:
             return dct
 
         for cc in cols:
-            coldata = self.eval(cc)[idx]
+            if cc in self._data:
+                coldata=self._data[cc][idx]
+            else:
+                coldata = self.eval(cc)[idx]
             coltype = coldata.dtype.kind
             col = _to_str(coldata, digits, fixed)
             colwidth = int(col.dtype.str[2:])
