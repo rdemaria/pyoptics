@@ -523,28 +523,28 @@ class BetaStarLeveling:
         ip5 = self.ips[5].betastar_from_lumi(self.bunch, self.lumi_start)
         ip2 = self.ips[2].sep_from_lumi_simple(self.bunch, self.lumi2)
         ip8 = self.ips[8].sep_from_lumi_simple(self.bunch, self.lumi8)
-        nc={1:0,2:0,5:0,8:0} # number of colliding bunches for each IP
-        for ip in (1,2,5,8):
+        nc = {1: 0, 2: 0, 5: 0, 8: 0}  # number of colliding bunches for each IP
+        for ip in (1, 2, 5, 8):
             for bb in self.bunches:
                 if ip in bb.ips:
-                    nc[ip]+=bb.nb
+                    nc[ip] += bb.nb
         if verbose:
             print(nc)
         # first step
-        bunches=[b.clone() for b in self.bunches]
+        bunches = [b.clone() for b in self.bunches]
         tt = 0  # luminosity time
-        ips={1:ip1,2:ip2,5:ip5,8:ip8}
+        ips = {1: ip1, 2: ip2, 5: ip5, 8: ip8}
         out.append((tt, bunches, ips))
         # lumi ramp
         lumi15 = self.lumi_start
         dlumi = (self.lumi_lev - self.lumi_start) / self.lumi_ramp_time * dt
         while lumi15 < self.lumi_lev:
             # clone and burnoff
-            bunches=[b.clone() for b in bunches]
-            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            bunches = [b.clone() for b in bunches]
+            ips = {1: ip1.clone(), 2: ip2.clone(), 5: ip5.clone(), 8: ip8.clone()}
             for bb in bunches:
                 for ip in bb.ips:
-                   bb.ppb -= ips[ip].burnoff(bb) * dt
+                    bb.ppb -= ips[ip].burnoff(bb) * dt
             # levelling
             lumi15 += dlumi
             ip1.betastar_from_lumi(bunches[0].clone(nb=nc[1]), lumi15)
@@ -560,11 +560,11 @@ class BetaStarLeveling:
         lumi15 = self.lumi_lev  # small error here
         while ip1.betx > self.betastar_end:
             # clone and burnoff
-            bunches=[b.clone() for b in bunches]
-            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            bunches = [b.clone() for b in bunches]
+            ips = {1: ip1.clone(), 2: ip2.clone(), 5: ip5.clone(), 8: ip8.clone()}
             for bb in bunches:
                 for ip in bb.ips:
-                   bb.ppb -= ips[ip].burnoff(bb) * dt
+                    bb.ppb -= ips[ip].burnoff(bb) * dt
             # levelling
             ip1.betastar_from_lumi(bunches[0].clone(nb=nc[1]), lumi15)
             ip5.betastar_from_lumi(bunches[0].clone(nb=nc[5]), lumi15)
@@ -578,11 +578,11 @@ class BetaStarLeveling:
         # lumi decay
         while tt < fillduration:
             # clone and burnoff
-            bunches=[b.clone() for b in bunches]
-            ips={1:ip1.clone(),2:ip2.clone(),5:ip5.clone(),8:ip8.clone()}
+            bunches = [b.clone() for b in bunches]
+            ips = {1: ip1.clone(), 2: ip2.clone(), 5: ip5.clone(), 8: ip8.clone()}
             for bb in bunches:
                 for ip in bb.ips:
-                   bb.ppb -= ips[ip].burnoff(bb) * dt
+                    bb.ppb -= ips[ip].burnoff(bb) * dt
             # levelling
             ip2.sep_from_lumi_simple(bunches[0].clone(nb=nc[2]), self.lumi2)
             ip8.sep_from_lumi_simple(bunches[0].clone(nb=nc[8]), self.lumi8)
@@ -593,11 +593,10 @@ class BetaStarLeveling:
 
 
 class StableBeam:
-    def __init__(self,tt,bunches,ip1,ip5,ip2,ip8):
+    def __init__(self, tt, bunches, ip1, ip5, ip2, ip8):
         self.tt = tt
         self.bunches = bunches
         self.ip1 = ip1
         self.ip5 = ip5
         self.ip2 = ip2
         self.ip8 = ip8
-

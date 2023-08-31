@@ -290,7 +290,7 @@ def luminosity(
                 / energy_tot1
                 * np.sin(CC_phase_x_1 + 2 * np.pi * CC_f_x_1 / c * delta_z)
             )
-        
+
         def theta_y_1(delta_z):
             return (
                 CC_V_y_1
@@ -311,7 +311,6 @@ def luminosity(
                 / energy_tot2
                 * np.sin(CC_phase_y_2 + 2 * np.pi * CC_f_y_2 / c * delta_z)
             )
-        
 
         # z, t is the absolute longitudinal position and time in lab frame
         def mx1(z, t):
@@ -353,19 +352,17 @@ def luminosity(
         #     print(f"Ver. crabbing angle B1 [murad] {R34_1*theta_y_1(eps)/eps}")
         #     print(f"Ver. crabbing angle B2 [murad] {R34_2*theta_y_2(eps)/eps}")
 
-
         if verbose:
-            eps=1e-12
+            eps = 1e-12
             print(f"Hor. crabbing angle B1 [murad] {(mx1(0,eps)-mx1(0,0))/eps/c}")
             print(f"Hor. crabbing angle B2 [murad] {(mx2(0,eps)-mx2(0,0))/eps/c}")
             print(f"Ver. crabbing angle B1 [murad] {(my1(0,eps)-my1(0,0))/eps/c}")
             print(f"Ver. crabbing angle B2 [murad] {(my2(0,eps)-my2(0,0))/eps/c}")
-            eps=1e-6
+            eps = 1e-6
             print(f"Hor. net cros angle B1 [murad] {(mx1(eps,0)-mx1(0,0))/eps}")
             print(f"Hor. net cros angle B2 [murad] {(mx2(eps,0)-mx2(0,0))/eps}")
             print(f"Ver. cros angle B1 [murad] {(my1(eps,0)-my1(0,0))/eps}")
             print(f"Ver. cros angle B2 [murad] {(my2(eps,0)-my2(0,0))/eps}")
-
 
         def kernel_double_integral(t, z):
             return (
@@ -436,5 +433,5 @@ def luminosity(
     return result
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     luminosity(verbose=True)
