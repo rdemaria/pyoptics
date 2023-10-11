@@ -210,7 +210,7 @@ def open(fn):
     else:
         raise IOError("%s or %s.gz not found" % (fn, fn))
     t = load(fh)
-    t["_filename"] = fn
+    t["filename"] = fn
     return t
 
 
