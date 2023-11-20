@@ -78,6 +78,8 @@ class optics(dataobj, TableMixIn):
         tfsdata.save(self._data, fn, floatfmt)
 
     def __init__(self, data={}, idx=False):
+        if hasattr(data,'col_names'):
+            self._data["_col_names"]=data.col_names()
         self.update(data)
         if hasattr(data, "summary"):
             self.header = data.summary
@@ -89,7 +91,7 @@ class optics(dataobj, TableMixIn):
         if "_col_names" in self._data:
             return self._data["_col_names"]
         else:
-            return self._data.col_names
+            return self._data.col_names()
 
     def copy(self):
         data = {}
