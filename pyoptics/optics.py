@@ -958,7 +958,7 @@ class qdplot(object):
         ca = self.figure.gca()
         ca.set_xlabel(_mylbl(self.axlabel, self.x))
         ca.set_xlim(min(self.xaxis[self.idx]), max(self.xaxis[self.idx]))
-        self.figure.legend(self.lines, self.legends, "upper right")
+        self.figure.legend(self.lines, self.legends, loc="upper right")
         ca.grid(True)
         #    self.figure.canvas.mpl_connect('button_release_event',self.button_press)
         self.figure.canvas.mpl_connect("pick_event", self.pick)
