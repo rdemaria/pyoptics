@@ -24,20 +24,21 @@ for target in [140, 200]:
 print(f"nb   energy  lumi   pileup  betastar")
 for target in [140, 200]:
     for energy in [6.8, 7]:
-      for betaratio in [2,4]:
-        b15c = b15.clone(nb=nb, energy=energy * 1e12)
-        ipc = ip1.betastar_from_pileup(bunch=b15c, target=target, betaratio=betaratio)
-        pileup = ipc.pileup(bunch=b15c)
-        for nb in [1960, 2200, 2748]:
-            b15c = b15.clone(
-                nb=nb,
-                energy=energy * 1e12,
-                betx=0.5 * 140 / target,
-                bety=0.5 * 140 / target*4,
+        for betaratio in [2, 4]:
+            b15c = b15.clone(nb=nb, energy=energy * 1e12)
+            ipc = ip1.betastar_from_pileup(
+                bunch=b15c, target=target, betaratio=betaratio
             )
-            ll = ipc.luminosity(bunch=b15c) / 1e38
-            print(
-                f"{nb:4}   {energy:4.1f}   {ll:4.1f}     "
-                f"{pileup:4.0f}        {ipc.betx:4.2f}  {ipc.bety:4.2f}"
-            )
-
+            pileup = ipc.pileup(bunch=b15c)
+            for nb in [1960, 2200, 2748]:
+                b15c = b15.clone(
+                    nb=nb,
+                    energy=energy * 1e12,
+                    betx=0.5 * 140 / target,
+                    bety=0.5 * 140 / target * 4,
+                )
+                ll = ipc.luminosity(bunch=b15c) / 1e38
+                print(
+                    f"{nb:4}   {energy:4.1f}   {ll:4.1f}     "
+                    f"{pileup:4.0f}        {ipc.betx:4.2f}  {ipc.bety:4.2f}"
+                )

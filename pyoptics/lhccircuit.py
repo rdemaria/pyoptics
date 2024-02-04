@@ -600,6 +600,7 @@ class Circuit2in1(object):
         k2_0 = k2steps[-1]
         k2_1 = k2steps[-2]
         k2_2 = k2steps[-3]
+
         # i1start,i2start=self.k2i(k1start, k2start, momentum(tstart))
         # check_i_limit(i1start,i1min,i1max,self.name)
         # check_i_limit(i2start,i2min,i2max,self.name)
@@ -1526,6 +1527,7 @@ class LHCCircuits(object):
             ipsteps[pc.madname1] = [0]
             ipsteps[pc.madname2] = [0]
             ksteps_all[name] = [0]
+
         # def update step
         def update_step(tnext, knext, pcnext):
             for name in pcnames:

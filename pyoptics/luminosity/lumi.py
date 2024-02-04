@@ -116,14 +116,14 @@ class IP:
         return np.sqrt(self.sepx**2 + self.sepy**2)
 
     def sep_(self, sep):
-        phi_rad=self.phi/180*np.pi
+        phi_rad = self.phi / 180 * np.pi
         cc = np.cos(phi_rad)
         ss = np.sin(phi_rad)
         self.sepx = -ss * sep
         self.sepy = cc * sep
         return self
 
-    sep=sep.setter(sep_)
+    sep = sep.setter(sep_)
 
     @property
     def sigx(self):
@@ -539,10 +539,10 @@ class BetaStarLeveling:
         ip1, ip5, ip2, ip8 = ips
         bunch = self.bunches[0]
         nc = self.get_colliding_bunches(verbose=verbose)
-        lumi1 = lumis[0] *  bunch.nb/nc[1]
-        lumi5 = lumis[1] *  bunch.nb/nc[5]
-        lumi2 = lumis[2] *  bunch.nb/nc[2]
-        lumi8 = lumis[3] *  bunch.nb/nc[8]
+        lumi1 = lumis[0] * bunch.nb / nc[1]
+        lumi5 = lumis[1] * bunch.nb / nc[5]
+        lumi2 = lumis[2] * bunch.nb / nc[2]
+        lumi8 = lumis[3] * bunch.nb / nc[8]
 
         ip1 = self.ips[1].betastar_from_lumi(bunch, lumi1)
         ip5 = self.ips[5].betastar_from_lumi(bunch, lumi5)
@@ -565,7 +565,8 @@ class BetaStarLeveling:
         ip1, ip5, ip2, ip8 = self.level_betasep(
             self.ips,
             (self.lumi_start, self.lumi_start, self.lumi2, self.lumi8),
-            self.bunches[0], verbose=True
+            self.bunches[0],
+            verbose=True,
         )
 
         # first step
@@ -590,11 +591,13 @@ class BetaStarLeveling:
                     print(bb.ppb)
             # levelling
             lumi15 += dlumi
-            ips[1].ccy+=dcc
-            ips[5].ccx+=dcc
+            ips[1].ccy += dcc
+            ips[5].ccx += dcc
             ip1, ip5, ip2, ip8 = self.level_betasep(
-                ips, (lumi15, lumi15, self.lumi2, self.lumi8), self.bunches[0],
-                verbose=True
+                ips,
+                (lumi15, lumi15, self.lumi2, self.lumi8),
+                self.bunches[0],
+                verbose=True,
             )
 
             # update
@@ -634,8 +637,10 @@ class BetaStarLeveling:
                     bb.ppb -= ips[ip].burnoff(bb) * dt
             # levelling
             ip1, ip5, ip2, ip8 = self.level_betasep(
-                self.ips, (lumi15, lumi15, self.lumi2, self.lumi8), self.bunches[0],
-                verbose=True
+                self.ips,
+                (lumi15, lumi15, self.lumi2, self.lumi8),
+                self.bunches[0],
+                verbose=True,
             )
             # update
             out.append((tt, bunches, ip1, ip5, ip2, ip8))

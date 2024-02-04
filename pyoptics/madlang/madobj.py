@@ -188,10 +188,10 @@ class Elem(object):
         return eval(expr, {}, self)
 
     def vars_to_dict(self):
-        out={}
-        for k,v in self._data.items():
+        out = {}
+        for k, v in self._data.items():
             if np.isscalar(v):
-                out[self._rorig[k]]=v
+                out[self._rorig[k]] = v
         return out
 
 

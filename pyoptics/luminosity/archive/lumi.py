@@ -88,7 +88,7 @@ def luminosity2(
     emit = emit_n / gamma
     sigma_x = sqrt(betx * emit)
     sigma_y = sqrt(bety * emit)
-    dsep=thetac/sqrt(emit / betx)
+    dsep = thetac / sqrt(emit / betx)
     alpha = (thetac - acrab) / (2 * sqrt(emit / betx))
     L = (nb * N**2 * frev) / (4 * pi * sigma_x * sigma_y)
     Ax = sigma_z / betx
@@ -106,9 +106,6 @@ def luminosity2(
         print("Fgeo        : %g" % Fgeo)
         print("Luminosity  [cm^-2 s^-1] : %e" % (LL * 1e-4))
     return LL
-
-
-
 
 
 def piwibeta(sigma_z=0.0755, bety=0.075, dsep=10):

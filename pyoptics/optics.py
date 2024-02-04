@@ -78,8 +78,8 @@ class optics(dataobj, TableMixIn):
         tfsdata.save(self._data, fn, floatfmt)
 
     def __init__(self, data={}, idx=False):
-        if hasattr(data,'col_names'):
-            self._data["_col_names"]=data.col_names()
+        if hasattr(data, "col_names"):
+            self._data["_col_names"] = data.col_names()
         self.update(data)
         if hasattr(data, "summary"):
             self.header = data.summary
@@ -537,7 +537,7 @@ class optics(dataobj, TableMixIn):
         ln = len(self.name)
         for k, v in list(self._data.items()):
             if hasattr(v, "__len__") and len(v) == ln:
-                yield k,v
+                yield k, v
 
     def cycle(self, name, reorder=True):
         idx = self._first_idx(name)
@@ -549,7 +549,7 @@ class optics(dataobj, TableMixIn):
                 if reorder:
                     v[:idx] += vm
         if reorder:
-            for vn,v in self._iter_columns():
+            for vn, v in self._iter_columns():
                 v = self[vn]
                 self[vn] = np.concatenate([v[idx:], v[:idx]])
         if hasattr(self, "ap"):
