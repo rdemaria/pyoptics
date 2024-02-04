@@ -115,6 +115,16 @@ class IP:
     def sep(self):
         return np.sqrt(self.sepx**2 + self.sepy**2)
 
+    def sep_(self, sep):
+        phi_rad=self.phi/180*np.pi
+        cc = np.cos(phi_rad)
+        ss = np.sin(phi_rad)
+        self.sepx = -ss * sep
+        self.sepy = cc * sep
+        return self
+
+    sep=sep.setter(sep_)
+
     @property
     def sigx(self):
         return np.sqrt(self.betx * self.emitx + self.dx**2)
@@ -122,13 +132,6 @@ class IP:
     @property
     def sigy(self):
         return np.sqrt(self.bety * self.emity + self.dy**2)
-
-    def sep_(self, sep):
-        cc = np.cos(self.phi)
-        ss = np.sin(self.phi)
-        self.sepx = -ss * sep
-        self.sepy = cc * sep
-        return self
 
     def __init__(
         self,
