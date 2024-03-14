@@ -933,7 +933,7 @@ class qdplot(object):
     def run(self):
         #    print 'optics run'
         self.ont = self.t
-        self.xaxis = getattr(self.ont, self.x)
+        self.xaxis = getattr(self.ont, self.x)[self.idx]
         is_ion = pl.isinteractive()
         pl.interactive(False)
         self.lines = []
@@ -962,7 +962,7 @@ class qdplot(object):
                 self._column(i, self.right, self.color[i])
         ca = self.figure.gca()
         ca.set_xlabel(_mylbl(self.axlabel, self.x))
-        ca.set_xlim(min(self.xaxis[self.idx]), max(self.xaxis[self.idx]))
+        ca.set_xlim(min(self.xaxis), max(self.xaxis))
         self.figure.legend(self.lines, self.legends, loc="upper right")
         ca.grid(True)
         #    self.figure.canvas.mpl_connect('button_release_event',self.button_press)
