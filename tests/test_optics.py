@@ -1,7 +1,6 @@
 from pyoptics import optics
 
 
-
 def test_optics_open():
     """Test opening an optics file"""
     t = optics.open("tests/tfsload.tfs")

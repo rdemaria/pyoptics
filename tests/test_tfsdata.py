@@ -1,5 +1,6 @@
 from pyoptics import tfsdata
 
+
 def test_open():
     """Test opening a tfs table"""
     tfs = tfsdata.open("tests/tfsload.tfs")

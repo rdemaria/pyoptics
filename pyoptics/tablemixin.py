@@ -34,8 +34,8 @@ class Loc:
         mask = np.zeros(self.table._nrows, dtype=bool)
         if isinstance(key, int):
             mask[key] = True
-        elif hasattr(key,'dtype'):
-            mask=key
+        elif hasattr(key, "dtype"):
+            mask = key
         elif isinstance(key, str):
             col = self.table._index
             r = re.compile(key, re.IGNORECASE)
@@ -236,7 +236,7 @@ class TableMixIn:
 
         for cc in cols:
             if cc in self._data:
-                coldata=self._data[cc][idx]
+                coldata = self._data[cc][idx]
             else:
                 coldata = self.eval(cc)[idx]
             coltype = coldata.dtype.kind

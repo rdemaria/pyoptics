@@ -1,11 +1,11 @@
-
 from pyoptics import lumi
 
 
 # Run4 Start of collapse
 ip1 = lumi.IP(name="atlas", betx=1, bety=1, py=250e-6)
-ip2 = lumi.IP(
-    name="alice", betx=10, bety=10, py=-70e-6 - 170e-6, px=0.3e-6).sep_(0.032e-3)
+ip2 = lumi.IP(name="alice", betx=10, bety=10, py=-70e-6 - 170e-6, px=0.3e-6).sep_(
+    0.032e-3
+)
 ip5 = lumi.IP(name="cms", betx=1, bety=1, px=250e-6)
 ip8 = lumi.IP(
     name="lhcb",
@@ -18,14 +18,14 @@ ip8 = lumi.IP(
 b15 = lumi.Bunch(nb=2748, ips=(ip1, ip5))
 b2 = b15.clone(nb=2492, ips=(ip2,))
 b8 = b15.clone(nb=2574, ips=(ip8,))
-ip8=ip8.sep_from_lumi(b8, 2e37)
-ip2=ip2.sep_from_lumi(b2, 1.4e35)
+ip8 = ip8.sep_from_lumi(b8, 2e37)
+ip2 = ip2.sep_from_lumi(b2, 1.4e35)
 
 
-print(ip1.luminosity(b15,verbose=False) / 1e38, "10^34 cm^-2 s^-1")
-print(ip5.luminosity(b15,verbose=False) / 1e38, "10^34 cm^-2 s^-1")
-print(ip2.luminosity(b2,verbose=False) / 1e38, "10^34 cm^-2 s^-1")
-print(ip8.luminosity(b8,verbose=False) / 1e38, "10^34 cm^-2 s^-1")
+print(ip1.luminosity(b15, verbose=False) / 1e38, "10^34 cm^-2 s^-1")
+print(ip5.luminosity(b15, verbose=False) / 1e38, "10^34 cm^-2 s^-1")
+print(ip2.luminosity(b2, verbose=False) / 1e38, "10^34 cm^-2 s^-1")
+print(ip8.luminosity(b8, verbose=False) / 1e38, "10^34 cm^-2 s^-1")
 
 for nb in [2748, 2200, 1960]:
     for energy in [6.8e12, 7e12]:
@@ -49,7 +49,9 @@ ip8 = lumi.IP(
     py=170e-6 + 1.8e-6,
     sepx=0.032e-3,
 )
-b15 = lumi.Bunch(nb=2748, ppb=1.3e11, emitnx=2.9e-6, emitny=2.2e-6, ips=(ip1, ip5, ip2, ip8))
+b15 = lumi.Bunch(
+    nb=2748, ppb=1.3e11, emitnx=2.9e-6, emitny=2.2e-6, ips=(ip1, ip5, ip2, ip8)
+)
 b2 = b15.clone(nb=2492, ips=(ip2,))
 b8 = b15.clone(nb=2574, ips=(ip8,))
 
