@@ -870,21 +870,24 @@ class qdplot(object):
         if yl:
             self.left = self._new_axes()
             #      self.left.set_autoscale_on(False)
-            self.left.yaxis.set_label_position("left")
-            self.left.yaxis.set_ticks_position("left")
         if yr:
             self.right = self._new_axes()
             #      self.right.set_autoscale_on(False)
-            self.right.yaxis.set_label_position("right")
-            self.right.yaxis.set_ticks_position("right")
+            self.left.yaxis.set_label_position("right")
+            self.left.yaxis.set_ticks_position("right")
+
         #    timeit('Setup')
         self.run()
         if lattice is not None:
             self.lattice.set_autoscale_on(False)
         if yl:
             self.left.set_autoscale_on(False)
+            self.left.yaxis.set_label_position("left")
+            self.left.yaxis.set_ticks_position("left")
         if yr:
             self.right.set_autoscale_on(False)
+            self.right.yaxis.set_label_position("right")
+            self.right.yaxis.set_ticks_position("right")
 
     #    timeit('Update')
     def _new_axes(self):
