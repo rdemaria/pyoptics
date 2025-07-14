@@ -109,7 +109,7 @@ class BeamEnvelope(object):
             if reg.match(name):
                 pl.text(ss, ylev, name, rotation=90)
 
-    def get_survey(self, ref="IP5"):
+    def get_survey(self, ref="IP5", offset=0):
         idx = where(self.survey // ref)[0][0]
         theta0 = self.survey.theta[idx]
         c0 = cos(theta0)
@@ -123,7 +123,7 @@ class BeamEnvelope(object):
         zz = self.survey.z - z0
         xxx = xx * c0 - zz * s0
         zzz = xx * s0 + zz * c0
-        return xxx, yy, zzz
+        return xxx+offset, yy, zzz
 
     def get_co_survey(self, idx):
         s = self.survey
@@ -140,7 +140,7 @@ class BeamEnvelope(object):
         ey = dot(wm, array([0, 1, 0]))
         self.co[idx] = vro + x * ex + y * ey
 
-    def plot_aper_sx(self, st="k", ref=None, lbl=None, pcut=(1, 1), ncut=(1, 1)):
+    def plot_aper_sx(self, st="k", ref=None, lbl=None, pcut=(1, 1), ncut=(1, 1), offset=0):
         ap = self.twiss
         idx = (ap.aper_1 > 0) & (ap.aper_1 < 1)
         lim = ap.aper_1[idx]
@@ -149,7 +149,7 @@ class BeamEnvelope(object):
         nlim2 = -lim2
         # lim2=ap.aper_1[idx]-ap.rtol[idx]-ap.xtol[idx]
         if ref is not None:
-            xx, yy, zz = self.get_survey(ref=ref)
+            xx, yy, zz = self.get_survey(ref=ref,offset=offset)
             # xx=self.twiss.mech_sep/2
             lim += xx[idx]
             lim2 += xx[idx]
@@ -170,7 +170,7 @@ class BeamEnvelope(object):
         pl.xlabel("s [m]")
 
     def get_beam_sx(
-        self, nsig=None, color="b", n1=None, n2=None, ref=None, pattern="."
+        self, nsig=None, color="b", n1=None, n2=None, ref=None, pattern=".", offset=0
     ):
         ap = self.ap
         sig = sqrt(ap.betx[n1:n2] * self.get_ex())
@@ -181,7 +181,7 @@ class BeamEnvelope(object):
         env = env[idx][n1:n2]
         sig = sig[idx][n1:n2]
         if ref is not None:
-            xxx, yyy, zzz = self.get_survey(ref=ref)
+            xxx, yyy, zzz = self.get_survey(ref=ref,offset=offset)
             xx += xxx[idx]
         return ss, xx, sig, env
 
@@ -219,7 +219,7 @@ class BeamEnvelope(object):
         pl.xlabel("s [m]")
 
     def plot_beam_sx(
-        self, nsig=None, color="b", n1=None, n2=None, ref=None, pattern="^(?!DRIFT)"
+        self, nsig=None, color="b", n1=None, n2=None, ref=None, pattern="^(?!DRIFT)",offset=0
     ):
         ap = self.ap
         sig = sqrt(ap.betx[n1:n2] * self.get_ex())
@@ -232,7 +232,7 @@ class BeamEnvelope(object):
         env = env[idx][n1:n2]
         sig = sig[idx][n1:n2]
         if ref is not None:
-            xxx, yyy, zzz = self.get_survey(ref=ref)
+            xxx, yyy, zzz = self.get_survey(ref=ref,offset=offset)
             xx += xxx[idx]
         pl.fill_between(ss, xx + env, xx - env, color=color, alpha=0.2)
         pl.fill_between(ss, xx + sig, xx - sig, color=color, alpha=0.5)

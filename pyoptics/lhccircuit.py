@@ -1035,7 +1035,7 @@ class CircuitSingle(object):
 
 
 class LHCCircuits(object):
-    def get_pc_names_from_lsa(self):
+    def get_pc_names_from_lsa():
         lsa = pjlsa.LSAClient()
         pcs = lsa.findParameterNames(groupName="ALL MAGNETS", regexp=".*/IREF")
         pcs = [pc.split("/IREF")[0] for pc in pcs]
