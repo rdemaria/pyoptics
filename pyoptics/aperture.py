@@ -524,7 +524,7 @@ class BeamEnvelope(object):
         return racetrack_to_polygon(0, 0, sh * sigx, sv * sigy, sr * sigx, sr * sigy)
 
     def get_halo(self, n, hr, hx, hy, pm=1):
-        x, y, xtol, ytol, rtol, rtol = self.get_pos_tol_spec(n, pm)
+        x, y, xtol, ytol, rtolx, rtoly = self.get_pos_tol_spec(n, pm)
         sigx, sigy = self.get_sigma(n)
         tmp = sqrt(2) * sqrt((hr - hx) * (hr - hy))
         sh = hr - hy + tmp
@@ -532,8 +532,8 @@ class BeamEnvelope(object):
         sr = hx + hy - hr - tmp
         h = xtol + sh * sigx
         v = ytol + sv * sigy
-        a = rtol + sr * sigx
-        b = rtol + sr * sigy
+        a = rtolx + sr * sigx
+        b = rtoly + sr * sigy
         return racetrack_to_polygon(x, y, h, v, a, b, 9)
 
     def plot_halo(self, n, halor=12, halox=12, haloy=12, color="m", lbl="halo"):
